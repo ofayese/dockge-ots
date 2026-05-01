@@ -31,7 +31,7 @@ services:
   warp-agent:
     image: warpdotdev/warp-agent:latest
     container_name: warp-agent-service
-    user: "0:0"
+    user: "${PUID:-0}:${PGID:-0}"
     depends_on:
       - warp
     environment:

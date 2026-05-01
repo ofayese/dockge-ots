@@ -4,7 +4,7 @@ Canonical brief for `claude-flow hive-mind` workers and queen. **Spawn with a sh
 
 ## One-line mission
 
-Raise **all eighteen** Dockge stack folders under this repo to **production-grade reliability, observability, and maintainability** on Synology without changing service intent, and produce a **deployable HAProxy front-door spec** (stretch) using existing ACME material under `/volume1/certs/acme/`.
+Raise **all nineteen** Dockge stack folders under this repo to **production-grade reliability, observability, and maintainability** on Synology without changing service intent, and produce a **deployable HAProxy front-door spec** (stretch) using existing ACME material under `/volume1/certs/acme/`.
 
 ## Context (authoritative)
 
@@ -12,8 +12,8 @@ Raise **all eighteen** Dockge stack folders under this repo to **production-grad
 | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Repo root (git)                            | `/Volumes/docker/dockge` (or `/volume1/docker/dockge` on NAS)                                                                                                                                                                                                                               |
 | Stack root (Dockge `DOCKGE_STACKS_DIR`)    | `/Volumes/docker/dockge/stacks` (or `/volume1/docker/dockge/stacks` on NAS)                                                                                                                                                                                                                 |
-| Stack folders (Dockge `DOCKGE_STACKS_DIR`) | **18** — `acme-sh`, `agents_gateway_data`, `code-server`, `codex-docs`, `databases`, `docker-model-runner`, `dozzle`, `github-desktop`, `grafana-prom`, `holyclaude`, `homepage`, `it-tools`, `mcp-tools-config`, `ollama`, `openresume`, `portainer`, `searxng`, `warp-main`, `watchtower` |
-| Workers (hive inventory)                   | **18** — **one worker per stack folder** (same names as rows above)                                                                                                                                                                                                                         |
+| Stack folders (Dockge `DOCKGE_STACKS_DIR`) | **19** — `acme-sh`, `agents_gateway_data`, `code-server`, `codex-docs`, `databases`, `docker-model-runner`, `dozzle`, `github-desktop`, `grafana-prom`, `holyclaude`, `homepage`, `it-tools`, `mcp-tools-config`, `ollama`, `openresume`, `portainer`, `searxng`, `warp-main`, `watchtower` |
+| Workers (hive inventory)                   | **19** — **one worker per stack folder** (same names as rows above)                                                                                                                                                                                                                         |
 | Dev / high-privilege note                  | `holyclaude` — validate separately; extra caps (`SYS_ADMIN`, `seccomp:unconfined`) documented in that stack’s proposal                                                                                                                                                                      |
 | Host                                       | Synology NAS, LAN `10.0.1.15`, `TZ=America/New_York`                                                                                                                                                                                                                                        |
 | Primary domain                             | **`otsorundscore.olutechsys.com`** (and related zones per [stacks/acme-sh/AGENTS.md](stacks/acme-sh/AGENTS.md)); stack configs and HAProxy use **`otsorundscore`** hostnames only                                                                                                           |
@@ -24,7 +24,7 @@ Raise **all eighteen** Dockge stack folders under this repo to **production-grad
 Use this verbatim (or a trivial variant); full rules are in this file:
 
 ```text
-Read HIVE_OBJECTIVE.md. 18 workers: 1 per stack folder. Proposals only in docs/hive/proposals/. Queen consensus before cross-stack or compose apply. Stretch: _haproxy/haproxy.cfg.
+Read HIVE_OBJECTIVE.md. 19 workers: 1 per stack folder. Proposals only in docs/hive/proposals/. Queen consensus before cross-stack or compose apply. Stretch: _haproxy/haproxy.cfg.
 ```
 
 ## Pre-flight (before `spawn`)
@@ -32,7 +32,7 @@ Read HIVE_OBJECTIVE.md. 18 workers: 1 per stack folder. Proposals only in docs/h
 ```bash
 cd /Volumes/docker/dockge   # or NAS: cd /volume1/docker/dockge
 claude-flow hive-mind init -t hierarchical-mesh
-claude-flow hive-mind spawn --count 18 --claude -o 'Read HIVE_OBJECTIVE.md. 18 workers: 1 per stack folder. Proposals only in docs/hive/proposals/. Queen consensus before cross-stack or compose apply. Stretch: _haproxy/haproxy.cfg.'
+claude-flow hive-mind spawn --count 19 --claude -o 'Read HIVE_OBJECTIVE.md. 19 workers: 1 per stack folder. Proposals only in docs/hive/proposals/. Queen consensus before cross-stack or compose apply. Stretch: _haproxy/haproxy.cfg.'
 ```
 
 Use `--count <N>`, **not** `-n <N>`. In ruflo v3.6.10 the `-n` / `--workers` flags are silently ignored and always spawn 1 worker, despite appearing in `--help` examples.
@@ -127,9 +127,9 @@ Per-stack workers still file findings in their own `proposals/<stack>/` and link
 
 ```mermaid
 flowchart TD
-  Init[hive-mind init hierarchical-mesh] --> Spawn[spawn n18 claude short -o]
+  Init[hive-mind init hierarchical-mesh] --> Spawn[spawn n19 claude short -o]
   Spawn --> Queen[Queen owns HIVE_OBJECTIVE.md]
-  Queen --> Fan[18 workers 1 per stack]
+  Queen --> Fan[19 workers 1 per stack]
   Fan --> P[docs/hive/proposals per stack]
   P --> X{cross-stack?}
   X -->|No| Apply[Queen review then apply]

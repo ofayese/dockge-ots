@@ -1,8 +1,9 @@
 {
   "folders": [
-    { "path": ".", "name": "dockge (repo root)" },
-    { "path": "docs", "name": "docs (hive)" },
-    { "path": "stacks", "name": "stacks (Dockge)" }
+    {
+      "path": ".",
+      "name": "dockge (repo root)"
+    }
   ],
   "settings": {}
 }

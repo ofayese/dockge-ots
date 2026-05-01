@@ -12,6 +12,7 @@ This folder holds **reference YAML** for Docker Desktop MCP tooling.
 
 ## NAS / git
 
+- **`compose.yaml`** is **CI / `compose-validate` only** (Busybox exits immediately). On Dockge you can leave this stack **down** if you only maintain **`docker-mcp.yaml`** as a catalog.
 - Treat this directory as **config-only**; keep large or machine-generated artifacts out of git when possible.
 - Prefer editing on a Mac/Linux checkout and **rsync** to the NAS per `HIVE_OBJECTIVE.md` → NAS Deployment Notes.
 

@@ -77,7 +77,7 @@ curl -s http://127.0.0.1:5571/ | head -5             # → HTML response from Do
 
 ## Deploy-Readiness Audit (2026-04-30)
 
-### Baseline Status — Dockge stack folders (18 under `stacks/`)
+### Baseline Status — Dockge stack folders (19 under `stacks/`)
 
 | Stack               | security_opt    | restart                      | healthcheck                | logging   | TZ        | watchtower          | image-pin                                               | README | .env.example | Deploy-Ready |
 | ------------------- | --------------- | ---------------------------- | -------------------------- | --------- | --------- | ------------------- | ------------------------------------------------------- | ------ | ------------ | ------------ |
@@ -119,7 +119,9 @@ curl -s http://127.0.0.1:5571/ | head -5             # → HTML response from Do
 
 ### What Works
 
-- [2026-04-30] All **18** Dockge stack folders have `README.md` where applicable; **`.env.example`** present for stacks that use env interpolation (`mcp-tools-config` uses **`compose.yaml`** for CI only plus **`docker-mcp.yaml`** catalog; no separate `.env.example` unless operators add one).
+- [2026-04-30] All **19** Dockge stack folders have `README.md` where applicable; **`.env.example`** present per stack (including **`mcp-tools-config`** — policy keys; Busybox placeholder does not interpolate them). **`mcp-tools-config`** uses **`compose.yaml`** for CI/Dockge validate plus **`docker-mcp.yaml`** catalog.
+- [2026-04-30] **Pre-/coder baseline (preflight):** before a coding pass, **`git status`** clean and **`scripts/compose-validate.sh`** + **`pre-commit run --all-files`** green; **`scripts/fix-permissions.sh`** present, executable, shellcheck-clean; **`scripts/verify-repo-layout.sh`** passes (no root-level **`hive/`** or duplicate stack names). **UID/GID:** compose uses **`${PUID:-0}`/`${PGID:-0}`** where **`user:`** is wired from env (`code-server`, `github-desktop`, `holyclaude`, **`warp-main` `warp-agent`**); **`grafana-prom`** uses **`${SYNO_UID:-0}`/`${SYNO_GID:-0}`**; other stacks rely on image defaults + NAS ownership via **`fix-permissions.sh`**. **MCP:** `stacks/mcp-tools-config/compose.yaml` validates; **`docker-mcp.yaml`** is catalog-only (`version: 3` / `registry:`). **Warp:** `warp-agent` healthcheck probes **`127.0.0.1:8080`**. **Rule:** never create root-level copies of **`stacks/<stack>/`** or **`docs/hive/proposals/`** — CI enforces via **`verify-repo-layout.sh`**.
+- [2026-04-30] **Post-/coder audit:** **`scripts/verify-repo-layout.sh`**, **`scripts/compose-validate.sh`**, and **`pre-commit run --all-files`** re-run green after warp UID + hive **19**-stack count alignment. **Canonical layout:** **19** top-level folders under **`stacks/`**; proposals only **`docs/hive/proposals/<stack>/`**. **Writable data:** bind mounts use **`/volume1/docker/dockge/stacks/<stack>/…`** (named volumes for DB/home where used); **documented exceptions:** Portainer **`/volume1/docker/portainer`**, code-server **`/volume1/docker`** project mount — see stack READMEs / **`HIVE_OBJECTIVE.md`**. **`HIVE_OBJECTIVE.md`** spawn strings use **`--count 19`**. Commit pending `/coder` edits when ready (`git status` will show modified files until commit).
 - [2026-04-30] Hive `docs/hive/proposals/<stack>/` exists for stacks in the deploy table above (including auxiliary folders); \_baseline and \_haproxy proposals also exist.
 - [2026-04-30] No stale `orundscore` hostname (without `ots` prefix) in any live compose file; hive proposal docs only reference the boundary-aware grep pattern in comments, not in live config.
 - [2026-04-30] `searxng/searxng` is already pinned to a date-commit tag (`2026.4.29-cba0cffa8`), not `:latest` — this is the correct pattern for SearXNG's rolling release model.

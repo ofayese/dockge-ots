@@ -4,9 +4,9 @@ Sample **Warp** app (`warpdotdev/warp`) plus `warp-agent` and Claude sidecar, us
 
 ## Ports
 
-| Host | Service |
-|------|---------|
-| `9090` | `warp` UI |
+| Host   | Service                   |
+| ------ | ------------------------- |
+| `9090` | `warp` UI                 |
 | `8080` | `warp-claude-cli-sidecar` |
 
 ## Environment

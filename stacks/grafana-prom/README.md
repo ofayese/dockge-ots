@@ -4,13 +4,13 @@ Synology-oriented **Grafana** + **Prometheus** + exporters (`node-exporter`, `sn
 
 ## Ports (defaults)
 
-| Service | Host port | Notes |
-|---------|-----------|-------|
-| Grafana | `3340` | Web UI |
-| Prometheus | internal `9090` | Scrapes targets defined in `prom.yml` |
-| SNMP exporter | `9116` | |
-| Node exporter | `9100` | |
-| cAdvisor | `8080` | Container metrics UI |
+| Service       | Host port       | Notes                                 |
+| ------------- | --------------- | ------------------------------------- |
+| Grafana       | `3340`          | Web UI                                |
+| Prometheus    | internal `9090` | Scrapes targets defined in `prom.yml` |
+| SNMP exporter | `9116`          |                                       |
+| Node exporter | `9100`          |                                       |
+| cAdvisor      | `8080`          | Container metrics UI                  |
 
 ## Paths (NAS)
 

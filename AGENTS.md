@@ -5,10 +5,11 @@
 - **Git repo root:** `/Volumes/docker/dockge` (NAS: `/volume1/docker/dockge`) — contains `HIVE_OBJECTIVE.md`, `.github/`, `scripts/` (see `scripts/README.txt`), and `stacks/`.
 - **Dockge stack root:** `/volume1/docker/dockge/stacks` — compose folders only. Hive docs live at repo `docs/hive/`. `WORKSPACE_PATH` for HolyClaude stays the stack root path.
 - **Compose CI:** run `scripts/compose-validate.sh` from any cwd (script locates repo root via `HIVE_OBJECTIVE.md`).
+- **Layout guard:** `scripts/verify-repo-layout.sh` (runs in **Stacks compose validate** CI) fails on root-level **`hive/`** (use **`docs/hive/`**) or a repo-root folder whose name duplicates a **`stacks/<stack>/`** child — avoids orphaned duplicates when paths are shown without `stacks/` in multi-root workspaces.
 - **NAS permissions:** on DSM, normalize bind-mount ownership with **`scripts/fix-permissions.sh`** (see `HIVE_OBJECTIVE.md` → NAS Deployment Notes). Default **`PUID`/`PGID` (or `SYNO_*`) = `0`** on the NAS unless you override in `.env` for local dev.
 - **SMB mounts:** If `stacks/.git` could not be fully removed (Resource busy), delete it when no editors have the volume open, then run `git status` at repo root to confirm Git does not treat `stacks/` as a nested repo.
 - **SMB + pre-commit:** Synology SMB mounts often reject in-place writes under `docs/`, `.github/`, and `.cursor/`. `.pre-commit-config.yaml` **excludes** those prefixes from `trailing-whitespace`, `end-of-file-fixer`, and `prettier` so `pre-commit run --all-files` succeeds on `/Volumes/docker/dockge`. Run full markdown/YAML fixups on an APFS clone or on the NAS. **`ruff-format` is omitted** (the only tracked `.py` is `docs/hive/tools/inventory.py`, which is excluded from mutating hooks by path); run `ruff format docs/hive/tools/inventory.py` when needed from a non-SMB checkout.
-- **Audit (2026-04-30):** **`stacks/docs` → `../docs` must not exist**; **`stacks/._DAV`** is SMB/Finder noise—delete when idle, never commit. **`.ruff_cache/`** is gitignored. **Compose:** `scripts/compose-validate.sh` passes. **Git / `inventory.py`:** if `git pull`/`git merge` fails with **Resource busy** or **EINVAL** on `docs/hive/tools/inventory.py`, close editor handles and retry, or merge from an **APFS git worktree** (`git worktree add -b <tmp-branch> <apfs-path> main` → `git merge origin/main` → `git push origin HEAD:main`). **`origin/main`:** merge `e15c4bd` (includes `1c774b3` — `out_dir` under `repo_root/docs/hive/proposals/…`, not `stacks/…/docs/…`).
+- **Audit (2026-04-30):** **`stacks/docs` → `../docs` must not exist**; **`stacks/._DAV`** is SMB/Finder noise—delete when idle, never commit. **`.ruff_cache/`** is gitignored. **Compose:** `scripts/compose-validate.sh` passes (includes **`stacks/mcp-tools-config/compose.yaml`** placeholder; **`docker-mcp.yaml`** there remains catalog-only). **Git / `inventory.py`:** if `git pull`/`git merge` fails with **Resource busy** or **EINVAL** on `docs/hive/tools/inventory.py`, close editor handles and retry, or merge from an **APFS git worktree** (`git worktree add -b <tmp-branch> <apfs-path> main` → `git merge origin/main` → `git push origin HEAD:main`). **`origin/main`:** merge `e15c4bd` (includes `1c774b3` — `out_dir` under `repo_root/docs/hive/proposals/…`, not `stacks/…/docs/…`).
 
 ## What Works
 
@@ -78,27 +79,27 @@ curl -s http://127.0.0.1:5571/ | head -5             # → HTML response from Do
 
 ### Baseline Status — Dockge stack folders (18 under `stacks/`)
 
-| Stack               | security_opt | restart                      | healthcheck          | logging   | TZ        | watchtower          | image-pin                                           | README | .env.example | Deploy-Ready |
-| ------------------- | ------------ | ---------------------------- | -------------------- | --------- | --------- | ------------------- | --------------------------------------------------- | ------ | ------------ | ------------ |
-| acme-sh             | ✓            | ✓                            | exception documented | ✓ applied | ✓         | ✓                   | semver 3.1.3                                        | ✓      | ✓            | ✓            |
-| agents_gateway_data | ✓            | ✓                            | —                    | ✓         | —         | ✓                   | semver gateway pin                                  | ✓      | ✓            | ⚠           |
-| code-server         | ✓            | always (exception commented) | ✓                    | ✓         | ✓         | ✓                   | semver 4.117.0-39                                   | ✓      | ✓            | ✓            |
-| codex-docs          | ✓            | ✓                            | ✓                    | ✓         | ✓         | ✓                   | **:latest — OPERATOR PIN NEEDED**                   | ✓      | ✓            | ⚠           |
-| databases           | ✓            | ✓                            | ✓                    | ✓         | ✓         | ✓                   | semver pinned                                       | ✓      | ✓            | ✓            |
-| docker-model-runner | ✓            | ✓                            | ✓                    | ✓         | ✓         | ✓                   | semver image pin                                    | ✓      | ✓            | ⚠           |
-| dozzle              | ✓            | ✓                            | ✓                    | ✓         | ✓         | ✓                   | semver v10.5.1                                      | ✓      | ✓            | ✓            |
-| github-desktop      | ✓            | ✓                            | ✓                    | ✓         | ✓         | ✓                   | `:latest` — pin for prod                            | ✓      | ✓            | ⚠           |
-| grafana-prom        | ✓            | ✓                            | ✓                    | ✓         | ✓         | ✓                   | semver pinned                                       | ✓      | ✓            | ✓            |
-| holyclaude          | ✓ (mixed)    | ✓                            | —                    | ✓         | ✓         | ✓                   | `:latest` — dev image                               | ✓      | ✓            | ⚠           |
-| homepage            | ✓            | ✓                            | ✓                    | ✓         | ✓         | ✓                   | semver v1.12                                        | ✓      | ✓            | ✓            |
-| it-tools            | ✓            | ✓                            | ✓                    | ✓         | ✓         | ✓                   | semver 2024.10.22                                   | ✓      | ✓            | ✓            |
-| mcp-tools-config    | N/A          | N/A                          | N/A                  | N/A       | N/A       | N/A                 | catalog YAML only                                   | ✓      | —            | ⚠           |
-| ollama              | ✓            | ✓                            | ✓                    | ✓         | ✓         | ✓                   | semver pinned; plain `depends_on` (Synology compat) | ✓      | ✓            | ✓            |
-| openresume          | ✓            | ✓                            | ✓                    | ✓         | ✓         | ✓                   | **:latest — OPERATOR PIN NEEDED**                   | ✓      | ✓            | ⚠           |
-| portainer           | ✓            | always (CE default)          | ✓                    | ✓         | ✓         | ✓                   | semver 2.41.0-alpine                                | ✓      | ✓            | ✓            |
-| searxng             | ✓            | ✓                            | ✓ (redis)            | ✓ applied | ✓ applied | ✓                   | searxng: date-tag; valkey: 8-alpine                 | ✓      | ✓            | ✓            |
-| warp-main           | ✓            | ✓                            | ✓                    | ✓         | partial   | ✓                   | semver / `:latest` mix                              | ✓      | ✓            | ⚠           |
-| watchtower          | ✓            | ✓                            | ✓ applied            | ✓         | ✓         | N/A (is watchtower) | **:latest — OPERATOR PIN NEEDED**                   | ✓      | ✓            | ⚠           |
+| Stack               | security_opt    | restart                      | healthcheck                | logging   | TZ        | watchtower          | image-pin                                               | README | .env.example | Deploy-Ready |
+| ------------------- | --------------- | ---------------------------- | -------------------------- | --------- | --------- | ------------------- | ------------------------------------------------------- | ------ | ------------ | ------------ |
+| acme-sh             | ✓               | ✓                            | exception documented       | ✓ applied | ✓         | ✓                   | semver 3.1.3                                            | ✓      | ✓            | ✓            |
+| agents_gateway_data | ✓               | ✓                            | —                          | ✓         | —         | ✓                   | semver gateway pin                                      | ✓      | ✓            | ⚠           |
+| code-server         | ✓               | always (exception commented) | ✓                          | ✓         | ✓         | ✓                   | semver 4.117.0-39                                       | ✓      | ✓            | ✓            |
+| codex-docs          | ✓               | ✓                            | ✓                          | ✓         | ✓         | ✓                   | **:latest — OPERATOR PIN NEEDED**                       | ✓      | ✓            | ⚠           |
+| databases           | ✓               | ✓                            | ✓                          | ✓         | ✓         | ✓                   | semver pinned                                           | ✓      | ✓            | ✓            |
+| docker-model-runner | ✓               | ✓                            | ✓                          | ✓         | ✓         | ✓                   | semver image pin                                        | ✓      | ✓            | ⚠           |
+| dozzle              | ✓               | ✓                            | ✓                          | ✓         | ✓         | ✓                   | semver v10.5.1                                          | ✓      | ✓            | ✓            |
+| github-desktop      | ✓               | ✓                            | ✓                          | ✓         | ✓         | ✓                   | `:latest` — pin for prod                                | ✓      | ✓            | ⚠           |
+| grafana-prom        | ✓               | ✓                            | ✓                          | ✓         | ✓         | ✓                   | semver pinned                                           | ✓      | ✓            | ✓            |
+| holyclaude          | ✓ (mixed)       | ✓                            | —                          | ✓         | ✓         | ✓                   | `:latest` — dev image                                   | ✓      | ✓            | ⚠           |
+| homepage            | ✓               | ✓                            | ✓                          | ✓         | ✓         | ✓                   | semver v1.12                                            | ✓      | ✓            | ✓            |
+| it-tools            | ✓               | ✓                            | ✓                          | ✓         | ✓         | ✓                   | semver 2024.10.22                                       | ✓      | ✓            | ✓            |
+| mcp-tools-config    | ✓ (placeholder) | `restart: "no"` (one-shot)   | —                          | ✓         | N/A       | N/A                 | `busybox:1.36` + separate **`docker-mcp.yaml`** catalog | ✓      | —            | ⚠           |
+| ollama              | ✓               | ✓                            | ✓                          | ✓         | ✓         | ✓                   | semver pinned; plain `depends_on` (Synology compat)     | ✓      | ✓            | ✓            |
+| openresume          | ✓               | ✓                            | ✓                          | ✓         | ✓         | ✓                   | **:latest — OPERATOR PIN NEEDED**                       | ✓      | ✓            | ⚠           |
+| portainer           | ✓               | always (CE default)          | ✓                          | ✓         | ✓         | ✓                   | semver 2.41.0-alpine                                    | ✓      | ✓            | ✓            |
+| searxng             | ✓               | ✓                            | ✓ (redis)                  | ✓ applied | ✓ applied | ✓                   | searxng: date-tag; valkey: 8-alpine                     | ✓      | ✓            | ✓            |
+| warp-main           | ✓               | ✓                            | ✓ (warp + agent + sidecar) | ✓         | partial   | ✓                   | semver / `:latest` mix                                  | ✓      | ✓            | ⚠           |
+| watchtower          | ✓               | ✓                            | ✓ applied                  | ✓         | ✓         | N/A (is watchtower) | **:latest — OPERATOR PIN NEEDED**                       | ✓      | ✓            | ⚠           |
 
 ### Changes Applied (this session)
 
@@ -106,6 +107,8 @@ curl -s http://127.0.0.1:5571/ | head -5             # → HTML response from Do
 - [2026-04-30] `searxng/compose.yaml`: Added `TZ=America/New_York` + `logging` block to both `redis` and `searxng` services. Both services previously had neither.
 - [2026-04-30] `watchtower/compose.yaml`: Added `healthcheck` using `/v1/health` endpoint (no auth required, HTTP API already enabled). probe: `wget -qO- http://127.0.0.1:8080/v1/health`.
 - [2026-04-30] `code-server/compose.yaml`: Added inline `# restart: always — documented exception` comment to all three services (code-server, db, phpmyadmin) explaining the baseline deviation.
+- [2026-04-30] **`mcp-tools-config`:** Added minimal **`compose.yaml`** (Busybox one-shot) so `scripts/compose-validate.sh` includes the folder; **`docker-mcp.yaml`** stays the Docker Desktop MCP catalog (not Compose). Updated **`docs/hive/COMPOSE_FILENAMES.md`** and **`stacks/mcp-tools-config/README.md`**.
+- [2026-04-30] **`warp-main/docker-compose.yaml`:** Added **`healthcheck`** on **`warp-agent`** (`wget` → `http://127.0.0.1:8080/`), aligned with sidecar `WARP_AGENT_PORT=8080`.
 
 ### Operator Actions Required (cannot be applied without NAS access)
 
@@ -116,7 +119,7 @@ curl -s http://127.0.0.1:5571/ | head -5             # → HTML response from Do
 
 ### What Works
 
-- [2026-04-30] All **18** Dockge stack folders have `README.md` where applicable; **`.env.example`** present for stacks that use env interpolation (config-only `mcp-tools-config` documents keys inline in YAML instead).
+- [2026-04-30] All **18** Dockge stack folders have `README.md` where applicable; **`.env.example`** present for stacks that use env interpolation (`mcp-tools-config` uses **`compose.yaml`** for CI only plus **`docker-mcp.yaml`** catalog; no separate `.env.example` unless operators add one).
 - [2026-04-30] Hive `docs/hive/proposals/<stack>/` exists for stacks in the deploy table above (including auxiliary folders); \_baseline and \_haproxy proposals also exist.
 - [2026-04-30] No stale `orundscore` hostname (without `ots` prefix) in any live compose file; hive proposal docs only reference the boundary-aware grep pattern in comments, not in live config.
 - [2026-04-30] `searxng/searxng` is already pinned to a date-commit tag (`2026.4.29-cba0cffa8`), not `:latest` — this is the correct pattern for SearXNG's rolling release model.

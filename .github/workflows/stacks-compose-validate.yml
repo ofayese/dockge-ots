@@ -17,6 +17,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Verify repo layout (no root-level hive/ or stack duplicates)
+        run: |
+          chmod +x scripts/verify-repo-layout.sh
+          scripts/verify-repo-layout.sh
+
       - name: Validate compose interpolation
         run: |
           chmod +x scripts/compose-validate.sh

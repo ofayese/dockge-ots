@@ -4,10 +4,11 @@ This folder holds **reference YAML** for Docker Desktop MCP tooling.
 
 ## Files
 
-| File                                            | Purpose                                                                                                                                                                                                             |
-| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [`docker-mcp.yaml`](./docker-mcp.yaml)          | **Docker MCP catalog** (metadata/registry entries). **Not** a Docker Compose file — `scripts/compose-validate.sh` does not parse it (see [`docs/hive/COMPOSE_FILENAMES.md`](../../docs/hive/COMPOSE_FILENAMES.md)). |
-| `config.yaml`, `registry.yaml`, `tools.yaml`, … | Operator-edited MCP configuration fragments.                                                                                                                                                                        |
+| File                                            | Purpose                                                                                                                                                                                                                                     |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`compose.yaml`](./compose.yaml)                | **Minimal Dockge/CI Compose** — satisfies `scripts/compose-validate.sh`. One-shot `busybox` + `true`; safe to leave stopped after validation. Does **not** run MCP servers.                                                                 |
+| [`docker-mcp.yaml`](./docker-mcp.yaml)          | **Docker MCP catalog** (metadata/registry entries). **Not** a Docker Compose file — validated only as YAML by editors/CI hooks, not `docker compose config` (see [`docs/hive/COMPOSE_FILENAMES.md`](../../docs/hive/COMPOSE_FILENAMES.md)). |
+| `config.yaml`, `registry.yaml`, `tools.yaml`, … | Operator-edited MCP configuration fragments.                                                                                                                                                                                                |
 
 ## NAS / git
 

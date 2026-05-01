@@ -4,11 +4,11 @@ Runs **Docker Model Runner** CUDA images for local LLM endpoints (`devstral-smal
 
 ## Ports
 
-| Host | Container | Service |
-|------|-----------|---------|
-| `8001` | `8000` | `devstral-small-2` |
-| `8003` | `8000` | `ministral3` |
-| `8011` | `8000` | `smollm3` |
+| Host   | Container | Service            |
+| ------ | --------- | ------------------ |
+| `8001` | `8000`    | `devstral-small-2` |
+| `8003` | `8000`    | `ministral3`       |
+| `8011` | `8000`    | `smollm3`          |
 
 ## Volumes / paths
 

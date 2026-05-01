@@ -4,9 +4,9 @@ Experimental **Docker MCP Gateway** wiring for DuckDuckGo search MCP. Uses the h
 
 ## Ports
 
-| Host (default) | Service |
-|----------------|---------|
-| `8811` | `mcp-gateway` HTTP |
+| Host (default) | Service            |
+| -------------- | ------------------ |
+| `8811`         | `mcp-gateway` HTTP |
 
 ## Volumes / paths
 

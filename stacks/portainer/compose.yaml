@@ -1,0 +1,68 @@
+services:
+  portainer:
+    image: portainer/portainer-ce:2.41.0-alpine
+    container_name: portainer
+    mem_limit: 512m
+    cpu_shares: 512
+    ports:
+      - 9000:9000
+      - 9443:9443
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /volume1/docker/portainer:/data
+    restart: always
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    environment:
+      - TZ=America/New_York
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 --spider http://127.0.0.1:9000/api/system/status || exit 1",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+
+  portainer_agent:
+    image: portainer/agent:2.39.1
+    container_name: portainer_agent
+    mem_limit: 256m
+    cpu_shares: 256
+    ports:
+      - 10.0.1.15:9001:9001
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /volume1/@docker/volumes:/var/lib/docker/volumes
+      - /:/host
+      - /volume1/docker/portainer/certs:/certs:ro
+    restart: always
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_RAW
+    environment:
+      AGENT_CLUSTER_ADDR: 0.0.0.0
+      AGENT_TLS_CERT: /certs/cert.pem
+      AGENT_TLS_KEY: /certs/key.pem
+      TZ: America/New_York
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+
+networks: {}

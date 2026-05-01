@@ -1,0 +1,28 @@
+services:
+  acme-sh:
+    image: neilpang/acme.sh:3.1.3
+    container_name: AcmeSh
+    mem_limit: 128m
+    cpu_shares: 256
+    security_opt:
+      - no-new-privileges:true
+    restart: on-failure:5
+    # No healthcheck — `command: daemon` with `network_mode: host` and no listening
+    # socket means there is no meaningful liveness probe. Operational signal comes
+    # from log lines and successful renewals (via DISCORD_WEBHOOK_URL alerts).
+    environment:
+      - TZ=America/New_York
+      - CF_Token=${CF_Token}
+      - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
+    network_mode: host
+    volumes:
+      - /volume1/docker/dockge/stacks/acme-sh/data:/acme.sh
+      - /volume1/certs/acme:/volume1/certs/acme
+    command: daemon
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      - com.centurylinklabs.watchtower.enable=true

@@ -1,0 +1,40 @@
+services:
+  holyclaude:
+    image: coderluii/holyclaude:latest
+    container_name: holyclaude
+    hostname: holyclaude
+    shm_size: 2g
+    cap_add:
+      - SYS_ADMIN
+      - SYS_PTRACE
+    security_opt:
+      - seccomp:unconfined
+      - no-new-privileges:true
+    mem_limit: 4g # Dev workstation container with browser/tooling overhead.
+    cpu_shares: 768 # Interactive IDE + agent workloads need higher relative priority.
+    restart: on-failure:5
+    ports:
+      - "3059:3001"
+    env_file:
+      - .env
+    environment:
+      - TZ=America/New_York
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
+      - NOTIFY_DISCORD=${NOTIFY_DISCORD}
+    volumes:
+      - claude-home:/home/claude/.claude
+      - ${WORKSPACE_PATH}:/workspace
+      - cloudcli-data:/home/claude/.cloudcli
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  claude-home: {}
+  cloudcli-data: {}

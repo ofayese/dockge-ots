@@ -1,0 +1,68 @@
+services:
+  mongodb:
+    container_name: CodexDocs-MongoDB
+    image: mongo:7
+    mem_limit: 512m
+    cpu_shares: 512
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: on-failure:5
+    volumes:
+      - /volume1/docker/dockge/stacks/codex-docs/mongodb:/data/db:rw
+    environment:
+      - MONGO_INITDB_DATABASE=codexdocs
+      - TZ=America/New_York
+    networks:
+      - bridge
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+
+  codex-docs:
+    container_name: CodexDocs
+    # Upstream publishes rolling tags; pin when a semver tag is available.
+    image: codexteam/codex.docs:latest
+    mem_limit: 256m
+    cpu_shares: 256
+    security_opt:
+      - no-new-privileges:true
+    restart: on-failure:5
+    ports:
+      - 10.0.1.15:8896:3000
+    volumes:
+      - /volume1/docker/dockge/stacks/codex-docs/uploads:/usr/src/app/uploads:rw
+    env_file:
+      - .env
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/codexdocs
+      - APP_SECRET=${APP_SECRET}
+      - PORT=3000
+      - TZ=America/New_York
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - bridge
+    extra_hosts:
+      - "otsorundscore.olutechsys.com:10.0.1.15"
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+
+networks:
+  bridge:
+    external: true

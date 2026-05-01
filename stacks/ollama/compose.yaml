@@ -1,0 +1,78 @@
+services:
+  ollama:
+    container_name: otsai-server
+    image: ollama/ollama:0.22.0
+    mem_limit: 8g
+    cpu_shares: 1024
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: on-failure:5
+    ports:
+      - 10.0.1.15:11434:11434
+    volumes:
+      - /volume1/docker/dockge/stacks/ollama/data:/root/.ollama:rw
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_NUM_PARALLEL=1
+      - OLLAMA_MAX_LOADED_MODELS=1
+      - TZ=America/New_York
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget -qO- http://127.0.0.1:11434/api/tags >/dev/null || exit 1",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    extra_hosts:
+      - "otsorundscore.olutechsys.com:10.0.1.15"
+
+  open-webui:
+    container_name: otsai-webui
+    image: ghcr.io/open-webui/open-webui:v0.9.2
+    mem_limit: 2g
+    cpu_shares: 768
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: on-failure:5
+    ports:
+      - 8893:8080
+    volumes:
+      - /volume1/docker/dockge/stacks/ollama/webui:/app/backend/data:rw
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - WEBUI_AUTH=true
+      - WEBUI_NAME=olutechsys AI
+      - WEBUI_URL=https://ai.otsorundscore.olutechsys.com
+      - DEFAULT_MODELS=phi4:mini
+      - TZ=America/New_York
+    depends_on:
+      - ollama
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget -qO- http://localhost:8080/health >/dev/null 2>&1 || wget -qO- http://localhost:8080/ >/dev/null || exit 1",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    extra_hosts:
+      - "otsorundscore.olutechsys.com:10.0.1.15"

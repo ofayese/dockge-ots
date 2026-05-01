@@ -1,0 +1,39 @@
+# watchtower
+
+Scheduled image-update agent. Updates only containers labeled `com.centurylinklabs.watchtower.enable=true` (opt-in).
+
+## Service
+
+- **watchtower** — runs continuously; cron-driven update sweeps; reads host `docker.sock` (`:ro`)
+- **HTTP API + Prometheus metrics** — `WATCHTOWER_HTTP_API_UPDATE`, `WATCHTOWER_HTTP_API_PERIODIC_POLLS`, and `WATCHTOWER_HTTP_API_METRICS` are enabled. Bearer auth uses the Docker secret backed by [`../grafana-prom/secrets/watchtower_bearer_token.txt`](../grafana-prom/secrets/watchtower_bearer_token.txt) (see [`../grafana-prom/secrets/README.md`](../grafana-prom/secrets/README.md)). The API (including `/v1/metrics`) is published on **`10.0.1.15:18787`** → container `8080`.
+
+## Schedule
+
+Daily at 04:00 America/New_York (`WATCHTOWER_SCHEDULE=0 0 4 * * *`).
+Cron format: `sec min hour dom mon dow`.
+
+## Behavior
+
+- Only opt-in containers (`WATCHTOWER_LABEL_ENABLE=true`)
+- Cleans up old images after update (`WATCHTOWER_CLEANUP=true`)
+- Skips stopped containers
+- Notifies via `WATCHTOWER_NOTIFICATION_URL` — currently `logger://` (logs only). Change to a Discord/Slack webhook for real alerts.
+
+## Pinning policy interaction
+
+Watchtower will pull patch/minor updates for any opt-in image whose tag is itself rolling (e.g. `:latest`, `:lts`, `:main`). For digest-pinned images, Watchtower notifies but cannot update — upgrades are manual by changing the digest in compose.yaml.
+
+Watchtower does **not** auto-update itself by label even with `watchtower.enable=true` set on its own container — by design (avoid the agent updating mid-run). Manual tag bumps remain the operator's job; see `docs/hive/proposals/watchtower/PROPOSAL.md`.
+
+## Health
+
+HTTP probe on `/v1/health` (verify endpoint exists in pinned version; falls back to `pgrep watchtower` if not).
+
+## Rollback
+
+```bash
+git checkout -- watchtower/compose.yaml
+docker compose -f watchtower/compose.yaml up -d
+```
+
+No persistent state — Watchtower is stateless.

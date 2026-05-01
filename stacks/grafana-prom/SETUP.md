@@ -1,0 +1,199 @@
+# Synology Grafana + Prometheus Stack
+
+This Docker Compose stack provides complete monitoring for Synology NAS using Grafana and Prometheus.
+
+## Services Included
+
+- **Grafana** (3340): Visualization and dashboarding platform
+- **Prometheus** (9090): Metrics collection and time-series database
+- **Node Exporter** (9100): System and OS metrics
+- **SNMP Exporter** (9116): SNMP protocol metrics collector
+- **cAdvisor** (8080): Container metrics
+- **Watchtower**: Automatic Docker image updates with metrics
+
+## Prerequisites
+
+1. **Find your UID and GID** (Synology-specific):
+
+   - SSH into your NAS or use Control Panel > Users > Advanced
+   - Most Synology NAS defaults: UID=1026, GID=100
+   - Update `.env` file with your actual values
+
+2. **Enable SNMP on your Synology NAS**:
+
+   - Control Panel > Terminal & SNMP > SNMP tab
+   - Enable SNMP service
+   - Enable SNMPv3 service
+   - Enable SNMP privacy
+   - Use credentials from snmp.yml
+
+3. **Configure firewall rules** (if enabled):
+   - Allow traffic on ports: 3340, 9090, 9116, 9100
+   - IP range: 192.168.50.0/24 (Grafana) and 192.168.51.0/24 (Prometheus)
+
+## Setup Instructions
+
+### Step 1: Update Configuration Files
+
+Edit `.env`:
+
+```bash
+UID=1026                    # Your Synology UID
+GID=100                     # Your Synology GID
+TIMEZONE=Europe/Bucharest   # Your timezone
+NAS_IP=192.168.1.18        # Your NAS local IP
+```
+
+Edit `prometheus.yml`:
+
+```yaml
+- job_name: "synology-nas"
+  static_configs:
+    - targets: ["192.168.1.18:161"] # Replace with YOUR NAS IP
+```
+
+### Step 2: Create Required Directories
+
+```bash
+mkdir -p data/grafana
+mkdir -p data/prometheus
+```
+
+### Step 3: Deploy the Stack
+
+```bash
+docker compose up -d
+```
+
+Check status:
+
+```bash
+docker compose ps
+```
+
+### Step 4: Access Grafana
+
+1. Open browser: `http://YOUR_NAS_IP:3340`
+2. Default credentials: `admin` / `admin`
+3. Change password when prompted
+
+### Step 5: Configure Prometheus Data Source
+
+1. In Grafana: Left sidebar → Connections → Data sources
+2. Click "Add new data source"
+3. Select Prometheus
+4. URL: `http://prometheus-server:9090`
+5. Click "Save & test"
+
+### Step 6: Import Synology Dashboard
+
+1. Download the dashboard JSON from the Marius Hosting guides
+2. In Grafana: Left sidebar → Dashboards → New → Import
+3. Upload the JSON file or paste its content
+4. Select Prometheus as the data source
+5. Click "Import"
+
+## Network Configuration
+
+Two isolated networks are created:
+
+- `grafana-net` (192.168.50.0/24): Grafana ↔ Prometheus
+- `prometheus-net` (192.168.51.0/24): All exporters and Watchtower
+
+## Health Checks
+
+All services include health checks. Verify they're running:
+
+```bash
+docker compose exec prometheus wget --no-verbose --tries=1 --spider http://localhost:9090/
+docker compose exec grafana wget --no-verbose --tries=1 --spider http://localhost:3000/api/health
+docker compose exec node-exporter wget --no-verbose --tries=1 --spider http://localhost:9100/
+docker compose exec snmp-exporter wget --no-verbose --tries=1 --spider http://localhost:9116/
+```
+
+## Troubleshooting
+
+### Containers not starting
+
+```bash
+docker compose logs -f
+docker compose logs prometheus
+docker compose logs grafana
+```
+
+### SNMP not collecting data
+
+- Verify SNMP is enabled on your NAS
+- Update `snmp.yml` with correct credentials
+- Ensure NAS IP in `prometheus.yml` is correct
+- Check firewall allows SNMP (port 161)
+
+### Grafana plugins fail to install
+
+Comment out the plugin line in docker-compose.yml:
+
+```yaml
+# GF_INSTALL_PLUGINS: grafana-clock-panel,grafana-simple-json-datasource,natel-discrete-panel,grafana-piechart-panel
+```
+
+### cAdvisor exits with error
+
+Verify `/var/run/docker.sock` permissions. May need to run with different UID/GID or use privileged mode.
+
+## Important Notes
+
+⚠️ **Watchtower will automatically update containers**. This may cause issues if an update has bugs.
+→ Always maintain backups using Hyper Backup.
+
+⚠️ **Change the Watchtower API token** in `.env` to something secure before production use.
+
+📝 **Memory usage** is controlled with `mem_limit` and `mem_reservation` to prevent resource exhaustion.
+
+🔄 **Update schedule** can be modified in `.env` (`WATCHTOWER_SCHEDULE`) using cron format.
+
+## Useful Commands
+
+```bash
+# Start stack
+docker compose up -d
+
+# Stop stack
+docker compose down
+
+# View logs
+docker compose logs -f
+
+# Restart a service
+docker compose restart prometheus
+
+# Update all images
+docker compose pull
+docker compose up -d
+
+# Clean up unused data
+docker compose exec prometheus /bin/prometheus --storage.tsdb.path=/prometheus --storage.tsdb.retention.time=60d
+```
+
+## Resource Requirements
+
+| Service       | CPU   | Memory |
+| ------------- | ----- | ------ |
+| Grafana       | 512   | 512MB  |
+| Prometheus    | 768   | 1GB    |
+| Node Exporter | 512   | 256MB  |
+| SNMP Exporter | 512   | 256MB  |
+| cAdvisor      | 512   | 256MB  |
+| Watchtower    | 256   | 128MB  |
+| **Total**     | ~3600 | ~2.5GB |
+
+Adjust `cpu_shares` and `mem_limit` based on your NAS capabilities.
+
+## References
+
+- Grafana: https://grafana.com/
+- Prometheus: https://prometheus.io/
+- Node Exporter: https://github.com/prometheus/node_exporter
+- SNMP Exporter: https://github.com/prometheus/snmp_exporter
+- cAdvisor: https://github.com/google/cadvisor
+- Watchtower: https://containrrr.dev/watchtower/
+- Original guides: https://mariushosting.com/

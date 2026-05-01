@@ -1,0 +1,53 @@
+services:
+  devstral-small-2:
+    image: docker/model-runner:v1.1.38-cuda
+    container_name: devstral-small-2
+    ports:
+      - 10.0.1.15:8001:8000
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+      - "otsorundscore.olutechsys.com:10.0.1.15"
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    networks:
+      - bridge
+    x-models:
+      llm:
+        model: ai/devstral-small-2
+        context_size: 128000
+
+  ministral3:
+    image: docker/model-runner:v1.1.38-cuda
+    container_name: ministral3
+    ports:
+      - 10.0.1.15:8003:8000
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+      - "otsorundscore.olutechsys.com:10.0.1.15"
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    networks:
+      - bridge
+    x-models:
+      llm:
+        model: ai/ministral3
+
+  smollm3:
+    image: docker/model-runner:v1.1.38-cuda
+    container_name: smollm3
+    ports:
+      - 10.0.1.15:8011:8000
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+      - "otsorundscore.olutechsys.com:10.0.1.15"
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    networks:
+      - bridge
+    x-models:
+      llm:
+        model: ai/smollm3
+
+networks:
+  bridge:
+    external: true

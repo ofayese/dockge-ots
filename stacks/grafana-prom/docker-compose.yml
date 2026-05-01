@@ -1,0 +1,170 @@
+services:
+  grafana:
+    image: grafana/grafana:13.0.1
+    container_name: Grafana
+    hostname: grafana
+    networks:
+      - grafana-net
+    mem_limit: 512m
+    cpu_shares: 512
+    security_opt:
+      - no-new-privileges:true
+    user: ${SYNO_UID}:${SYNO_GID}
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    ports:
+      - "3340:3000"
+    volumes:
+      - ./data/grafana:/var/lib/grafana:rw
+    environment:
+      TZ: ${TIMEZONE}
+      GF_INSTALL_PLUGINS: grafana-clock-panel,grafana-simple-json-datasource,natel-discrete-panel,grafana-piechart-panel
+    restart: on-failure:5
+
+  prometheus:
+    image: prom/prometheus:v3.11.3
+    command:
+      - "--storage.tsdb.retention.time=60d"
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    container_name: Prometheus
+    hostname: prometheus-server
+    networks:
+      - grafana-net
+      - prometheus-net
+    mem_limit: 1g
+    cpu_shares: 768
+    security_opt:
+      - no-new-privileges:true
+    user: ${SYNO_UID}:${SYNO_GID}
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:9090/ || exit 1
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    volumes:
+      - ./data/prometheus:/prometheus:rw
+      - ./prom.yml:/etc/prometheus/prometheus.yml:ro
+      # Same token file Watchtower uses (see ../watchtower/compose.yaml + secrets/README.md).
+      - ./secrets/watchtower_bearer_token.txt:/etc/prometheus/watchtower_bearer_token:ro
+    restart: on-failure:5
+    depends_on:
+      - node-exporter
+      - snmp-exporter
+      - cadvisor
+
+  node-exporter:
+    image: prom/node-exporter:v1.11.1
+    command:
+      - --collector.disable-defaults
+      - --collector.stat
+      - --collector.time
+      - --collector.cpu
+      - --collector.loadavg
+      - --collector.hwmon
+      - --collector.meminfo
+      - --collector.diskstats
+    container_name: Prometheus-Node
+    hostname: prometheus-node
+    networks:
+      - prometheus-net
+    mem_limit: 256m
+    mem_reservation: 64m
+    cpu_shares: 512
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    user: ${SYNO_UID}:${SYNO_GID}
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:9100/ || exit 1
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: on-failure:5
+
+  snmp-exporter:
+    image: prom/snmp-exporter:v0.30.1
+    command:
+      - "--config.file=/etc/snmp_exporter/snmp.yml"
+    container_name: Prometheus-SNMP
+    hostname: prometheus-snmp
+    networks:
+      - prometheus-net
+    mem_limit: 256m
+    mem_reservation: 64m
+    cpu_shares: 512
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    user: ${SYNO_UID}:${SYNO_GID}
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:9116/ || exit 1
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    volumes:
+      - ./snmp.yml:/etc/snmp_exporter/snmp.yml:ro
+    restart: on-failure:5
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.52.1
+    command:
+      - "--docker_only=true"
+    container_name: Prometheus-cAdvisor
+    hostname: prometheus-cadvisor
+    networks:
+      - prometheus-net
+    mem_limit: 256m
+    mem_reservation: 64m
+    cpu_shares: 512
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: on-failure:5
+
+  # Watchtower is owned by the fleet stack at ../../watchtower/compose.yaml — do not
+  # run a second instance here (avoids duplicate upgrades and conflicting schedules).
+
+networks:
+  grafana-net:
+    name: grafana-net
+    ipam:
+      config:
+        - subnet: 192.168.50.0/24
+  prometheus-net:
+    name: prometheus-net
+    ipam:
+      config:
+        - subnet: 192.168.51.0/24

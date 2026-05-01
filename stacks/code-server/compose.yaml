@@ -1,0 +1,135 @@
+services:
+  code-server:
+    image: codercom/code-server:4.117.0-39
+    container_name: CodeServer
+    user: "${PUID:-1026}:${PGID:-100}"
+    mem_limit: 4g
+    cpu_shares: 1024
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # restart: always — documented exception per _baseline §8: IDE should recover
+    # from any exit code, not just failure, to avoid lockout on clean exits.
+    restart: always
+    ports:
+      - "8377:8080"
+    volumes:
+      - /volume1/docker/dockge/stacks/code-server/config:/home/coder/.config:rw
+      - /volume1/docker/dockge/stacks/code-server/state:/home/coder/.local/share/code-server:rw
+      - /volume1/docker:/home/coder/project/docker:rw
+      - /volume1/homes/ofayese:/home/coder/project/home:rw
+      - /var/run/docker.sock:/var/run/docker.sock:rw
+    environment:
+      TZ: ${TZ:-America/New_York}
+      DOCKER_USER: ${DOCKER_USER:-ofayese}
+      HOME: /home/coder
+      HASHED_PASSWORD: ${CODE_SERVER_HASHED_PASSWORD}
+      PROXY_DOMAIN: ${PROXY_DOMAIN:-}
+    group_add:
+      - "0"
+    healthcheck:
+      test:
+        ["CMD-SHELL", "curl -fs http://localhost:8080/ >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    networks:
+      - bridge
+
+  db:
+    image: mysql:8.3
+    container_name: CodeServerDB
+    mem_limit: 2g
+    cpu_shares: 512
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # restart: always — documented exception: DB should always recover regardless
+    # of exit code to avoid code-server and phpmyadmin connection failures.
+    restart: always
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - /volume1/docker/dockge/stacks/code-server/config/mysql-init:/docker-entrypoint-initdb.d:ro
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-development}
+      MYSQL_USER: ${MYSQL_USER:-developer}
+      MYSQL_PASSWORD: ${PMA_CONTROLPASS}
+      TZ: ${TZ:-America/New_York}
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'mysqladmin ping -h localhost -uroot -p"$$MYSQL_ROOT_PASSWORD" --silent',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    networks:
+      - bridge
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:5.2.3-apache
+    container_name: CodeServerPMA
+    mem_limit: 512m
+    cpu_shares: 256
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # restart: always — documented exception: web UI should auto-recover from any exit.
+    restart: always
+    ports:
+      - "8378:80"
+    volumes:
+      - /volume1/docker/dockge/stacks/code-server/config/phpmyadmin:/etc/phpmyadmin:rw
+      - /volume1/docker/dockge/stacks/code-server/config/phpmyadmin_sessions:/sessions:rw
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      PMA_CONTROLUSER: ${PMA_CONTROLUSER:-pma}
+      PMA_CONTROLPASS: ${PMA_CONTROLPASS}
+      PMA_BLOWFISH_SECRET: ${PMA_BLOWFISH_SECRET}
+      PMA_ABSOLUTE_URI: ${PMA_ABSOLUTE_URI:-}
+      HIDE_PHP_VERSION: "true"
+      TZ: ${TZ:-America/New_York}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost/ >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    depends_on:
+      db:
+        condition: service_healthy
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    networks:
+      - bridge
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  bridge:
+    external: true

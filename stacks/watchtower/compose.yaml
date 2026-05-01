@@ -1,0 +1,57 @@
+services:
+  watchtower:
+    container_name: Watchtower
+    image: containrrr/watchtower:latest
+    mem_limit: 128m
+    cpu_shares: 256
+    security_opt:
+      - no-new-privileges:true
+    restart: on-failure:5
+    ports:
+      # Prometheus (grafana-prom) scrapes /v1/metrics here; restrict on firewall if needed.
+      - "10.0.1.15:18787:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - TZ=America/New_York
+      - WATCHTOWER_LABEL_ENABLE=true
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_INCLUDE_STOPPED=false
+      - WATCHTOWER_SCHEDULE=0 0 4 * * *
+      - WATCHTOWER_NOTIFICATIONS=shoutrrr
+      - WATCHTOWER_NOTIFICATION_URL=logger://
+      - WATCHTOWER_NOTIFICATION_REPORT=true
+      # HTTP API + metrics (Prometheus). Periodic cron schedule is preserved.
+      - WATCHTOWER_HTTP_API_UPDATE=true
+      - WATCHTOWER_HTTP_API_PERIODIC_POLLS=true
+      - WATCHTOWER_HTTP_API_METRICS=true
+      - WATCHTOWER_HTTP_API_TOKEN=/run/secrets/watchtower_bearer
+    secrets:
+      - watchtower_bearer
+    healthcheck:
+      # /v1/health requires no auth token — safe liveness probe.
+      test:
+        [
+          "CMD-SHELL",
+          "wget -qO- http://127.0.0.1:8080/v1/health >/dev/null || exit 1",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - bridge
+
+secrets:
+  watchtower_bearer:
+    # Single source of truth for bearer auth (Prometheus uses the same file).
+    file: ../grafana-prom/secrets/watchtower_bearer_token.txt
+
+networks:
+  bridge:
+    external: true

@@ -1,0 +1,10 @@
+services:
+  mcp-gateway:
+    image: docker/mcp-gateway
+    command:
+      - --servers=duckduckgo
+      - --transport=streaming
+    ports:
+      - 8811:8811
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock

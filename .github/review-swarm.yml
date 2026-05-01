@@ -1,0 +1,60 @@
+version: 1
+review:
+  auto-trigger: true
+  required-agents:
+    - security
+    - performance
+    - style
+  optional-agents:
+    - architecture
+    - accessibility
+
+  thresholds:
+    security: block
+    performance: warn
+    style: suggest
+
+  rules:
+    security:
+      - no-eval
+      - no-hardcoded-secrets
+      - proper-auth-checks
+    performance:
+      - no-n-plus-one
+      - efficient-queries
+      - proper-caching
+    architecture:
+      - max-coupling: 5
+      - min-cohesion: 0.7
+      - follow-patterns
+
+triggers:
+  high-risk-files:
+    paths:
+      - "**/auth/**"
+      - "**/payment/**"
+      - "**/payments/**"
+      - "**/secrets/**"
+    agents:
+      - security
+      - architecture
+    depth: comprehensive
+
+  performance-critical:
+    paths:
+      - "**/api/**"
+      - "**/database/**"
+      - "**/db/**"
+    agents:
+      - performance
+      - architecture
+    benchmarks: true
+
+  ui-changes:
+    paths:
+      - "**/components/**"
+      - "**/styles/**"
+      - "**/ui/**"
+    agents:
+      - accessibility
+      - style

@@ -1,0 +1,47 @@
+# Local tool cache (repo root)
+.ruff_cache/
+
+# Superseded by stacks-compose-validate.yml (legacy filename may be SMB-busy locally)
+.github/workflows/compose-validate.yml
+
+# Legacy SMB-local copies; canonical compose validate is stacks/scripts/compose-validate.sh
+scripts/compose-validate.sh
+scripts/compose-validate-symlink.sh
+
+.smbdelete*
+._DAV/
+**/._DAV/
+.DS_Store
+**/.DS_Store
+
+# Host-only (Synology / local Dockge runtime)
+data/
+logs/
+
+# Local AI/session policy and runtime (repo root; dirs live here but stay untracked)
+.claude/
+.claude-flow/
+.hive-mind/sessions/
+
+# Repo-root Cursor (optional local overrides)
+.cursor/hooks/state/
+
+# Stack secrets and local operator env (never commit)
+stacks/grafana-prom/.env
+stacks/codex-docs/.env
+stacks/searxng/config/settings.yml
+stacks/searxng/settings.yml
+stacks/databases/secrets/
+stacks/grafana-prom/secrets/watchtower_bearer_token.txt
+
+# Accidental local backups
+stacks/acme-sh/data.bak-*.zip
+
+# Runtime / cache (never commit)
+stacks/ollama/webui/cache/
+stacks/ollama/webui/vector_db/
+stacks/ollama/webui/*.db
+stacks/ollama/webui/*.db-shm
+stacks/ollama/webui/*.db-wal
+stacks/docker-model-runner/archives/*.zip
+stacks/portainer/.env

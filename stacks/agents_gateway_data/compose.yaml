@@ -19,6 +19,9 @@ services:
     volumes:
       # SECURITY: docker.sock grants Docker API access (host-level). Required for MCP gateway image.
       - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      PUID: ${PUID:-0}
+      PGID: ${PGID:-0}
     networks:
       - bridge
     labels:

@@ -14,12 +14,12 @@ Synology-oriented **Grafana** + **Prometheus** + exporters (`node-exporter`, `sn
 
 ## Paths (NAS)
 
-All bind mounts in `docker-compose.yml` use **absolute** paths under `/volume1/docker/dockge/stacks/grafana-prom/` (data dirs, `prom.yml`, `snmp.yml`, `secrets/`). Create data dirs before first start:
+All bind mounts in `docker-compose.yml` use **absolute** paths under `/volume1/​docker/dockge​/stacks/grafana-prom/` (data dirs, `prom.yml`, `snmp.yml`, `secrets/`). Create data dirs before first start:
 
 ```bash
-mkdir -p /volume1/docker/dockge/stacks/grafana-prom/data/grafana \
-  /volume1/docker/dockge/stacks/grafana-prom/data/prometheus
-sudo bash /volume1/docker/dockge/scripts/fix-permissions.sh
+mkdir -p /volume1/​docker/dockge​/stacks/grafana-prom/data/grafana \
+  /volume1/​docker/dockge​/stacks/grafana-prom/data/prometheus
+sudo bash /volume1/​docker/dockge/scripts/fix-permissions.sh
 ```
 
 ## Environment

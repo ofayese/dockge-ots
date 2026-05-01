@@ -29,7 +29,7 @@ git checkout -- codex-docs/compose.yaml
 docker compose -f codex-docs/compose.yaml up -d
 ```
 
-Mongo data persists at `/volume1/docker/dockge/stacks/codex-docs/mongodb`. Never `rm -rf` without a snapshot.
+Mongo data persists at `/volume1/​docker/dockge​/stacks/codex-docs/mongodb`. Never `rm -rf` without a snapshot.
 
 ## Status note
 

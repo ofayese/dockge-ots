@@ -18,13 +18,15 @@ services:
     ports:
       - "8377:8080"
     volumes:
-      - /volume1/docker/dockge/stacks/code-server/config:/home/coder/.config:rw
-      - /volume1/docker/dockge/stacks/code-server/state:/home/coder/.local/share/code-server:rw
-      - /volume1/docker:/home/coder/project/docker:rw
-      - /volume1/homes/ofayese:/home/coder/project/home:rw
+      - ${STACK_ROOT}/code-server/config:/home/coder/.config:rw
+      - ${STACK_ROOT}/code-server/state:/home/coder/.local/share/code-server:rw
+      - ${CODE_SERVER_HOST_DOCKER_BIND:?set CODE_SERVER_HOST_DOCKER_BIND in .env}:/home/coder/project/docker:rw # EXEMPT operator wide bind (see stack README)
+      - ${CODE_SERVER_HOST_HOME_BIND:?set CODE_SERVER_HOST_HOME_BIND in .env}:/home/coder/project/home:rw # EXEMPT operator home bind
       # SECURITY: rw docker.sock lets this container control the host Docker API (effectively host root). Required for in-IDE docker; restrict network exposure.
       - /var/run/docker.sock:/var/run/docker.sock:rw
     environment:
+      PUID: ${PUID:-0}
+      PGID: ${PGID:-0}
       TZ: ${TZ:-America/New_York}
       DOCKER_USER: ${DOCKER_USER:-ofayese}
       HOME: /home/coder
@@ -63,8 +65,10 @@ services:
       - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-      - /volume1/docker/dockge/stacks/code-server/config/mysql-init:/docker-entrypoint-initdb.d:ro
+      - ${STACK_ROOT}/code-server/config/mysql-init:/docker-entrypoint-initdb.d:ro
     environment:
+      PUID: ${PUID:-0}
+      PGID: ${PGID:-0}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-development}
       MYSQL_USER: ${MYSQL_USER:-developer}
@@ -102,9 +106,11 @@ services:
     ports:
       - "8378:80"
     volumes:
-      - /volume1/docker/dockge/stacks/code-server/config/phpmyadmin:/etc/phpmyadmin:rw
-      - /volume1/docker/dockge/stacks/code-server/config/phpmyadmin_sessions:/sessions:rw
+      - ${STACK_ROOT}/code-server/config/phpmyadmin:/etc/phpmyadmin:rw
+      - ${STACK_ROOT}/code-server/config/phpmyadmin_sessions:/sessions:rw
     environment:
+      PUID: ${PUID:-0}
+      PGID: ${PGID:-0}
       PMA_HOST: db
       PMA_PORT: 3306
       PMA_CONTROLUSER: ${PMA_CONTROLUSER:-pma}

@@ -11,13 +11,15 @@ services:
     # socket means there is no meaningful liveness probe. Operational signal comes
     # from log lines and successful renewals (via DISCORD_WEBHOOK_URL alerts).
     environment:
+      - PUID=${PUID:-0}
+      - PGID=${PGID:-0}
       - TZ=America/New_York
       - CF_Token=${CF_Token}
       - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
     network_mode: host
     volumes:
-      - /volume1/docker/dockge/stacks/acme-sh/data:/acme.sh
-      - /volume1/certs/acme:/volume1/certs/acme
+      - ${STACK_ROOT}/acme-sh/data:/acme.sh
+      - ${ACME_CERT_ROOT:-/volume1/certs/acme}:/volume1/certs/acme
     command: daemon
     logging:
       driver: json-file

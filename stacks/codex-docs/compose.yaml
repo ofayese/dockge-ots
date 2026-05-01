@@ -13,8 +13,10 @@ services:
         max-file: "3"
     restart: on-failure:5
     volumes:
-      - /volume1/docker/dockge/stacks/codex-docs/mongodb:/data/db:rw
+      - ${STACK_ROOT}/codex-docs/mongodb:/data/db:rw
     environment:
+      - PUID=${PUID:-0}
+      - PGID=${PGID:-0}
       - MONGO_INITDB_DATABASE=codexdocs
       - TZ=America/New_York
     networks:
@@ -40,10 +42,12 @@ services:
     ports:
       - 10.0.1.15:8896:3000
     volumes:
-      - /volume1/docker/dockge/stacks/codex-docs/uploads:/usr/src/app/uploads:rw
+      - ${STACK_ROOT}/codex-docs/uploads:/usr/src/app/uploads:rw
     env_file:
       - .env
     environment:
+      - PUID=${PUID:-0}
+      - PGID=${PGID:-0}
       - MONGODB_URI=mongodb://mongodb:27017/codexdocs
       - APP_SECRET=${APP_SECRET}
       - PORT=3000

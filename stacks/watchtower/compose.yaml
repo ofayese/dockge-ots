@@ -14,6 +14,8 @@ services:
       # Docker socket (ro): Watchtower needs daemon API for image updates; ro is sufficient for its operations.
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
+      - PUID=${PUID:-0}
+      - PGID=${PGID:-0}
       - TZ=America/New_York
       - WATCHTOWER_LABEL_ENABLE=true
       - WATCHTOWER_CLEANUP=true

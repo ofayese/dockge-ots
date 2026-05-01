@@ -12,6 +12,8 @@ services:
     environment:
       - WARP_HOST=0.0.0.0
       - WARP_PORT=9090
+      - PUID=${PUID:-0}
+      - PGID=${PGID:-0}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
@@ -40,6 +42,8 @@ services:
       WARP_APP_PORT: "9090"
       CLAUDE_HOST: host.docker.internal
       CLAUDE_PORT: "3000"
+      PUID: ${PUID:-0}
+      PGID: ${PGID:-0}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
@@ -66,6 +70,8 @@ services:
       - WARP_AGENT_PORT=8080
       - CLAUDE_API_HOST=host.docker.internal
       - CLAUDE_API_PORT=3000
+      - PUID=${PUID:-0}
+      - PGID=${PGID:-0}
     ports:
       - "8080:8080"
     extra_hosts:

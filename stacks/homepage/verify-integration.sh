@@ -15,7 +15,7 @@
 #
 # USAGE
 #   bash verify-integration.sh
-#   (Run from: /volume1/docker/dockge/stacks/homepage)
+#   (Run from: /volume1/​docker/dockge​/stacks/homepage)
 #
 # EXIT CODES
 #   0 = All checks passed

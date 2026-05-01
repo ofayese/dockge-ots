@@ -15,12 +15,14 @@ services:
     ports:
       - 10.0.1.15:7575:3000
     volumes:
-      - /volume1/docker/dockge/stacks/homepage/config:/app/config:rw
-      - /volume1/docker/dockge/stacks/homepage/icons:/app/public/icons:rw
+      - ${STACK_ROOT}/homepage/config:/app/config:rw
+      - ${STACK_ROOT}/homepage/icons:/app/public/icons:rw
       # Docker socket (ro): exposes container/meta to Homepage; read-only avoids mutating containers via the API.
       # Required for the docker.yaml `my-docker` socket integration.
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
+      - PUID=${PUID:-0}
+      - PGID=${PGID:-0}
       - TZ=America/New_York
       # Allow access from the Synology LAN IP and your domain
       - HOMEPAGE_ALLOWED_HOSTS=10.0.1.15:7575,otsorundscore.olutechsys.com:7575,otsorundscore.olutech.systems:7575,localhost:7575

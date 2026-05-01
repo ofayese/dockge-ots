@@ -9,7 +9,7 @@ Containerized acme.sh in daemon mode — issues and renews TLS certificates via 
 
 ## State on disk
 
-- `/volume1/docker/dockge/stacks/acme-sh/data/` → `/acme.sh` (issuance state, account keys, order history)
+- `/volume1/​docker/dockge​/stacks/acme-sh/data/` → `/acme.sh` (issuance state, account keys, order history)
 - `/volume1/certs/acme/` → `/volume1/certs/acme/` (installed PEMs consumed by other stacks; **do not modify directly**)
 
 ## Required env (`.env`, gitignored)

@@ -15,7 +15,7 @@ Copy [`.env.example`](./.env.example) → `.env` and set **`WARP_API_KEY`** (War
 
 ## Paths / data
 
-No bind-mounted app data in-repo; add absolute paths under `/volume1/docker/dockge/stacks/warp-main/` if you need persistence (never write mutable state into the git tree on the NAS).
+No bind-mounted app data in-repo; add absolute paths under `/volume1/​docker/dockge​/stacks/warp-main/` if you need persistence (never write mutable state into the git tree on the NAS).
 
 ## Outbound
 

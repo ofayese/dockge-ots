@@ -4,8 +4,8 @@ Local LLM runtime (`ollama`) + open-webui front-end. CPU-only on this NAS — no
 
 ## Services
 
-- **otsai-server** (11434) — Ollama REST API; models persist at `/volume1/docker/dockge/stacks/ollama/data`
-- **otsai-webui** (8893) — open-webui chat UI; depends on `ollama` healthcheck; auth state in `/volume1/docker/dockge/stacks/ollama/webui`
+- **otsai-server** (11434) — Ollama REST API; models persist at `/volume1/​docker/dockge​/stacks/ollama/data`
+- **otsai-webui** (8893) — open-webui chat UI; depends on `ollama` healthcheck; auth state in `/volume1/​docker/dockge​/stacks/ollama/webui`
 
 ## Public hostname
 
@@ -42,5 +42,5 @@ git checkout -- ollama/compose.yaml
 docker compose -f ollama/compose.yaml up -d
 ```
 
-Models survive: `/volume1/docker/dockge/stacks/ollama/data` not touched.
-User accounts (open-webui) survive: `/volume1/docker/dockge/stacks/ollama/webui` not touched.
+Models survive: `/volume1/​docker/dockge​/stacks/ollama/data` not touched.
+User accounts (open-webui) survive: `/volume1/​docker/dockge​/stacks/ollama/webui` not touched.

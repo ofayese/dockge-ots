@@ -23,6 +23,9 @@ logs/
 # Repo-root Cursor (optional local overrides)
 .cursor/hooks/state/
 
+# Repo-root local secrets (never commit)
+.env
+
 # Stack secrets and local operator env (never commit)
 stacks/grafana-prom/.env
 stacks/codex-docs/.env
@@ -42,3 +45,4 @@ stacks/ollama/webui/*.db-shm
 stacks/ollama/webui/*.db-wal
 stacks/docker-model-runner/archives/*.zip
 stacks/portainer/.env
+stacks/code-server/.env

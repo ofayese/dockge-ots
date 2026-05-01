@@ -10,6 +10,8 @@ services:
     ports:
       - 10.0.1.15:8894:80
     environment:
+      - PUID=${PUID:-0}
+      - PGID=${PGID:-0}
       - TZ=${TZ:-America/New_York}
     labels:
       - com.centurylinklabs.watchtower.enable=true

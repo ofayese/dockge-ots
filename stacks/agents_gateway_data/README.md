@@ -11,7 +11,7 @@ Experimental **Docker MCP Gateway** wiring for DuckDuckGo search MCP. Uses the h
 ## Volumes / paths
 
 - **`/var/run/docker.sock`** — required by `docker/mcp-gateway` to orchestrate MCP servers (see compose comments for security note).
-- Writable state should live under **`/volume1/docker/dockge/stacks/agents_gateway_data/`** on the NAS (not in the git checkout).
+- Writable state should live under **`/volume1/​docker/dockge​/stacks/agents_gateway_data/`** on the NAS (not in the git checkout).
 
 ## Environment
 

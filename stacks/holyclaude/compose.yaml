@@ -25,7 +25,7 @@ services:
       - NOTIFY_DISCORD=${NOTIFY_DISCORD}
     volumes:
       - claude-home:/home/claude/.claude
-      - ${WORKSPACE_PATH}:/workspace
+      - ${STACK_ROOT}:/workspace
       - cloudcli-data:/home/claude/.cloudcli
     labels:
       - com.centurylinklabs.watchtower.enable=true

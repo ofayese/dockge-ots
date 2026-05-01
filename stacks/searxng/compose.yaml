@@ -9,6 +9,8 @@ services:
     restart: on-failure:5
     command: valkey-server --save "" --appendonly no
     environment:
+      - PUID=${PUID:-0}
+      - PGID=${PGID:-0}
       - TZ=America/New_York
     networks:
       - bridge
@@ -36,8 +38,10 @@ services:
     ports:
       - 10.0.1.15:8888:8080
     volumes:
-      - /volume1/docker/dockge/stacks/searxng/config:/etc/searxng:rw
+      - ${STACK_ROOT}/searxng/config:/etc/searxng:rw
     environment:
+      - PUID=${PUID:-0}
+      - PGID=${PGID:-0}
       - SEARXNG_BASE_URL=https://search.otsorundscore.olutechsys.com/
       - SEARXNG_REDIS_URL=redis://redis:6379/0
       - UWSGI_WORKERS=4

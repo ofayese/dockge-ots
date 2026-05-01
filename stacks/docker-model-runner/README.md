@@ -12,7 +12,7 @@ Runs **Docker Model Runner** CUDA images for local LLM endpoints (`devstral-smal
 
 ## Volumes / paths
 
-- No bind-mounted model cache in-repo by default; models download at runtime. To persist data, add absolute paths under **`/volume1/docker/dockge/stacks/docker-model-runner/data/<service>/`** and document them in your local `.env` / override compose (never commit secrets).
+- No bind-mounted model cache in-repo by default; models download at runtime. To persist data, add absolute paths under **`/volume1/​docker/dockge​/stacks/docker-model-runner/data/<service>/`** and document them in your local `.env` / override compose (never commit secrets).
 
 ## Environment
 

@@ -10,7 +10,7 @@ services:
     volumes:
       # SECURITY: docker.sock grants control of the host Docker API. Portainer requires rw for management UI.
       - /var/run/docker.sock:/var/run/docker.sock
-      - /volume1/docker/portainer:/data
+      - ${PORTAINER_DATA_ROOT:?set PORTAINER_DATA_ROOT in .env}:/data # EXEMPT operator legacy Portainer state (outside STACK_ROOT)
     restart: always
     security_opt:
       - no-new-privileges:true
@@ -20,6 +20,8 @@ services:
         max-size: "10m"
         max-file: "3"
     environment:
+      - PUID=${PUID:-0}
+      - PGID=${PGID:-0}
       - TZ=America/New_York
     healthcheck:
       test:
@@ -44,9 +46,9 @@ services:
     volumes:
       # SECURITY: Agent mounts docker.sock rw, host rootfs at /host, and Docker volumes — highest privilege in this repo. Restrict network access.
       - /var/run/docker.sock:/var/run/docker.sock
-      - /volume1/@docker/volumes:/var/lib/docker/volumes
-      - /:/host
-      - /volume1/docker/portainer/certs:/certs:ro
+      - /volume1/@docker/volumes:/var/lib/docker/volumes # EXEMPT Portainer agent Docker volumes
+      - /:/host # EXEMPT Portainer agent host rootfs
+      - ${PORTAINER_CERT_ROOT:?set PORTAINER_CERT_ROOT in .env}:/certs:ro # EXEMPT operator Portainer TLS
     restart: always
     security_opt:
       - no-new-privileges:true
@@ -60,6 +62,8 @@ services:
     cap_add:
       - NET_RAW
     environment:
+      PUID: ${PUID:-0}
+      PGID: ${PGID:-0}
       AGENT_CLUSTER_ADDR: 0.0.0.0
       AGENT_TLS_CERT: /certs/cert.pem
       AGENT_TLS_KEY: /certs/key.pem

@@ -10,18 +10,18 @@ MariaDB + PostgreSQL + Adminer for any service that needs a shared DB. Distinct 
 
 ## Secrets (file-based, outside `.env`)
 
-- `/volume1/docker/dockge/stacks/databases/secrets/mariadb_root_pw.txt` (mode `0600`)
-- `/volume1/docker/dockge/stacks/databases/secrets/mariadb_app_pw.txt` (mode `0600`)
-- `/volume1/docker/dockge/stacks/databases/secrets/postgres_pw.txt` (mode `0600`)
+- `/volume1/​docker/dockge​/stacks/databases/secrets/mariadb_root_pw.txt` (mode `0600`)
+- `/volume1/​docker/dockge​/stacks/databases/secrets/mariadb_app_pw.txt` (mode `0600`)
+- `/volume1/​docker/dockge​/stacks/databases/secrets/postgres_pw.txt` (mode `0600`)
 
 Verify with:
 
 ```bash
-ls -la /volume1/docker/dockge/stacks/databases/secrets/
+ls -la /volume1/​docker/dockge​/stacks/databases/secrets/
 git check-ignore databases/secrets/mariadb_root_pw.txt   # expect: prints path = ignored
 ```
 
-If any file is mode `0644` or worse: `chmod 0600 /volume1/docker/dockge/stacks/databases/secrets/*.txt`.
+If any file is mode `0644` or worse: `chmod 0600 /volume1/​docker/dockge​/stacks/databases/secrets/*.txt`.
 
 ## Health
 
@@ -36,7 +36,7 @@ git checkout -- databases/compose.yaml
 docker compose -f databases/compose.yaml up -d
 ```
 
-Data persists at `/volume1/docker/dockge/stacks/databases/{mariadb,postgres}`. Back up before any major-version bump.
+Data persists at `/volume1/​docker/dockge​/stacks/databases/{mariadb,postgres}`. Back up before any major-version bump.
 
 ## Out of scope
 

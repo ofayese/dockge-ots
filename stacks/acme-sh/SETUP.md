@@ -141,14 +141,14 @@ will bite any Linux host you migrate this config to.
 
 DSM's Container Manager / Docker package uses a non-standard layout:
 
-- The active config file is **`/volume1/docker/daemon.json`**, not
+- The active config file is **`/volume1/​docker/daemon.json`**, not
   `/etc/docker/daemon.json`. Edits to the latter are silently ignored.
 - The correct restart command is **`sudo synopkg restart ContainerManager`**
   (older DSM: `sudo synopkg restart Docker`). `systemctl restart docker`
   does not exist.
 - DSM package upgrades may rewrite or replace `daemon.json`. Always
-  back it up before merging (`cp -n /volume1/docker/daemon.json
-/volume1/docker/daemon.json.bak`) and re-apply your fragment after a
+  back it up before merging (`cp -n /volume1/​docker/daemon.json
+/volume1/​docker/daemon.json.bak`) and re-apply your fragment after a
   package update if the diff disappears.
 - `synoservicectl --reload nginx` is what reloads DSM's reverse proxy
   after replacing `cert.pem`/`chain.pem` in
@@ -162,11 +162,11 @@ truncating write, leaving an empty `daemon.json` and a daemon that
 won't start. Always go through a temp file:
 
 ```bash
-TMP=$(sudo mktemp /volume1/docker/.daemon.json.XXXXXX)
+TMP=$(sudo mktemp /volume1/​docker/.daemon.json.XXXXXX)
 sudo jq -s '.[0] * .[1]' \
-  /volume1/docker/daemon.json \
+  /volume1/​docker/daemon.json \
   /volume1/certs/acme/daemon-mtls.json > "${TMP}"
-sudo mv -f "${TMP}" /volume1/docker/daemon.json
+sudo mv -f "${TMP}" /volume1/​docker/daemon.json
 ```
 
 `mv -f` within the same filesystem is atomic, so a reader either sees
@@ -200,7 +200,7 @@ migration, PEMs stay at the same paths under `/volume1/certs/acme/`.
 **Order:** backup → remove ECC (step 2) → issue RSA 2048 (step 3) →
 `--install-cert` (step 4) → verify (step 5).
 
-1. **Backup:** copy `/volume1/docker/dockge/stacks/acme-sh/data` and optionally
+1. **Backup:** copy `/volume1/​docker/dockge​/stacks/acme-sh/data` and optionally
    `/volume1/certs/acme/`.
 2. **Remove ECDSA orders** before re-issue. Run the block; skip errors for
    names that were never ECC. Match `-d` to each ECC row’s primary domain in
@@ -234,7 +234,7 @@ migration, PEMs stay at the same paths under `/volume1/certs/acme/`.
 ### 1. Start the container
 
 ```bash
-cd /volume1/docker/dockge/stacks/acme-sh
+cd /volume1/​docker/dockge​/stacks/acme-sh
 docker compose up -d
 ```
 
@@ -394,7 +394,7 @@ bash /Volumes/certs/acme/deploy-otsorundscore.bash
 
 Zip or copy that folder to the NAS (File Station, `scp`, etc.), then as **root** on
 otsorundscore: copy the staged `dsm-*` and `docker-tls/` PEMs into the DSM and Docker paths
-shown in the script header, merge TLS into `/volume1/docker/daemon.json`, reload nginx,
+shown in the script header, merge TLS into `/volume1/​docker/daemon.json`, reload nginx,
 and restart Container Manager.
 
 **First run only — apply the full Docker daemon config.** The bundled
@@ -411,19 +411,19 @@ sides of the pipeline.
 
 ```bash
 # On otsorundscore, as root:
-sudo cp -n /volume1/docker/daemon.json /volume1/docker/daemon.json.bak
-TMP=$(sudo mktemp /volume1/docker/.daemon.json.XXXXXX)
+sudo cp -n /volume1/​docker/daemon.json /volume1/​docker/daemon.json.bak
+TMP=$(sudo mktemp /volume1/​docker/.daemon.json.XXXXXX)
 sudo jq -s '.[0] * .[1]' \
-  /volume1/docker/daemon.json \
+  /volume1/​docker/daemon.json \
   /volume1/certs/acme/daemon-tls.json > "${TMP}"
-sudo mv -f "${TMP}" /volume1/docker/daemon.json
+sudo mv -f "${TMP}" /volume1/​docker/daemon.json
 sudo synopkg restart ContainerManager
 ```
 
 If `daemon.json` doesn't exist yet:
 
 ```bash
-sudo install -m 0644 /volume1/certs/acme/daemon-tls.json /volume1/docker/daemon.json
+sudo install -m 0644 /volume1/certs/acme/daemon-tls.json /volume1/​docker/daemon.json
 sudo synopkg restart ContainerManager
 ```
 
@@ -482,20 +482,20 @@ DOCKER_HOSTNAME=otsorundscore.olutechsys.com \
    merge — never `jq | tee daemon.json` against the same file):
 
 ```bash
-mkdir -p /volume1/docker/mtls
-chmod 0700 /volume1/docker/mtls
-install -m 0644 /volume1/certs/acme/otsorundscore-nas-upload-mtls/docker-mtls/ca.pem          /volume1/docker/mtls/ca.pem
-install -m 0644 /volume1/certs/acme/otsorundscore-nas-upload-mtls/docker-mtls/server-cert.pem /volume1/docker/mtls/server-cert.pem
-install -m 0400 /volume1/certs/acme/otsorundscore-nas-upload-mtls/docker-mtls/server-key.pem  /volume1/docker/mtls/server-key.pem
+mkdir -p /volume1/​docker/mtls
+chmod 0700 /volume1/​docker/mtls
+install -m 0644 /volume1/certs/acme/otsorundscore-nas-upload-mtls/docker-mtls/ca.pem          /volume1/​docker/mtls/ca.pem
+install -m 0644 /volume1/certs/acme/otsorundscore-nas-upload-mtls/docker-mtls/server-cert.pem /volume1/​docker/mtls/server-cert.pem
+install -m 0400 /volume1/certs/acme/otsorundscore-nas-upload-mtls/docker-mtls/server-key.pem  /volume1/​docker/mtls/server-key.pem
 
 # docker-daemon-mtls.json updates tls/tlsverify/tlscacert/tlscert/tlskey only.
 # It intentionally does NOT set `hosts`; existing listener values are preserved.
-cp -n /volume1/docker/daemon.json /volume1/docker/daemon.json.bak
-TMP=$(mktemp /volume1/docker/.daemon.json.XXXXXX)
+cp -n /volume1/​docker/daemon.json /volume1/​docker/daemon.json.bak
+TMP=$(mktemp /volume1/​docker/.daemon.json.XXXXXX)
 jq -s '.[0] * .[1]' \
-  /volume1/docker/daemon.json \
+  /volume1/​docker/daemon.json \
   /volume1/certs/acme/otsorundscore-nas-upload-mtls/docker-daemon-mtls.json > "${TMP}"
-mv -f "${TMP}" /volume1/docker/daemon.json
+mv -f "${TMP}" /volume1/​docker/daemon.json
 synopkg restart ContainerManager
 ```
 
@@ -504,11 +504,11 @@ synopkg restart ContainerManager
 > Example to enforce loopback-only:
 >
 > ```bash
-> TMP=$(mktemp /volume1/docker/.daemon.json.XXXXXX)
+> TMP=$(mktemp /volume1/​docker/.daemon.json.XXXXXX)
 > jq -s '.[0] * .[1]' \
->   /volume1/docker/daemon.json \
+>   /volume1/​docker/daemon.json \
 >   /volume1/certs/acme/daemon-mtls.json > "${TMP}"
-> mv -f "${TMP}" /volume1/docker/daemon.json
+> mv -f "${TMP}" /volume1/​docker/daemon.json
 > synopkg restart ContainerManager
 > ```
 >
@@ -808,10 +808,10 @@ network surface first — that buys time:
 # On otsorundscore: re-merge daemon-tls/mtls config with hosts pinned to
 # 127.0.0.1 (no LAN listener), then restart. This breaks remote LAN
 # Docker access entirely until rotation is complete.
-TMP=$(sudo mktemp /volume1/docker/.daemon.json.XXXXXX)
+TMP=$(sudo mktemp /volume1/​docker/.daemon.json.XXXXXX)
 sudo jq '.hosts = ["unix:///var/run/docker.sock", "tcp://127.0.0.1:2376"]' \
-  /volume1/docker/daemon.json > "${TMP}"
-sudo mv -f "${TMP}" /volume1/docker/daemon.json
+  /volume1/​docker/daemon.json > "${TMP}"
+sudo mv -f "${TMP}" /volume1/​docker/daemon.json
 sudo synopkg restart ContainerManager
 ```
 

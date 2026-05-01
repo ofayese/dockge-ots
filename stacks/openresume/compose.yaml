@@ -10,6 +10,8 @@ services:
     ports:
       - 10.0.1.15:8889:3000
     environment:
+      - PUID=${PUID:-0}
+      - PGID=${PGID:-0}
       - NODE_ENV=production
       - NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL:-https://resume.otsorundscore.olutechsys.com}
       - TZ=${TZ:-America/New_York}

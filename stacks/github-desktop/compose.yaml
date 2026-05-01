@@ -23,9 +23,9 @@ services:
       - "${HOST_PORT:-3405}:3001"
     volumes:
       # Primary persistent config — all linuxserver state lives here
-      - /volume1/docker/dockge/stacks/github-desktop/config:/config:rw
+      - ${STACK_ROOT}/github-desktop/config:/config:rw
       # Optional: mount a host directory for git repos so they survive container re-creates
-      # - /volume1/docker/dockge/stacks/github-desktop/data:/config/repos:rw
+      # - ${STACK_ROOT}/github-desktop/data:/config/repos:rw
     environment:
       TZ: ${TZ:-America/New_York}
       PUID: ${PUID:-0}

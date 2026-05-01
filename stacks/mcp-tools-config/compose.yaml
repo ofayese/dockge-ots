@@ -9,6 +9,9 @@ services:
     security_opt:
       - no-new-privileges:true
     command: ["true"]
+    environment:
+      PUID: ${PUID:-0}
+      PGID: ${PGID:-0}
     restart: "no"
     logging:
       driver: json-file

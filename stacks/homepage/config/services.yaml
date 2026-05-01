@@ -251,7 +251,7 @@
 #      docker compose -f compose.yaml restart
 #
 # 7. Verify the new service appears:
-#      cd /volume1/docker/dockge/stacks/homepage
+#      cd /volume1/​docker/dockge​/stacks/homepage
 #      bash verify-integration.sh
 #
 # ============================================================================

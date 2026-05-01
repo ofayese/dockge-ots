@@ -13,8 +13,10 @@ services:
         max-file: "3"
     restart: on-failure:5
     volumes:
-      - /volume1/docker/dockge/stacks/databases/mariadb:/var/lib/mysql:rw
+      - ${STACK_ROOT}/databases/mariadb:/var/lib/mysql:rw
     environment:
+      - PUID=${PUID:-0}
+      - PGID=${PGID:-0}
       - MYSQL_ROOT_PASSWORD_FILE=/run/secrets/mariadb_root_pw
       - MYSQL_DATABASE=appdb
       - MYSQL_USER=appuser
@@ -46,8 +48,10 @@ services:
         max-file: "3"
     restart: on-failure:5
     volumes:
-      - /volume1/docker/dockge/stacks/databases/postgres:/var/lib/postgresql/data:rw
+      - ${STACK_ROOT}/databases/postgres:/var/lib/postgresql/data:rw
     environment:
+      - PUID=${PUID:-0}
+      - PGID=${PGID:-0}
       - POSTGRES_DB=appdb
       - POSTGRES_USER=appuser
       - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_pw
@@ -79,6 +83,8 @@ services:
     ports:
       - 10.0.1.15:8895:8080
     environment:
+      - PUID=${PUID:-0}
+      - PGID=${PGID:-0}
       - ADMINER_DEFAULT_SERVER=mariadb
       - ADMINER_DESIGN=hydra
       - TZ=America/New_York
@@ -98,8 +104,8 @@ services:
 
 secrets:
   mariadb_root_pw:
-    file: /volume1/docker/dockge/stacks/databases/secrets/mariadb_root_pw.txt
+    file: ${STACK_ROOT}/databases/secrets/mariadb_root_pw.txt
   mariadb_app_pw:
-    file: /volume1/docker/dockge/stacks/databases/secrets/mariadb_app_pw.txt
+    file: ${STACK_ROOT}/databases/secrets/mariadb_app_pw.txt
   postgres_pw:
-    file: /volume1/docker/dockge/stacks/databases/secrets/postgres_pw.txt
+    file: ${STACK_ROOT}/databases/secrets/postgres_pw.txt

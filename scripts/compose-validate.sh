@@ -15,6 +15,8 @@ STACKS="${ROOT}/stacks"
 cd "$ROOT"
 
 export COMPOSE_ENV_FILE="${ROOT}/.github/compose-ci.env"
+# Host bind mounts use ${STACK_ROOT}/<stack>/… — CI resolves to the real stacks/ path.
+export STACK_ROOT="${STACK_ROOT:-${STACKS}}"
 
 mkdir -p "${STACKS}/grafana-prom/secrets"
 if [[ ! -s "${STACKS}/grafana-prom/secrets/watchtower_bearer_token.txt" ]]; then
@@ -29,6 +31,7 @@ for f in mariadb_root_pw.txt mariadb_app_pw.txt postgres_pw.txt; do
 done
 
 mkdir -p /tmp/workspace 2>/dev/null || true
+mkdir -p /tmp/code-server-host-docker-bind /tmp/code-server-host-home-bind /tmp/portainer-data /tmp/portainer-certs 2>/dev/null || true
 
 created_env_files=()
 cleanup() {
@@ -51,9 +54,29 @@ PUID=0
 PGID=0
 DISCORD_WEBHOOK_URL=
 NOTIFY_DISCORD=false
-WORKSPACE_PATH=/tmp/workspace
+STACK_ROOT=${STACKS}
 EOF
 	created_env_files+=("${STACKS}/holyclaude/.env")
+fi
+
+if [[ ! -f "${STACKS}/code-server/.env" ]]; then
+	cat >"${STACKS}/code-server/.env" <<EOF
+STACK_ROOT=${STACKS}
+CODE_SERVER_HOST_DOCKER_BIND=/tmp/code-server-host-docker-bind
+CODE_SERVER_HOST_HOME_BIND=/tmp/code-server-host-home-bind
+EOF
+	created_env_files+=("${STACKS}/code-server/.env")
+fi
+
+if [[ ! -f "${STACKS}/portainer/.env" ]]; then
+	cat >"${STACKS}/portainer/.env" <<EOF
+STACK_ROOT=${STACKS}
+PORTAINER_DATA_ROOT=/tmp/portainer-data
+PORTAINER_CERT_ROOT=/tmp/portainer-certs
+EDGE_ID=
+EDGE_KEY=
+EOF
+	created_env_files+=("${STACKS}/portainer/.env")
 fi
 
 while IFS= read -r f; do
@@ -66,6 +89,7 @@ while IFS= read -r f; do
 		cd "${dir}"
 		docker compose --env-file "${COMPOSE_ENV_FILE}" -f "${base}" config -q
 	)
-done < <(find "${STACKS}" -maxdepth 4 \( -name compose.yaml -o -name docker-compose.yml -o -name docker-compose.yaml \) ! -path '*/.git/*' | sort)
+	# docker-mcp.yaml is Docker Desktop MCP catalog YAML only — never validate as Compose.
+done < <(find "${STACKS}" -maxdepth 4 \( -name compose.yaml -o -name docker-compose.yml -o -name docker-compose.yaml \) ! -name docker-mcp.yaml ! -path '*/.git/*' | sort)
 
 echo "All compose files validated OK."

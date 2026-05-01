@@ -12,8 +12,10 @@ services:
     volumes:
       # Docker socket (ro): Dozzle enumerates containers/logs only; ro reduces risk vs a writable socket.
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /volume1/docker/dockge/stacks/dozzle:/data:rw
+      - ${STACK_ROOT}/dozzle:/data:rw
     environment:
+      PUID: ${PUID:-0}
+      PGID: ${PGID:-0}
       DOZZLE_AUTH_PROVIDER: simple
       TZ: America/New_York
     logging:

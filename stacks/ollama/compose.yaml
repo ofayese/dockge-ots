@@ -15,8 +15,10 @@ services:
     ports:
       - 10.0.1.15:11434:11434
     volumes:
-      - /volume1/docker/dockge/stacks/ollama/data:/root/.ollama:rw
+      - ${STACK_ROOT}/ollama/data:/root/.ollama:rw
     environment:
+      - PUID=${PUID:-0}
+      - PGID=${PGID:-0}
       - OLLAMA_HOST=0.0.0.0
       - OLLAMA_NUM_PARALLEL=1
       - OLLAMA_MAX_LOADED_MODELS=1
@@ -52,8 +54,10 @@ services:
     ports:
       - 8893:8080
     volumes:
-      - /volume1/docker/dockge/stacks/ollama/webui:/app/backend/data:rw
+      - ${STACK_ROOT}/ollama/webui:/app/backend/data:rw
     environment:
+      - PUID=${PUID:-0}
+      - PGID=${PGID:-0}
       - OLLAMA_BASE_URL=http://ollama:11434
       - WEBUI_AUTH=true
       - WEBUI_NAME=olutechsys AI

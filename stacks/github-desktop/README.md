@@ -21,9 +21,9 @@ Access via browser: `https://<nas-ip>:3405` or through the Synology Reverse Prox
 Run this on the Synology (SSH or via Task Scheduler as root):
 
 ```bash
-mkdir -p /volume1/docker/dockge/stacks/github-desktop/config
-mkdir -p /volume1/docker/dockge/stacks/github-desktop/data
-chown -R 0:0 /volume1/docker/dockge/stacks/github-desktop
+mkdir -p /volume1/​docker/dockge​/stacks/github-desktop/config
+mkdir -p /volume1/​docker/dockge​/stacks/github-desktop/data
+chown -R 0:0 /volume1/​docker/dockge​/stacks/github-desktop
 ```
 
 > Repo default is **root (`0:0`)** on Synology per `HIVE_OBJECTIVE.md`. Override `PUID`/`PGID` in `.env` for non-NAS dev hosts if needed.
@@ -86,7 +86,7 @@ Enable HTTP Compression: **Control Panel → Security → Advanced → Enable HT
 ## Volume Layout
 
 ```
-/volume1/docker/dockge/stacks/github-desktop/
+/volume1/​docker/dockge​/stacks/github-desktop/
 ├── compose.yaml
 ├── .env                  # live secrets (git-ignored)
 ├── .env.example          # template committed to git
@@ -154,16 +154,16 @@ group_add:
 
 ## Alignment With Repo Conventions
 
-| Convention                                         | This Stack                                     |
-| -------------------------------------------------- | ---------------------------------------------- |
-| Filename                                           | `compose.yaml`                                 |
-| `mem_limit` / `cpu_shares`                         | ✅ `2g` / `768`                                |
-| `logging` (json-file 10m/3)                        | ✅                                             |
-| `restart: on-failure:5`                            | ✅                                             |
-| `security_opt: no-new-privileges:true`             | ✅ (+ seccomp:unconfined required by Electron) |
-| `healthcheck`                                      | ✅ 30s interval, 90s start_period              |
-| Watchtower label                                   | ✅                                             |
-| `TZ` / `PUID` / `PGID` via `.env`                  | ✅                                             |
-| Volume path under `/volume1/docker/dockge/stacks/` | ✅                                             |
-| `bridge` external network                          | ✅                                             |
-| `.env.example` + `.gitignore`                      | ✅                                             |
+| Convention                                           | This Stack                                     |
+| ---------------------------------------------------- | ---------------------------------------------- |
+| Filename                                             | `compose.yaml`                                 |
+| `mem_limit` / `cpu_shares`                           | ✅ `2g` / `768`                                |
+| `logging` (json-file 10m/3)                          | ✅                                             |
+| `restart: on-failure:5`                              | ✅                                             |
+| `security_opt: no-new-privileges:true`               | ✅ (+ seccomp:unconfined required by Electron) |
+| `healthcheck`                                        | ✅ 30s interval, 90s start_period              |
+| Watchtower label                                     | ✅                                             |
+| `TZ` / `PUID` / `PGID` via `.env`                    | ✅                                             |
+| Volume path under `/volume1/​docker/dockge​/stacks/` | ✅                                             |
+| `bridge` external network                            | ✅                                             |
+| `.env.example` + `.gitignore`                        | ✅                                             |

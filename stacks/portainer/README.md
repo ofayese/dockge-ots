@@ -4,12 +4,12 @@ Container management UI (server) + agent for daemon access on the host.
 
 ## Services
 
-- **portainer** (9000 HTTP, 9443 HTTPS) — UI; mounts host `docker.sock` and `/volume1/docker/portainer` for state
+- **portainer** (9000 HTTP, 9443 HTTPS) — UI; mounts host `docker.sock` and `/volume1/​docker/portainer` for state
 - **portainer_agent** (9001) — daemon-side agent; runs with `cap_drop: ALL` and only `cap_add: NET_RAW`; mounts `/` as `/host` for full filesystem visibility
 
 ## TLS certs (agent)
 
-`/volume1/docker/portainer/certs/{cert,key}.pem` — mounted read-only into the agent. Do not modify; certs are issued and rotated separately.
+`/volume1/​docker/portainer/certs/{cert,key}.pem` — mounted read-only into the agent. Do not modify; certs are issued and rotated separately.
 
 ## Health
 
@@ -27,7 +27,7 @@ git checkout -- portainer/compose.yaml
 docker compose -f portainer/compose.yaml up -d
 ```
 
-Portainer DB (settings, registries, endpoints) persists at `/volume1/docker/portainer`. Loss = re-create endpoints and re-pair the agent.
+Portainer DB (settings, registries, endpoints) persists at `/volume1/​docker/portainer`. Loss = re-create endpoints and re-pair the agent.
 
 ## History
 

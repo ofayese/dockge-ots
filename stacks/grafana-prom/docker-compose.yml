@@ -23,8 +23,10 @@ services:
     ports:
       - "3340:3000"
     volumes:
-      - /volume1/docker/dockge/stacks/grafana-prom/data/grafana:/var/lib/grafana:rw
+      - ${STACK_ROOT}/grafana-prom/data/grafana:/var/lib/grafana:rw
     environment:
+      PUID: ${PUID:-0}
+      PGID: ${PGID:-0}
       TZ: ${TIMEZONE}
       GF_INSTALL_PLUGINS: grafana-clock-panel,grafana-simple-json-datasource,natel-discrete-panel,grafana-piechart-panel
     restart: on-failure:5
@@ -49,16 +51,19 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    environment:
+      PUID: ${PUID:-0}
+      PGID: ${PGID:-0}
     healthcheck:
       test: wget --no-verbose --tries=1 --spider http://localhost:9090/ || exit 1
       interval: 30s
       timeout: 5s
       retries: 3
     volumes:
-      - /volume1/docker/dockge/stacks/grafana-prom/data/prometheus:/prometheus:rw
-      - /volume1/docker/dockge/stacks/grafana-prom/prom.yml:/etc/prometheus/prometheus.yml:ro
+      - ${STACK_ROOT}/grafana-prom/data/prometheus:/prometheus:rw
+      - ${STACK_ROOT}/grafana-prom/prom.yml:/etc/prometheus/prometheus.yml:ro
       # Same token file Watchtower uses (see ../watchtower/compose.yaml + secrets/README.md).
-      - /volume1/docker/dockge/stacks/grafana-prom/secrets/watchtower_bearer_token.txt:/etc/prometheus/watchtower_bearer_token:ro
+      - ${STACK_ROOT}/grafana-prom/secrets/watchtower_bearer_token.txt:/etc/prometheus/watchtower_bearer_token:ro
     restart: on-failure:5
     depends_on:
       - node-exporter
@@ -92,6 +97,9 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    environment:
+      PUID: ${PUID:-0}
+      PGID: ${PGID:-0}
     healthcheck:
       test: wget --no-verbose --tries=1 --spider http://localhost:9100/ || exit 1
       interval: 30s
@@ -119,13 +127,16 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    environment:
+      PUID: ${PUID:-0}
+      PGID: ${PGID:-0}
     healthcheck:
       test: wget --no-verbose --tries=1 --spider http://localhost:9116/ || exit 1
       interval: 30s
       timeout: 5s
       retries: 3
     volumes:
-      - /volume1/docker/dockge/stacks/grafana-prom/snmp.yml:/etc/snmp_exporter/snmp.yml:ro
+      - ${STACK_ROOT}/grafana-prom/snmp.yml:/etc/snmp_exporter/snmp.yml:ro
     restart: on-failure:5
 
   cadvisor:
@@ -149,11 +160,14 @@ services:
         max-file: "3"
     # cAdvisor requires host rootfs/sysfs for container metrics (read-only). Documented NAS exception; do not replicate for unrelated stacks.
     volumes:
-      - /:/rootfs:ro
-      - /var/run:/var/run:ro
-      - /sys:/sys:ro
+      - /:/rootfs:ro # EXEMPT cAdvisor host metrics
+      - /var/run:/var/run:ro # EXEMPT cAdvisor host metrics
+      - /sys:/sys:ro # EXEMPT cAdvisor host metrics
       # Docker socket (ro): cAdvisor reads container stats via the daemon API.
       - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      PUID: ${PUID:-0}
+      PGID: ${PGID:-0}
     healthcheck:
       test:
         [

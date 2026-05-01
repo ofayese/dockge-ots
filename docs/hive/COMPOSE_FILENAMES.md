@@ -15,4 +15,4 @@ All other stacks under this repo use `compose.yaml` unless a new exception is ad
 
 ## CI validation
 
-[`scripts/compose-validate.sh`](../../scripts/compose-validate.sh) (repo root) discovers `compose.yaml`, `docker-compose.yml`, and `docker-compose.yaml` up to depth four and runs `docker compose config -q` for static checks. Under **`mcp-tools-config/`**, only **`compose.yaml`** is Compose; **`docker-mcp.yaml`** remains catalog-only (see table above).
+[`scripts/compose-validate.sh`](../../scripts/compose-validate.sh) (repo root) discovers `compose.yaml`, `docker-compose.yml`, and `docker-compose.yaml` up to depth four and runs `docker compose config -q` for static checks. The `find` pipeline **explicitly excludes `docker-mcp.yaml`** so Docker Desktop MCP catalog YAML is never passed to `docker compose` (see inline comment in the script). Under **`mcp-tools-config/`**, only **`compose.yaml`** is Compose; **`docker-mcp.yaml`** remains catalog-only (see table above).

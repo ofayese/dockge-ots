@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Portable check: stack names in scripts/init-nas.sh no-op manifest match ls stacks/.
-# (BSD grep lacks grep -oP; use this instead of raw grep -oP on macOS.)
+# Portable check: stack names in scripts/init-nas.sh STACK_MANIFEST match ls stacks/.
+# (BSD grep lacks grep -oP; avoid matching unrelated "foo:bar" strings in echo lines.)
 set -euo pipefail
 _script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="${_script_dir}"
@@ -11,7 +11,17 @@ done
 	echo "ERROR: could not find repo root" >&2
 	exit 1
 }
+init_script="${ROOT}/scripts/init-nas.sh"
 # shellcheck disable=SC2012
 diff <(
-	perl -ne 'while (/"([^"]+:[^"]+)"/g) { ($x=$1) =~ s/:.*//s; print "$x\n" }' "${ROOT}/scripts/init-nas.sh" | sort -u
+	awk '
+		/^STACK_MANIFEST=\(/ { inm=1; next }
+		inm && /^\)/ { inm=0; next }
+		inm && /^[[:space:]]*"/ {
+			sub(/^[[:space:]]*"/, "")
+			sub(/"[[:space:]]*,?$/, "")
+			sub(/:.*$/, "")
+			print
+		}
+	' "${init_script}" | sort -u
 ) <(ls "${ROOT}/stacks" | sort)

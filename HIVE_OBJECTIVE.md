@@ -4,27 +4,27 @@ Canonical brief for `claude-flow hive-mind` workers and queen. **Spawn with a sh
 
 ## One-line mission
 
-Raise **all nineteen** Dockge stack folders under this repo to **production-grade reliability, observability, and maintainability** on Synology without changing service intent, and produce a **deployable HAProxy front-door spec** (stretch) using existing ACME material under `/volume1/certs/acme/`.
+Raise **all twenty** Dockge stack folders under this repo to **production-grade reliability, observability, and maintainability** on Synology without changing service intent, and produce a **deployable HAProxy front-door spec** (stretch) using existing ACME material under `/volume1/certs/acme/`.
 
 ## Context (authoritative)
 
-| Item                                       | Value                                                                                                                                                                                                                                                                                       |
-| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Repo root (git)                            | `/Volumes/docker/dockge` (or `/volume1/docker/dockge` on NAS)                                                                                                                                                                                                                               |
-| Stack root (Dockge `DOCKGE_STACKS_DIR`)    | `/Volumes/docker/dockge/stacks` (or `/volume1/docker/dockge/stacks` on NAS)                                                                                                                                                                                                                 |
-| Stack folders (Dockge `DOCKGE_STACKS_DIR`) | **19** — `acme-sh`, `agents_gateway_data`, `code-server`, `codex-docs`, `databases`, `docker-model-runner`, `dozzle`, `github-desktop`, `grafana-prom`, `holyclaude`, `homepage`, `it-tools`, `mcp-tools-config`, `ollama`, `openresume`, `portainer`, `searxng`, `warp-main`, `watchtower` |
-| Workers (hive inventory)                   | **19** — **one worker per stack folder** (same names as rows above)                                                                                                                                                                                                                         |
-| Dev / high-privilege note                  | `holyclaude` — validate separately; extra caps (`SYS_ADMIN`, `seccomp:unconfined`) documented in that stack’s proposal                                                                                                                                                                      |
-| Host                                       | Synology NAS, LAN `10.0.1.15`, `TZ=America/New_York`                                                                                                                                                                                                                                        |
-| Primary domain                             | **`otsorundscore.olutechsys.com`** (and related zones per [stacks/acme-sh/AGENTS.md](stacks/acme-sh/AGENTS.md)); stack configs and HAProxy use **`otsorundscore`** hostnames only                                                                                                           |
-| TLS                                        | `acme-sh` issues to `/volume1/certs/acme/` — **do not edit cert/key files**; reference paths only in proposals                                                                                                                                                                              |
+| Item                                       | Value                                                                                                                                                                                                                                                                                                 |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Repo root (git)                            | `/Volumes/docker/dockge` (or `/volume1/docker/dockge` on NAS)                                                                                                                                                                                                                                         |
+| Stack root (Dockge `DOCKGE_STACKS_DIR`)    | `/Volumes/docker/dockge/stacks` (or `/volume1/docker/dockge/stacks` on NAS)                                                                                                                                                                                                                           |
+| Stack folders (Dockge `DOCKGE_STACKS_DIR`) | **20** — `acme-sh`, `agents_gateway_data`, `code-server`, `codex-docs`, `databases`, `docker-model-runner`, `dozzle`, `github-desktop`, `grafana-prom`, `holyclaude`, `homepage`, `it-tools`, `mcp-tools-config`, `ollama`, `openresume`, `portainer`, `searxng`, `warp-main`, `watchtower`, `zabbix` |
+| Workers (hive inventory)                   | **20** — **one worker per stack folder** (same names as rows above)                                                                                                                                                                                                                                   |
+| Dev / high-privilege note                  | `holyclaude` — validate separately; extra caps (`SYS_ADMIN`, `seccomp:unconfined`) documented in that stack’s proposal                                                                                                                                                                                |
+| Host                                       | Synology NAS, LAN `10.0.1.15`, `TZ=America/New_York`                                                                                                                                                                                                                                                  |
+| Primary domain                             | **`otsorundscore.olutechsys.com`** (and related zones per [stacks/acme-sh/AGENTS.md](stacks/acme-sh/AGENTS.md)); stack configs and HAProxy use **`otsorundscore`** hostnames only                                                                                                                     |
+| TLS                                        | `acme-sh` issues to `/volume1/certs/acme/` — **do not edit cert/key files**; reference paths only in proposals                                                                                                                                                                                        |
 
 ## Short `-o` for spawn (keep under ~200 characters)
 
 Use this verbatim (or a trivial variant); full rules are in this file:
 
 ```text
-Read HIVE_OBJECTIVE.md. 19 workers: 1 per stack folder. Proposals only in docs/hive/proposals/. Queen consensus before cross-stack or compose apply. Stretch: _haproxy/haproxy.cfg.
+Read HIVE_OBJECTIVE.md. 20 workers: 1 per stack folder. Proposals only in docs/hive/proposals/. Queen consensus before cross-stack or compose apply. Stretch: _haproxy/haproxy.cfg.
 ```
 
 ## Pre-flight (before `spawn`)
@@ -32,7 +32,7 @@ Read HIVE_OBJECTIVE.md. 19 workers: 1 per stack folder. Proposals only in docs/h
 ```bash
 cd /Volumes/docker/dockge   # or NAS: cd /volume1/docker/dockge
 claude-flow hive-mind init -t hierarchical-mesh
-claude-flow hive-mind spawn --count 19 --claude -o 'Read HIVE_OBJECTIVE.md. 19 workers: 1 per stack folder. Proposals only in docs/hive/proposals/. Queen consensus before cross-stack or compose apply. Stretch: _haproxy/haproxy.cfg.'
+claude-flow hive-mind spawn --count 20 --claude -o 'Read HIVE_OBJECTIVE.md. 20 workers: 1 per stack folder. Proposals only in docs/hive/proposals/. Queen consensus before cross-stack or compose apply. Stretch: _haproxy/haproxy.cfg.'
 ```
 
 Use `--count <N>`, **not** `-n <N>`. In ruflo v3.6.10 the `-n` / `--workers` flags are silently ignored and always spawn 1 worker, despite appearing in `--help` examples.
@@ -98,7 +98,7 @@ Per-stack workers still file findings in their own `proposals/<stack>/` and link
 - Image: digest **or** explicit semver tag; no unjustified `:latest`
 - `healthcheck` with realistic `test`, `interval`, `timeout`, `retries`, `start_period` (or documented impossibility)
 - Baseline block + documented resource limits
-- Volumes: absolute NAS paths (`/volume1/docker/dockge/stacks/<stack>/...`); `:ro` where the container does not need write
+- Volumes: `${STACK_ROOT}/<stack>/...` (absolute after `init-nas.sh`); `:ro` where the container does not need write
 - `.env.example` for all non-secret tunables; secrets remain gitignored
 - `logging` driver/options suitable for Dozzle
 - `README.md` in stack folder: purpose, ports, env vars, dependencies, health meaning, rollback
@@ -127,9 +127,9 @@ Per-stack workers still file findings in their own `proposals/<stack>/` and link
 
 ```mermaid
 flowchart TD
-  Init[hive-mind init hierarchical-mesh] --> Spawn[spawn n19 claude short -o]
+  Init[hive-mind init hierarchical-mesh] --> Spawn[spawn n20 claude short -o]
   Spawn --> Queen[Queen owns HIVE_OBJECTIVE.md]
-  Queen --> Fan[19 workers 1 per stack]
+  Queen --> Fan[20 workers 1 per stack]
   Fan --> P[docs/hive/proposals per stack]
   P --> X{cross-stack?}
   X -->|No| Apply[Queen review then apply]
@@ -142,10 +142,12 @@ flowchart TD
 
 ## NAS Deployment Notes (Synology)
 
+Canonical operator flow: **[docs/hive/NAS_DEPLOYMENT.md](docs/hive/NAS_DEPLOYMENT.md)** (`init-nas.sh`, `STACK_ROOT`, `fix-permissions.sh`, rsync).
+
 ### Paths and writable data
 
-- **Bind mounts** in tracked compose files use **absolute** paths under `/volume1/docker/dockge/stacks/<stack>/…` (or documented exceptions such as `/volume1/docker/portainer` for legacy Portainer data). Do **not** point writable volumes at the git checkout tree on the NAS; keep mutable state on volume paths only.
-- **Permissions:** On the NAS, stack data dirs should be **`root:root`** with dirs `755` and files `644` for predictable Docker bind mounts. Run **`scripts/fix-permissions.sh`** (from this repo on the NAS, as `root`) after initial deploy or large rsyncs. Defaults: `/volume1/docker/dockge/stacks` plus an optional second path (e.g. `/volume1/docker/portainer`).
+- **Bind mounts** in tracked compose files use **`${STACK_ROOT}/<stack>/…`** (resolved to an absolute path in repo-root `.env` by `scripts/init-nas.sh`) or documented operator exceptions (Portainer, code-server — see those stacks’ READMEs).
+- **Permissions:** On the NAS, stack data dirs should be **`root:root`** with dirs `755` and files `644` for predictable Docker bind mounts. Run **`sudo bash scripts/fix-permissions.sh`** (optional explicit stacks root) after initial deploy or large rsyncs.
 
 ### Git and sync workflow
 

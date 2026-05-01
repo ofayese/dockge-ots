@@ -1,90 +1,123 @@
 #!/usr/bin/env bash
-# init-nas.sh — post-clone NAS bootstrap: resolve STACK_ROOT, write repo-root .env, mkdir stack dirs, fix permissions.
-# Run once after git clone on the NAS: sudo bash scripts/init-nas.sh
+# init-nas.sh
+# Post-clone bootstrap for the Dockge stack repo.
+# Run once after git clone on the NAS:
+#   sudo bash scripts/init-nas.sh
+# Re-run after git pull only if new stacks have been added.
+# Idempotent — safe to run multiple times.
+
 set -euo pipefail
 
+# ── 1. Resolve repo root and STACK_ROOT ──────────────────────────────
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
-STACKS_DIR="${REPO_ROOT}/stacks"
+REPO_ENV="${REPO_ROOT}/.env"
+STACKS_IN_REPO="${REPO_ROOT}/stacks"
 
-# --- STACK_MANIFEST: noop colon-quoted stack lines at end of file (keep in sync with ls stacks/).
-
-resolve_stack_root() {
-	if [[ -d "${STACKS_DIR}" ]]; then
-		printf '%s' "${STACKS_DIR}"
-		return 0
+# Prefer stacks inside this repo (this layout). Else sibling ../stacks next to the
+# clone parent. Else STACK_ROOT_OVERRIDE or /dockge/stacks.
+if [[ -d "${STACKS_IN_REPO}" ]]; then
+	STACK_ROOT="${STACKS_IN_REPO}"
+	echo "Auto-detected STACK_ROOT (repo stacks/): ${STACK_ROOT}"
+else
+	CANDIDATE_STACKS="$(cd "${REPO_ROOT}/.." && pwd)/stacks"
+	if [[ -d "${CANDIDATE_STACKS}" ]]; then
+		STACK_ROOT="${CANDIDATE_STACKS}"
+		echo "Auto-detected STACK_ROOT (sibling stacks/): ${STACK_ROOT}"
+	else
+		STACK_ROOT="${STACK_ROOT_OVERRIDE:-/dockge/stacks}"
+		echo "Using default STACK_ROOT: ${STACK_ROOT}"
+		echo "(Override with: STACK_ROOT_OVERRIDE=/your/path sudo bash scripts/init-nas.sh)"
 	fi
-	printf '%s' "/dockge/stacks"
-}
+fi
 
-write_repo_env() {
-	local stack_root="$1"
-	local env_file="${REPO_ROOT}/.env"
-	touch "${env_file}"
-	if grep -q '^STACK_ROOT=' "${env_file}" 2>/dev/null; then
+# ── 2. Write STACK_ROOT into repo-root .env ───────────────────────────
+if [[ -f "${REPO_ENV}" ]]; then
+	if grep -q '^STACK_ROOT=' "${REPO_ENV}" 2>/dev/null; then
 		if [[ "$(uname -s)" == "Darwin" ]]; then
-			sed -i '' "s|^STACK_ROOT=.*|STACK_ROOT=${stack_root}|" "${env_file}"
+			sed -i '' "s|^STACK_ROOT=.*|STACK_ROOT=${STACK_ROOT}|" "${REPO_ENV}"
 		else
-			sed -i "s|^STACK_ROOT=.*|STACK_ROOT=${stack_root}|" "${env_file}"
+			sed -i "s|^STACK_ROOT=.*|STACK_ROOT=${STACK_ROOT}|" "${REPO_ENV}"
 		fi
+		echo "Updated STACK_ROOT in ${REPO_ENV}"
 	else
-		printf 'STACK_ROOT=%s\n' "${stack_root}" >>"${env_file}"
+		echo "STACK_ROOT=${STACK_ROOT}" >>"${REPO_ENV}"
+		echo "Appended STACK_ROOT to ${REPO_ENV}"
 	fi
-	for kv in "PUID=0" "PGID=0"; do
-		key="${kv%%=*}"
-		if ! grep -q "^${key}=" "${env_file}" 2>/dev/null; then
-			printf '%s\n' "${kv}" >>"${env_file}"
+else
+	if [[ -f "${REPO_ROOT}/.env.example" ]]; then
+		cp "${REPO_ROOT}/.env.example" "${REPO_ENV}"
+		if [[ "$(uname -s)" == "Darwin" ]]; then
+			sed -i '' "s|^STACK_ROOT=.*|STACK_ROOT=${STACK_ROOT}|" "${REPO_ENV}"
+		else
+			sed -i "s|^STACK_ROOT=.*|STACK_ROOT=${STACK_ROOT}|" "${REPO_ENV}"
 		fi
-	done
-}
-
-mkdir_stack_layout() {
-	local stack_root="$1"
-	local stack
-	for stack in "${STACKS_DIR}"/*; do
-		[[ -d "${stack}" ]] || continue
-		local name
-		name="$(basename "${stack}")"
-		mkdir -p "${stack_root}/${name}/data" "${stack_root}/${name}/config" "${stack_root}/${name}/db"
-	done
-}
-
-main() {
-	local stack_root
-	stack_root="$(resolve_stack_root)"
-	printf 'Using STACK_ROOT=%s\n' "${stack_root}"
-	mkdir -p "${stack_root}"
-	write_repo_env "${stack_root}"
-	mkdir_stack_layout "${stack_root}"
-
-	if [[ "$(id -u)" -eq 0 ]]; then
-		bash "${SCRIPT_DIR}/fix-permissions.sh" "${stack_root}"
+		echo "Created ${REPO_ENV} from .env.example with resolved STACK_ROOT"
 	else
-		printf 'WARN: not root; run: sudo bash %s %s\n' "${SCRIPT_DIR}/fix-permissions.sh" "${stack_root}" >&2
+		echo "STACK_ROOT=${STACK_ROOT}" >"${REPO_ENV}"
+		echo "Created minimal ${REPO_ENV}"
 	fi
-	printf 'init-nas.sh finished.\n'
-}
+fi
 
-main "$@"
+# Ensure PUID/PGID exist in repo .env (non-destructive append).
+for kv in "PUID=0" "PGID=0"; do
+	key="${kv%%=*}"
+	if ! grep -q "^${key}=" "${REPO_ENV}" 2>/dev/null; then
+		echo "${kv}" >>"${REPO_ENV}"
+	fi
+done
 
-# shellcheck disable=SC2034
-# No-op manifest pairs for CI (keep in sync with ls stacks/ and comment manifest above).
-: "acme-sh:data"
-: "agents_gateway_data:data"
-: "code-server:config"
-: "codex-docs:data"
-: "databases:db"
-: "docker-model-runner:data"
-: "dozzle:data"
-: "github-desktop:config"
-: "grafana-prom:data"
-: "holyclaude:data"
-: "homepage:config"
-: "it-tools:data"
-: "mcp-tools-config:data"
-: "ollama:data"
-: "openresume:data"
-: "portainer:data"
-: "searxng:config"
-: "warp-main:data"
-: "watchtower:data"
+# ── 3. Create volume directories for all stacks ───────────────────────
+echo ""
+echo "Creating volume directories under ${STACK_ROOT} ..."
+
+# Format: "stack-name:sub1[,sub2]" — keep aligned with compose bind mounts under ${STACK_ROOT}/<stack>/...
+STACK_MANIFEST=(
+	"acme-sh:data"
+	"agents_gateway_data:data"
+	"code-server:config"
+	"codex-docs:data"
+	"databases:db"
+	"docker-model-runner:data"
+	"dozzle:data"
+	"github-desktop:config"
+	"grafana-prom:data,config"
+	"holyclaude:data"
+	"homepage:config"
+	"it-tools:data"
+	"mcp-tools-config:data"
+	"ollama:data"
+	"openresume:data"
+	"portainer:data"
+	"searxng:config"
+	"warp-main:data"
+	"watchtower:data"
+	"zabbix:db,data,config"
+)
+
+for entry in "${STACK_MANIFEST[@]}"; do
+	stack="${entry%%:*}"
+	sub_folders="${entry##*:}"
+	IFS=',' read -ra folders <<<"${sub_folders}"
+	for folder in "${folders[@]}"; do
+		dir="${STACK_ROOT}/${stack}/${folder}"
+		mkdir -p "${dir}"
+		echo "  ✓ ${dir}"
+	done
+done
+
+# ── 4. Run fix-permissions.sh ─────────────────────────────────────────
+echo ""
+echo "Fixing permissions ..."
+if [[ "$(id -u)" -eq 0 ]]; then
+	bash "${SCRIPT_DIR}/fix-permissions.sh" "${STACK_ROOT}"
+else
+	echo "WARN: not root; run: sudo bash ${SCRIPT_DIR}/fix-permissions.sh ${STACK_ROOT}" >&2
+fi
+
+echo ""
+echo "────────────────────────────────────────"
+echo "Init complete."
+echo "STACK_ROOT = ${STACK_ROOT}"
+echo "Now open Dockge and deploy your stacks."
+echo "────────────────────────────────────────"

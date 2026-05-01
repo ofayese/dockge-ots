@@ -99,7 +99,7 @@ Other services (Dozzle, Code-Server, MariaDB, etc.) show status only (running/st
 ## Synology DS723+ Specifics
 
 - **Docker Socket:** `/var/run/docker.sock` (mounted read-only in Homepage container)
-- **PUID/PGID:** 1026:100 (Synology standard for non-system users)
+- **Ownership:** bind mounts should be `root:root` on NAS (`fix-permissions.sh`); Homepage does not set linuxserver-style PUID in compose.
 - **All containers use label:** `com.centurylinklabs.watchtower.enable=true` (for auto-updates)
 - **All containers are on the same `bridge` network** (defined externally in root compose files)
 

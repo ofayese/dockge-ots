@@ -17,7 +17,8 @@ services:
     volumes:
       - /volume1/docker/dockge/stacks/homepage/config:/app/config:rw
       - /volume1/docker/dockge/stacks/homepage/icons:/app/public/icons:rw
-      # Required for the docker.yaml `my-docker` socket integration
+      # Docker socket (ro): exposes container/meta to Homepage; read-only avoids mutating containers via the API.
+      # Required for the docker.yaml `my-docker` socket integration.
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
       - TZ=America/New_York

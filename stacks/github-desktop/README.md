@@ -5,8 +5,8 @@ Based on the [mariushosting installation guide](https://mariushosting.com/how-to
 
 ## Service
 
-| Container | Host Port | Purpose |
-|---|---|---|
+| Container        | Host Port       | Purpose                  |
+| ---------------- | --------------- | ------------------------ |
 | `Github-Desktop` | `3405` → `3001` | KasmVNC HTTPS browser UI |
 
 Access via browser: `https://<nas-ip>:3405` or through the Synology Reverse Proxy at
@@ -23,10 +23,10 @@ Run this on the Synology (SSH or via Task Scheduler as root):
 ```bash
 mkdir -p /volume1/docker/dockge/stacks/github-desktop/config
 mkdir -p /volume1/docker/dockge/stacks/github-desktop/data
-chown -R 1026:100 /volume1/docker/dockge/stacks/github-desktop
+chown -R 0:0 /volume1/docker/dockge/stacks/github-desktop
 ```
 
-> Replace `1026:100` with your own PUID:PGID (see [how to find yours](https://mariushosting.com/synology-find-user-id-and-group-id/)).
+> Repo default is **root (`0:0`)** on Synology per `HIVE_OBJECTIVE.md`. Override `PUID`/`PGID` in `.env` for non-NAS dev hosts if needed.
 
 ### 2. Configure environment
 
@@ -37,15 +37,15 @@ nano .env   # Set PASSWORD, confirm PUID/PGID/TZ
 
 Key values to set:
 
-| Variable | Default | Notes |
-|---|---|---|
-| `PUID` | `1026` | Your Synology user ID |
-| `PGID` | `100` | Your Synology group ID (usually `users = 100`) |
-| `TZ` | `America/New_York` | [IANA timezone string](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) |
-| `CUSTOM_USER` | `admin` | Login username for KasmVNC web UI |
-| `PASSWORD` | *(required)* | Login password — no special characters |
-| `TITLE` | `Github-Desktop` | Browser tab title |
-| `HOST_PORT` | `3405` | Host-side port (reverse proxy destination) |
+| Variable      | Default            | Notes                                                                                |
+| ------------- | ------------------ | ------------------------------------------------------------------------------------ |
+| `PUID`        | `0`                | Default **root** on NAS; override for local Linux dev                                |
+| `PGID`        | `0`                | Default **root** on NAS; override for local Linux dev                                |
+| `TZ`          | `America/New_York` | [IANA timezone string](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) |
+| `CUSTOM_USER` | `admin`            | Login username for KasmVNC web UI                                                    |
+| `PASSWORD`    | _(required)_       | Login password — no special characters                                               |
+| `TITLE`       | `Github-Desktop`   | Browser tab title                                                                    |
+| `HOST_PORT`   | `3405`             | Host-side port (reverse proxy destination)                                           |
 
 ### 3. Deploy
 
@@ -65,16 +65,16 @@ then authenticate with your GitHub account inside the app.
 
 In **Control Panel → Login Portal → Advanced → Reverse Proxy**, create a new rule:
 
-| Field | Value |
-|---|---|
-| Name | `Github-Desktop` |
-| Source Protocol | HTTPS |
-| Source Hostname | `githubdesktop.<yourname>.synology.me` |
-| Source Port | `443` |
-| Enable HSTS | ✅ |
-| Destination Protocol | HTTPS |
-| Destination Hostname | `localhost` |
-| Destination Port | `3405` |
+| Field                | Value                                  |
+| -------------------- | -------------------------------------- |
+| Name                 | `Github-Desktop`                       |
+| Source Protocol      | HTTPS                                  |
+| Source Hostname      | `githubdesktop.<yourname>.synology.me` |
+| Source Port          | `443`                                  |
+| Enable HSTS          | ✅                                     |
+| Destination Protocol | HTTPS                                  |
+| Destination Hostname | `localhost`                            |
+| Destination Port     | `3405`                                 |
 
 Under **Custom Header → Create → WebSocket**, add the WebSocket headers and click Save.
 
@@ -127,10 +127,10 @@ If you want hardware acceleration for Electron rendering on a NAS with an Intel 
 add the following to the service definition:
 
 ```yaml
-    devices:
-      - /dev/dri:/dev/dri
-    group_add:
-      - "video"        # GID varies — check with: getent group video
+devices:
+  - /dev/dri:/dev/dri
+group_add:
+  - "video" # GID varies — check with: getent group video
 ```
 
 > This is experimental. Synology DSM must have GPU passthrough available and the
@@ -154,16 +154,16 @@ add the following to the service definition:
 
 ## Alignment With Repo Conventions
 
-| Convention | This Stack |
-|---|---|
-| Filename | `compose.yaml` |
-| `mem_limit` / `cpu_shares` | ✅ `2g` / `768` |
-| `logging` (json-file 10m/3) | ✅ |
-| `restart: on-failure:5` | ✅ |
-| `security_opt: no-new-privileges:true` | ✅ (+ seccomp:unconfined required by Electron) |
-| `healthcheck` | ✅ 30s interval, 90s start_period |
-| Watchtower label | ✅ |
-| `TZ` / `PUID` / `PGID` via `.env` | ✅ |
-| Volume path under `/volume1/docker/dockge/stacks/` | ✅ |
-| `bridge` external network | ✅ |
-| `.env.example` + `.gitignore` | ✅ |
+| Convention                                         | This Stack                                     |
+| -------------------------------------------------- | ---------------------------------------------- |
+| Filename                                           | `compose.yaml`                                 |
+| `mem_limit` / `cpu_shares`                         | ✅ `2g` / `768`                                |
+| `logging` (json-file 10m/3)                        | ✅                                             |
+| `restart: on-failure:5`                            | ✅                                             |
+| `security_opt: no-new-privileges:true`             | ✅ (+ seccomp:unconfined required by Electron) |
+| `healthcheck`                                      | ✅ 30s interval, 90s start_period              |
+| Watchtower label                                   | ✅                                             |
+| `TZ` / `PUID` / `PGID` via `.env`                  | ✅                                             |
+| Volume path under `/volume1/docker/dockge/stacks/` | ✅                                             |
+| `bridge` external network                          | ✅                                             |
+| `.env.example` + `.gitignore`                      | ✅                                             |

@@ -11,6 +11,7 @@ services:
       # Prometheus (grafana-prom) scrapes /v1/metrics here; restrict on firewall if needed.
       - "10.0.1.15:18787:8080"
     volumes:
+      # Docker socket (ro): Watchtower needs daemon API for image updates; ro is sufficient for its operations.
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
       - TZ=America/New_York

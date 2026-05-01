@@ -19,8 +19,8 @@ services:
       - .env
     environment:
       - TZ=America/New_York
-      - PUID=${PUID}
-      - PGID=${PGID}
+      - PUID=${PUID:-0}
+      - PGID=${PGID:-0}
       - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
       - NOTIFY_DISCORD=${NOTIFY_DISCORD}
     volumes:

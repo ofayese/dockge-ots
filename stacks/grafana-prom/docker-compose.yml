@@ -9,7 +9,7 @@ services:
     cpu_shares: 512
     security_opt:
       - no-new-privileges:true
-    user: ${SYNO_UID}:${SYNO_GID}
+    user: ${SYNO_UID:-0}:${SYNO_GID:-0}
     logging:
       driver: json-file
       options:
@@ -23,7 +23,7 @@ services:
     ports:
       - "3340:3000"
     volumes:
-      - ./data/grafana:/var/lib/grafana:rw
+      - /volume1/docker/dockge/stacks/grafana-prom/data/grafana:/var/lib/grafana:rw
     environment:
       TZ: ${TIMEZONE}
       GF_INSTALL_PLUGINS: grafana-clock-panel,grafana-simple-json-datasource,natel-discrete-panel,grafana-piechart-panel
@@ -43,7 +43,7 @@ services:
     cpu_shares: 768
     security_opt:
       - no-new-privileges:true
-    user: ${SYNO_UID}:${SYNO_GID}
+    user: ${SYNO_UID:-0}:${SYNO_GID:-0}
     logging:
       driver: json-file
       options:
@@ -55,10 +55,10 @@ services:
       timeout: 5s
       retries: 3
     volumes:
-      - ./data/prometheus:/prometheus:rw
-      - ./prom.yml:/etc/prometheus/prometheus.yml:ro
+      - /volume1/docker/dockge/stacks/grafana-prom/data/prometheus:/prometheus:rw
+      - /volume1/docker/dockge/stacks/grafana-prom/prom.yml:/etc/prometheus/prometheus.yml:ro
       # Same token file Watchtower uses (see ../watchtower/compose.yaml + secrets/README.md).
-      - ./secrets/watchtower_bearer_token.txt:/etc/prometheus/watchtower_bearer_token:ro
+      - /volume1/docker/dockge/stacks/grafana-prom/secrets/watchtower_bearer_token.txt:/etc/prometheus/watchtower_bearer_token:ro
     restart: on-failure:5
     depends_on:
       - node-exporter
@@ -86,7 +86,7 @@ services:
     security_opt:
       - no-new-privileges:true
     read_only: true
-    user: ${SYNO_UID}:${SYNO_GID}
+    user: ${SYNO_UID:-0}:${SYNO_GID:-0}
     logging:
       driver: json-file
       options:
@@ -113,7 +113,7 @@ services:
     security_opt:
       - no-new-privileges:true
     read_only: true
-    user: ${SYNO_UID}:${SYNO_GID}
+    user: ${SYNO_UID:-0}:${SYNO_GID:-0}
     logging:
       driver: json-file
       options:
@@ -125,7 +125,7 @@ services:
       timeout: 5s
       retries: 3
     volumes:
-      - ./snmp.yml:/etc/snmp_exporter/snmp.yml:ro
+      - /volume1/docker/dockge/stacks/grafana-prom/snmp.yml:/etc/snmp_exporter/snmp.yml:ro
     restart: on-failure:5
 
   cadvisor:
@@ -147,11 +147,23 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    # cAdvisor requires host rootfs/sysfs for container metrics (read-only). Documented NAS exception; do not replicate for unrelated stacks.
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:ro
       - /sys:/sys:ro
+      # Docker socket (ro): cAdvisor reads container stats via the daemon API.
       - /var/run/docker.sock:/var/run/docker.sock:ro
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget -qO- http://127.0.0.1:8080/healthz >/dev/null 2>&1 || exit 1",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     restart: on-failure:5
 
   # Watchtower is owned by the fleet stack at ../../watchtower/compose.yaml — do not

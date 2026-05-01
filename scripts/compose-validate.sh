@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 # Validate Compose files parse and interpolate (no pull / no run).
-# Repo root = parent of scripts/; compose stacks live under stacks/.
+# Repo root = ancestor containing HIVE_OBJECTIVE.md; compose stacks live under stacks/.
 set -euo pipefail
-# Repo root contains HIVE_OBJECTIVE.md (works from repo/scripts or repo/stacks/scripts).
 _script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="${_script_dir}"
 while [[ ! -f "${ROOT}/HIVE_OBJECTIVE.md" && "${ROOT}" != "/" ]]; do
@@ -48,8 +47,8 @@ fi
 
 if [[ ! -f "${STACKS}/holyclaude/.env" ]]; then
 	cat >"${STACKS}/holyclaude/.env" <<EOF
-PUID=1000
-PGID=1000
+PUID=0
+PGID=0
 DISCORD_WEBHOOK_URL=
 NOTIFY_DISCORD=false
 WORKSPACE_PATH=/tmp/workspace

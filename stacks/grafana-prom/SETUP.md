@@ -13,11 +13,10 @@ This Docker Compose stack provides complete monitoring for Synology NAS using Gr
 
 ## Prerequisites
 
-1. **Find your UID and GID** (Synology-specific):
+1. **UID and GID for Grafana/Prometheus processes** (see `.env.example`):
 
-   - SSH into your NAS or use Control Panel > Users > Advanced
-   - Most Synology NAS defaults: UID=1026, GID=100
-   - Update `.env` file with your actual values
+   - Repo default on NAS: **`SYNO_UID=0`** / **`SYNO_GID=0`** (root) per `HIVE_OBJECTIVE.md`.
+   - Override only on non-NAS dev hosts if you must run processes as a non-root numeric user.
 
 2. **Enable SNMP on your Synology NAS**:
 
@@ -38,10 +37,10 @@ This Docker Compose stack provides complete monitoring for Synology NAS using Gr
 Edit `.env`:
 
 ```bash
-UID=1026                    # Your Synology UID
-GID=100                     # Your Synology GID
-TIMEZONE=Europe/Bucharest   # Your timezone
-NAS_IP=192.168.1.18        # Your NAS local IP
+SYNO_UID=0                  # Default root on NAS (see HIVE_OBJECTIVE.md)
+SYNO_GID=0
+TIMEZONE=America/New_York   # IANA TZ
+NAS_IP=10.0.1.15            # Management LAN IP for SNMP targets
 ```
 
 Edit `prometheus.yml`:

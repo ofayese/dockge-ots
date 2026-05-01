@@ -8,6 +8,7 @@ services:
       - 9000:9000
       - 9443:9443
     volumes:
+      # SECURITY: docker.sock grants control of the host Docker API. Portainer requires rw for management UI.
       - /var/run/docker.sock:/var/run/docker.sock
       - /volume1/docker/portainer:/data
     restart: always
@@ -41,6 +42,7 @@ services:
     ports:
       - 10.0.1.15:9001:9001
     volumes:
+      # SECURITY: Agent mounts docker.sock rw, host rootfs at /host, and Docker volumes — highest privilege in this repo. Restrict network access.
       - /var/run/docker.sock:/var/run/docker.sock
       - /volume1/@docker/volumes:/var/lib/docker/volumes
       - /:/host

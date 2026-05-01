@@ -2,7 +2,7 @@ services:
   code-server:
     image: codercom/code-server:4.117.0-39
     container_name: CodeServer
-    user: "${PUID:-1026}:${PGID:-100}"
+    user: "${PUID:-0}:${PGID:-0}"
     mem_limit: 4g
     cpu_shares: 1024
     security_opt:
@@ -22,6 +22,7 @@ services:
       - /volume1/docker/dockge/stacks/code-server/state:/home/coder/.local/share/code-server:rw
       - /volume1/docker:/home/coder/project/docker:rw
       - /volume1/homes/ofayese:/home/coder/project/home:rw
+      # SECURITY: rw docker.sock lets this container control the host Docker API (effectively host root). Required for in-IDE docker; restrict network exposure.
       - /var/run/docker.sock:/var/run/docker.sock:rw
     environment:
       TZ: ${TZ:-America/New_York}
@@ -119,8 +120,7 @@ services:
       retries: 3
       start_period: 20s
     depends_on:
-      db:
-        condition: service_healthy
+      - db
     labels:
       - com.centurylinklabs.watchtower.enable=true
     networks:

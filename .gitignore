@@ -1,18 +1,15 @@
 # Local tool cache (repo root)
 .ruff_cache/
 
-# Superseded by stacks-compose-validate.yml (legacy filename may be SMB-busy locally)
-.github/workflows/compose-validate.yml
-
-# Legacy SMB-local copies; canonical compose validate is stacks/scripts/compose-validate.sh
-scripts/compose-validate.sh
-scripts/compose-validate-symlink.sh
+# Synology / Windows / desktop artifacts (repo-wide)
+**/@eaDir/
+**/.DS_Store
+**/Thumbs.db
+**/.synology/
 
 .smbdelete*
 ._DAV/
 **/._DAV/
-.DS_Store
-**/.DS_Store
 
 # Host-only (Synology / local Dockge runtime)
 data/

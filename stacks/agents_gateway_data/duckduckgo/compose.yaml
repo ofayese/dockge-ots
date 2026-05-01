@@ -1,10 +1,29 @@
 services:
   mcp-gateway:
-    image: docker/mcp-gateway
+    image: docker/mcp-gateway:v0.42.0
     command:
       - --servers=duckduckgo
       - --transport=streaming
+    mem_limit: 512m
+    cpu_shares: 512
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: on-failure:5
     ports:
       - 8811:8811
     volumes:
+      # SECURITY: docker.sock grants Docker API access (host-level). Required for MCP gateway image.
       - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - bridge
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+
+networks:
+  bridge:
+    external: true

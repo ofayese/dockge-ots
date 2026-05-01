@@ -11,11 +11,11 @@
 #   3. Resources: added --memory 512m --cpu-shares 512
 #   4. Logging: added --log-driver json-file with size cap
 #   5. Port note: host 5571→container 5001. Homepage/HAProxy must use 5571.
-#   6. PUID/PGID: added per upstream README for correct stack file ownership.
+#   6. PUID/PGID: default root (0:0) for Synology bind-mount ownership; override if needed.
 #   7. sleep 20 retained — required for Synology Docker daemon startup sequence.
 #
-# OPERATOR: set PUID/PGID to the UID/GID of the user who owns the stacks dir.
-#   id ofayese   →  uid=1026(ofayese) gid=100(users)
+# Default PUID/PGID are root (0:0), matching `HIVE_OBJECTIVE.md` NAS notes. Override only
+# if a non-root owner is required for the stacks directory.
 # =============================================================================
 
 set -e
@@ -23,8 +23,8 @@ set -e
 DOCKER="/usr/local/bin/docker"
 NAME="Dockge"
 IMAGE="louislam/dockge:1"
-PUID="${PUID:-1026}"
-PGID="${PGID:-100}"
+PUID="${PUID:-0}"
+PGID="${PGID:-0}"
 
 sleep 20
 

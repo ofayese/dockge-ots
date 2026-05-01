@@ -1,3 +1,4 @@
+# Compose static check: repo-root scripts/compose-validate.sh (not under stacks/).
 name: Stacks compose validate
 
 on:
@@ -18,5 +19,5 @@ jobs:
 
       - name: Validate compose interpolation
         run: |
-          chmod +x stacks/scripts/compose-validate.sh
-          stacks/scripts/compose-validate.sh
+          chmod +x scripts/compose-validate.sh
+          scripts/compose-validate.sh

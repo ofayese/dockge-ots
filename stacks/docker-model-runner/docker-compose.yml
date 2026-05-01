@@ -2,6 +2,16 @@ services:
   devstral-small-2:
     image: docker/model-runner:v1.1.38-cuda
     container_name: devstral-small-2
+    mem_limit: 8g
+    cpu_shares: 1024
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: on-failure:5
     ports:
       - 10.0.1.15:8001:8000
     extra_hosts:
@@ -11,6 +21,18 @@ services:
       - com.centurylinklabs.watchtower.enable=true
     networks:
       - bridge
+    environment:
+      - TZ=America/New_York
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget -qO- http://127.0.0.1:8000/v1/models >/dev/null 2>&1 || exit 1",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
     x-models:
       llm:
         model: ai/devstral-small-2
@@ -19,6 +41,16 @@ services:
   ministral3:
     image: docker/model-runner:v1.1.38-cuda
     container_name: ministral3
+    mem_limit: 8g
+    cpu_shares: 1024
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: on-failure:5
     ports:
       - 10.0.1.15:8003:8000
     extra_hosts:
@@ -28,6 +60,18 @@ services:
       - com.centurylinklabs.watchtower.enable=true
     networks:
       - bridge
+    environment:
+      - TZ=America/New_York
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget -qO- http://127.0.0.1:8000/v1/models >/dev/null 2>&1 || exit 1",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
     x-models:
       llm:
         model: ai/ministral3
@@ -35,6 +79,16 @@ services:
   smollm3:
     image: docker/model-runner:v1.1.38-cuda
     container_name: smollm3
+    mem_limit: 8g
+    cpu_shares: 1024
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: on-failure:5
     ports:
       - 10.0.1.15:8011:8000
     extra_hosts:
@@ -44,6 +98,18 @@ services:
       - com.centurylinklabs.watchtower.enable=true
     networks:
       - bridge
+    environment:
+      - TZ=America/New_York
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget -qO- http://127.0.0.1:8000/v1/models >/dev/null 2>&1 || exit 1",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
     x-models:
       llm:
         model: ai/smollm3

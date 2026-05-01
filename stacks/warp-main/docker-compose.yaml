@@ -16,7 +16,17 @@ services:
       - "host.docker.internal:host-gateway"
     networks:
       - warp-network
-    restart: unless-stopped
+    restart: on-failure:5
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget -qO- http://127.0.0.1:9090/ >/dev/null 2>&1 || exit 1",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   warp-agent:
     image: warpdotdev/warp-agent:latest
@@ -34,7 +44,7 @@ services:
       - "host.docker.internal:host-gateway"
     networks:
       - warp-network
-    restart: unless-stopped
+    restart: on-failure:5
 
   warp-claude-cli-sidecar:
     image: warpdotdev/warp-claude-cli-sidecar:latest
@@ -52,7 +62,17 @@ services:
       - "host.docker.internal:host-gateway"
     networks:
       - warp-network
-    restart: unless-stopped
+    restart: on-failure:5
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget -qO- http://127.0.0.1:8080/ >/dev/null 2>&1 || exit 1",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
 networks:
   warp-network:

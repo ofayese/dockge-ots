@@ -28,8 +28,8 @@ services:
       # - /volume1/docker/dockge/stacks/github-desktop/data:/config/repos:rw
     environment:
       TZ: ${TZ:-America/New_York}
-      PUID: ${PUID:-1026}
-      PGID: ${PGID:-100}
+      PUID: ${PUID:-0}
+      PGID: ${PGID:-0}
       CUSTOM_USER: ${CUSTOM_USER:-admin}
       PASSWORD: ${PASSWORD:?PASSWORD env var must be set}
       TITLE: ${TITLE:-Github-Desktop}

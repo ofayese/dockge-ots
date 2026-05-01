@@ -182,7 +182,7 @@ Homepage displays **live container status** (green = running, red = stopped) by 
 ### Synology-Specific Notes
 
 - **Read-only mount** (`:ro`): Homepage only reads container info; it cannot modify containers. Essential for security.
-- **PUID/PGID** (1026:100 in compose.yaml): Synology's non-system user. Allows the container to respect NAS file permissions.
+- **PUID/PGID:** Homepage image does not use linuxserver-style PUID; bind mounts rely on host ownership. Use **`scripts/fix-permissions.sh`** on the NAS so paths under `/volume1/docker/dockge/stacks/homepage/` are `root:root` per `HIVE_OBJECTIVE.md`.
 - **Watchtower labels:** All services include `com.centurylinklabs.watchtower.enable=true` for automatic updates.
 - **External bridge network:** All stacks use a pre-created Docker network called `bridge` (defined at the NAS level).
 

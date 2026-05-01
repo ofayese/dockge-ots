@@ -82,11 +82,10 @@ services:
       - ADMINER_DEFAULT_SERVER=mariadb
       - ADMINER_DESIGN=hydra
       - TZ=America/New_York
+    # Plain depends_on (no condition) for Synology docker compose compatibility.
     depends_on:
-      mariadb:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
+      - mariadb
+      - postgres
     healthcheck:
       test:
         ["CMD-SHELL", "wget -qO- http://localhost:8080/ >/dev/null || exit 1"]

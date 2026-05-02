@@ -27,9 +27,35 @@ PUID="${PUID:-0}"
 PGID="${PGID:-0}"
 # Repo root on the NAS (contains stacks/, scripts/, .git, etc.). Dockge app state
 # (SQLite, etc.) lives here — no separate .../data/ subfolder required.
+# Legacy layout: .../dockge/data/ was mounted at /app/data (dockge.db lived there).
+# This script one-time-moves ${DOCKGE_ROOT}/data/* into ${DOCKGE_ROOT}/ when
+# data/dockge.db exists and repo-root dockge.db does not — avoids silent DB loss.
 DOCKGE_ROOT="${DOCKGE_ROOT:-/volume1/docker/dockge}"
 
 sleep 20
+
+# One-time migration from old .../dockge/data/ bind to repo-root /app/data bind.
+migrate_legacy_app_data() {
+	legacy_dir="${DOCKGE_ROOT}/data"
+	[ -f "${legacy_dir}/dockge.db" ] || return 0
+	[ -f "${DOCKGE_ROOT}/dockge.db" ] && return 0
+	echo "dockge-start: migrating Dockge app state from ${legacy_dir}/ to ${DOCKGE_ROOT}/ (one-time)"
+	find "${legacy_dir}" -mindepth 1 -maxdepth 1 | while IFS= read -r f; do
+		[ -n "$f" ] || continue
+		bn=$(basename "$f")
+		case "$bn" in
+		stacks | scripts | .git) continue ;;
+		esac
+		dest="${DOCKGE_ROOT}/${bn}"
+		if [ -e "$dest" ]; then
+			echo "dockge-start: migration skip (exists): ${dest}"
+			continue
+		fi
+		mv "$f" "$dest"
+	done
+}
+
+migrate_legacy_app_data
 
 exists() {
 	$DOCKER ps -a --format '{{.Names}}' | grep -qx "$NAME"

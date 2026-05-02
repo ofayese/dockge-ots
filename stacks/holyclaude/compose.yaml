@@ -13,6 +13,13 @@ services:
     mem_limit: 4g # Dev workstation container with browser/tooling overhead.
     cpu_shares: 768 # Interactive IDE + agent workloads need higher relative priority.
     restart: unless-stopped
+    # Healthcheck type: B — TCP probe (published 3000; internal listener for UI/VNC-style stack)
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 3000 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
     ports:
       - "3059:3059"
       - "3000:3000"

@@ -7,9 +7,9 @@ services:
     security_opt:
       - no-new-privileges:true
     restart: unless-stopped
-    # No healthcheck — `command: daemon` with `network_mode: host` and no listening
-    # socket means there is no meaningful liveness probe. Operational signal comes
-    # from log lines and successful renewals (via DISCORD_WEBHOOK_URL alerts).
+    # No healthcheck: acme-sh is a cron-style renewal daemon.
+    # It does not expose HTTP or TCP endpoints.
+    # Certificate renewal success is verified via Synology cert store.
     environment:
       - PUID=${PUID:-0}
       - PGID=${PGID:-0}

@@ -38,7 +38,8 @@ sleep 20
 migrate_legacy_app_data() {
 	legacy_dir="${DOCKGE_ROOT}/data"
 	[ -f "${legacy_dir}/dockge.db" ] || return 0
-	[ -f "${DOCKGE_ROOT}/dockge.db" ] && return 0
+	# Real config already at repo root — do not overwrite.
+	[ -f "${DOCKGE_ROOT}/dockge.db" ] && [ -s "${DOCKGE_ROOT}/dockge.db" ] && return 0
 	echo "dockge-start: migrating Dockge app state from ${legacy_dir}/ to ${DOCKGE_ROOT}/ (one-time)"
 	find "${legacy_dir}" -mindepth 1 -maxdepth 1 | while IFS= read -r f; do
 		[ -n "$f" ] || continue
@@ -48,8 +49,13 @@ migrate_legacy_app_data() {
 		esac
 		dest="${DOCKGE_ROOT}/${bn}"
 		if [ -e "$dest" ]; then
-			echo "dockge-start: migration skip (exists): ${dest}"
-			continue
+			# Replace only empty placeholder files (e.g. first boot wrote 0-byte dockge.db).
+			if [ -f "$dest" ] && [ ! -s "$dest" ] && [ -s "$f" ]; then
+				rm -f "$dest"
+			else
+				echo "dockge-start: migration skip (exists): ${dest}"
+				continue
+			fi
 		fi
 		mv "$f" "$dest"
 	done

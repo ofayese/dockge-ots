@@ -1,50 +1,41 @@
 services:
   github-desktop:
-    container_name: Github-Desktop
-    # Pin to a specific digest/tag in production; mariushosting guide targets v3.5.6+
     image: ghcr.io/linuxserver/github-desktop:latest
+    container_name: github-desktop
     hostname: github-desktop
-    mem_limit: 2g
-    cpu_shares: 768
     shm_size: 1g
+    # security_opt and cap_add are required for GitHub Desktop (Electron)
+    # to render inside a KasmVNC container. Standard for LinuxServer.io
+    # GUI images. Security Advisor will flag these — intentional.
+    # See docs/hive/NAS_DEPLOYMENT.md for acknowledgement.
     security_opt:
-      - no-new-privileges:true
-      # Electron/Chromium requires unconfined seccomp to function
       - seccomp:unconfined
     cap_add:
       - IPC_LOCK
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-    restart: unless-stopped
-    ports:
-      - "${HOST_PORT:-3405}:3001"
-    volumes:
-      # Primary persistent config — all linuxserver state lives here
-      - ${STACK_ROOT}/github-desktop/config:/config:rw
-      # Optional: mount a host directory for git repos so they survive container re-creates
-      # - ${STACK_ROOT}/github-desktop/data:/config/repos:rw
-    environment:
-      TZ: ${TZ:-America/New_York}
-      PUID: ${PUID:-0}
-      PGID: ${PGID:-0}
-      CUSTOM_USER: ${CUSTOM_USER:-admin}
-      PASSWORD: ${PASSWORD:?PASSWORD env var must be set}
-      TITLE: ${TITLE:-Github-Desktop}
+    # Healthcheck type: B — TCP probe on KasmVNC internal port 3000.
+    # start_period is long — Electron initialisation takes 60-90s.
     healthcheck:
-      # KasmVNC HTTP listener on internal port 3000; nc is bundled in the linuxserver image
       test: ["CMD-SHELL", "nc -z 127.0.0.1 3000 || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 90s
+    ports:
+      - "${GITHUB_DESKTOP_PORT:-3405}:3001"
+    volumes:
+      - ${STACK_ROOT}/github-desktop/config:/config:rw
+    environment:
+      TZ: ${TZ:-Europe/London}
+      PUID: ${PUID:-0}
+      PGID: ${PGID:-0}
+      CUSTOM_USER: ${GITHUB_DESKTOP_USER:?set GITHUB_DESKTOP_USER in .env}
+      PASSWORD: ${GITHUB_DESKTOP_PASSWORD:?set GITHUB_DESKTOP_PASSWORD in .env}
+      TITLE: GitHub Desktop
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     labels:
       - com.centurylinklabs.watchtower.enable=true
-    networks:
-      - bridge
-
-networks:
-  bridge:
-    external: true

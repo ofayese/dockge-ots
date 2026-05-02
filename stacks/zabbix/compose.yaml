@@ -112,36 +112,45 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
 
-  # Optional: uncomment to run Zabbix Agent 2 on this host (not required for SNMPv3 NAS monitoring).
+  # ──────────────────────────────────────────────────────────────────
+  # ZABBIX AGENT OPTIONS — read before uncommenting
+  # ──────────────────────────────────────────────────────────────────
+  # The NAS is monitored via SNMPv3 (see README.md → SNMPv3 / Agent options).
+  # SNMPv3 covers: disks, RAID, temperature, fans, UPS, network,
+  # volume usage. No agent is required for this.
+  #
+  # For NAS OS-level monitoring (processes, logs, custom scripts):
+  #   Install the Zabbix Agent package from SynoCommunity Package
+  #   Center. It runs natively on DSM and connects to this Zabbix
+  #   Server container at 127.0.0.1:10051 (port 10051 is published
+  #   to the NAS host by the zabbix-server service above).
+  #   No changes to this compose file are needed for that.
+  #   See README.md § Agent options → Option 1 for setup steps.
+  #
+  # The container below is for Docker container monitoring ONLY.
+  # It requires privileged mode and host-side bind mounts to see
+  # NAS host metrics — avoid this unless you specifically need
+  # Docker container metrics in Zabbix. Security Advisor will flag
+  # privileged mode. See docs/hive/NAS_DEPLOYMENT.md.
+  #
   # zabbix-agent2:
-  #   container_name: Zabbix-Agent2
-  #   image: zabbix/zabbix-agent2:7.4-alpine
-  #   mem_limit: 128m
-  #   cpu_shares: 256
-  #   security_opt:
-  #     - no-new-privileges:true
-  #   restart: unless-stopped
-  #   networks:
-  #     - zabbix-net
-  #   depends_on:
-  #     - zabbix-server
-  #   ports:
-  #     - "10050:10050"
+  #   image: zabbix/zabbix-agent2:alpine-6.4-latest
+  #   container_name: zabbix-agent2
+  #   # privileged: true  # required to see host metrics from container
+  #   # network_mode: host  # required for host-level monitoring
+  #   # volumes:
+  #   #   - /proc:/proc:ro
+  #   #   - /sys:/sys:ro
+  #   #   - /var/run:/var/run:ro
+  #   #   - ${STACK_ROOT}/zabbix/config:/etc/zabbix:rw
   #   environment:
   #     PUID: ${PUID:-0}
   #     PGID: ${PGID:-0}
-  #     TZ: ${TZ:-America/New_York}
-  #     ZBX_HOSTNAME: ${ZBX_AGENT_HOSTNAME:-zabbix-agent-docker}
   #     ZBX_SERVER_HOST: zabbix-server
-  #     ZBX_SERVER_PORT: "10051"
-  #   volumes:
-  #     - ${STACK_ROOT}/zabbix/config:/etc/zabbix
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "zabbix_agent2 -t agent.ping || exit 1"]
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 5
-  #     start_period: 30s
+  #     ZBX_HOSTNAME: ${ZBX_AGENT_HOSTNAME:-synology-nas}
+  #   restart: unless-stopped
+  #   networks:
+  #     - zabbix-net
 
 networks:
   zabbix-net:

@@ -36,6 +36,18 @@ Preferred: SSH into NAS → `cd /dockge` → `git pull`.
 
 If new stacks were added: re-run `sudo bash scripts/init-nas.sh` so new volume directories exist.
 
+For scheduled or post-receive runs (safe to call repeatedly):
+
+```bash
+bash scripts/init-nas.sh --if-changed
+```
+
+For forced full re-init (after adding new stacks or changing `STACK_MANIFEST` in `init-nas.sh`):
+
+```bash
+sudo bash scripts/init-nas.sh
+```
+
 Alternative rsync (if git on NAS is impractical):
 
 ```bash
@@ -44,6 +56,52 @@ rsync -av --delete --exclude='.git' --exclude='.env' \
 ```
 
 Then: `sudo bash scripts/init-nas.sh`
+
+## Git workflow options
+
+### Option A — GitHub as remote (default, no extra packages needed)
+
+Mac → `git push` → GitHub → NAS `git pull` (manual or scheduled).
+
+### Option B — NAS Git Server as remote (Synology Git Server package)
+
+Mac → `git push` → NAS Git Server → post-receive hook auto-deploys.
+
+To set up Option B:
+
+1. Install Synology Git Server from Package Center.
+2. Create a bare repo on the NAS:
+
+   ```bash
+   ssh <user>@<nas-ip>
+   git init --bare /volume1/git/dockge.git
+   ```
+
+3. Add a post-receive hook:
+
+   ```bash
+   cat > /volume1/git/dockge.git/hooks/post-receive << 'EOF'
+   #!/usr/bin/env bash
+   set -euo pipefail
+   WORKING_COPY="/dockge"
+   echo "Post-receive: updating working copy..."
+   git -C "$WORKING_COPY" pull --ff-only
+   bash "$WORKING_COPY/scripts/init-nas.sh" --if-changed
+   echo "Deploy complete."
+   EOF
+   chmod +x /volume1/git/dockge.git/hooks/post-receive
+   ```
+
+4. On Mac: `git remote add nas ssh://<user>@<nas-ip>/volume1/git/dockge.git`
+5. `git push nas main`
+
+### Option C — GitHub Desktop stack (browser-based)
+
+Access `https://<NAS_IP>:3405` and use the GUI to clone, commit, and push the repo directly from the NAS browser interface. No SSH required. See [stacks/github-desktop/README.md](../stacks/github-desktop/README.md).
+
+### Git on NAS — policy
+
+Options B and C enable full git operations on the NAS. The Mac remains the primary development environment. Never `git push` from the NAS if the Mac has unpushed commits — pull first.
 
 ## Volume paths
 
@@ -118,6 +176,79 @@ diff \
 ```
 
 Expected: **empty output** (no diff).
+
+## Snapshot Replication (recommended — btrfs volumes only)
+
+Configure Snapshot Replication in DSM to snapshot the shared folder containing `${STACK_ROOT}`:
+
+- **Hourly:** retain 24 snapshots
+- **Daily:** retain 7 snapshots
+- **Weekly:** retain 4 snapshots
+
+Before running `init-nas.sh` or deploying a new stack, take a manual snapshot: **Snapshot Replication** → select shared folder → **Take Snapshot**.
+
+Snapshots are instant and consume no extra space until data changes. They do **not** replace Hyper Backup — snapshots live on the same disk.
+
+## Hyper Backup (off-device backup)
+
+Back up `${STACK_ROOT}` to a remote destination (Synology C2, S3, Backblaze, another NAS, etc.) on a schedule.
+
+### Database directory exclusions
+
+Running database engines cannot be backed up consistently by file copy. Exclude all `db/` directories from Hyper Backup and use database dumps instead:
+
+| Stack      | Exclude from Hyper Backup     | Backup method                                        |
+| ---------- | ----------------------------- | ---------------------------------------------------- |
+| zabbix     | `${STACK_ROOT}/zabbix/db`     | `docker exec` Postgres → `pg_dumpall` → backup.sql   |
+| databases  | `${STACK_ROOT}/databases/db` | `docker exec` on each DB service → vendor dump       |
+| codex-docs | `${STACK_ROOT}/codex-docs/db` | `docker exec CodexDocs-MongoDB mongodump`            |
+
+All `data/` and `config/` directories are safe to include in Hyper Backup.
+
+## Security Advisor warnings
+
+Security Advisor will report the following warnings for this repo. All are intentional and documented here.
+
+| Warning                             | Cause                                                    | Status                                                                                                                                      |
+| ----------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Containers running as root (UID 0)  | `PUID`/`PGID` default to `0` across stacks               | Intentional — Synology Docker default. See UID/GID dual-mode docs in stack `.env.example` files and `HIVE_OBJECTIVE.md`.                    |
+| `seccomp: unconfined`               | **github-desktop** (Electron / KasmVNC requirement)      | Intentional — documented in `stacks/github-desktop/compose.yaml`.                                                                         |
+| `IPC_LOCK` capability               | **github-desktop** (Electron memory locking)             | Intentional — documented in `stacks/github-desktop/compose.yaml`.                                                                         |
+| `privileged: true` on zabbix-agent2 | Docker agent needs host access for container metrics     | Only relevant if **zabbix-agent2** is uncommented. Document the exception here before enabling. See `stacks/zabbix/compose.yaml` comments. |
+
+Acknowledge these in **Security Advisor → Mark as acknowledged**. Do not remove settings from `compose.yaml` solely to silence warnings.
+
+## Native vs Docker alternatives (SynoCommunity)
+
+Some functionality in this repo can be run as native SynoCommunity packages instead of Docker stacks. The Docker stacks remain in the repo for portability and consistency. Choose native if you prefer lower overhead and tighter DSM integration.
+
+| Docker stack              | SynoCommunity alternative      | Notes                                                                                                                                                                                                                                                                                                                                                                                                        |
+| ------------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| acme-sh                   | cloudflared (Cloudflare Tunnel) | Cloudflare Tunnel handles external HTTPS without cert management. If using Cloudflare, `acme-sh` is redundant for public-facing certs.                                                                                                                                                                                                                                                                      |
+| nginx-proxy-manager       | cloudflared (Cloudflare Tunnel) | Cloudflare Tunnel replaces external reverse proxy. nginx-proxy-manager remains useful for internal routing.                                                                                                                                                                                                                                                                                                  |
+| zabbix-agent2 (Docker)    | Zabbix Agent (SynoCommunity)    | Native agent reports to the Zabbix Server container on `127.0.0.1:10051` and sees full DSM host metrics without privileged mode. Docker agent requires privileged + bind mounts to see host resources. Use native for NAS OS-level monitoring; use Docker agent only if you specifically need Docker container metrics in Zabbix. SNMPv3 (already configured) covers NAS hardware health without either. |
+| databases (Adminer UI)    | Adminer (SynoCommunity)         | Adminer native package provides the same database management UI without a Docker container.                                                                                                                                                                                                                                                                                                                |
+| agents_gateway_data       | —                              | No direct SynoCommunity equivalent.                                                                                                                                                                                                                                                                                                                                                                        |
+
+Installing **cloudflared** (SynoCommunity) natively:
+
+1. Add SynoCommunity repo to Package Center.
+2. Install Cloudflare Tunnel package.
+3. Configure tunnel via DSM UI or `cloudflared` CLI.
+4. Point tunnel to internal services on `localhost:<port>`.
+
+If you do this: disable or remove the **acme-sh** stack (certs no longer needed for public endpoints). nginx-proxy-manager becomes optional.
+
+## SynoCommunity dev tools (install for better NAS workflow)
+
+Synology DSM ships with **bash** already installed — no bash package is needed. Install these from **Package Center → Community** after adding the SynoCommunity repository source:
+
+| Package    | Purpose               | Impact on this repo                                      |
+| ---------- | --------------------- | -------------------------------------------------------- |
+| **Git**    | `git` client on NAS   | Enables `git pull` / `git push` from NAS (see Git workflow options) |
+| **ShellCheck** | Shell script linter | Run `shellcheck` on the NAS itself, not only on Mac      |
+
+**Do not** install a third-party bash package — DSM already includes bash. Installing a third-party bash may create `PATH` conflicts.
 
 ## Permissions
 

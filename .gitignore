@@ -26,6 +26,9 @@ logs/
 # Repo-root local secrets (never commit)
 .env
 
+# init-nas.sh --if-changed skip marker (host-local)
+.manifest-hash
+
 # Stack secrets and local operator env (never commit)
 stacks/grafana-prom/.env
 stacks/codex-docs/.env

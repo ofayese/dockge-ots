@@ -58,7 +58,7 @@ STACK_MANIFEST=(
 
 	# ── data,config ───────────────────────────────────────────────────
 	"code-server:data,config"
-	"github-desktop:data,config"
+	"github-desktop:config" # KasmVNC GUI — /config only, no data dir
 	"homepage:data,config"
 	"searxng:data,config"
 	"grafana-prom:data,config"
@@ -118,6 +118,23 @@ if [[ "${LIST_ONLY}" -eq 1 ]]; then
 		done
 	done
 	exit 0
+fi
+
+# ── --if-changed: skip if script unchanged since last run ───────────
+if [[ "${1:-}" == "--if-changed" ]]; then
+	HASH_FILE="${REPO_ROOT}/.manifest-hash"
+	if command -v md5 &>/dev/null; then
+		CURRENT_HASH=$(md5 -q "${BASH_SOURCE[0]}")
+	else
+		CURRENT_HASH=$(md5sum "${BASH_SOURCE[0]}" | cut -d' ' -f1)
+	fi
+	STORED_HASH=$(cat "${HASH_FILE}" 2>/dev/null || echo "")
+	if [[ "${CURRENT_HASH}" == "${STORED_HASH}" ]]; then
+		echo "init-nas.sh: manifest unchanged — skipping directory creation."
+		exit 0
+	fi
+	echo "${CURRENT_HASH}" >"${HASH_FILE}"
+	echo "init-nas.sh: manifest changed — running full init."
 fi
 
 # ── 2. Write STACK_ROOT into repo-root .env ───────────────────────────

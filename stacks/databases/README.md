@@ -38,6 +38,14 @@ docker compose -f databases/compose.yaml up -d
 
 Data persists at `/volume1/​docker/dockge​/stacks/databases/{mariadb,postgres}`. Back up before any major-version bump.
 
+## Backup
+
+| Directory                    | Hyper Backup | Method                                                                                          |
+| ---------------------------- | ------------ | ----------------------------------------------------------------------------------------------- |
+| `${STACK_ROOT}/databases/db` | **Exclude**  | Database dumps (`docker exec` → vendor tools; see `docs/hive/NAS_DEPLOYMENT.md` → Hyper Backup) |
+
+There is no separate app-level `data/` bind for this stack; engine files live under **`db/`** only.
+
 ## Out of scope
 
 Backup strategy lives in `docs/hive/proposals/_backups/PROPOSAL.md` (queen-led).

@@ -33,3 +33,14 @@ Copy [`.env.example`](./.env.example) → `.env`. **`SYNO_UID` / `SYNO_GID`** de
 ## Offline / outbound
 
 Image pulls require **HTTPS 443** to container registries and (for plugins) Grafana.net unless mirrored.
+
+## Backup
+
+This stack does **not** use a host `db/` bind for a database engine; Prometheus and Grafana state live under **`${STACK_ROOT}/grafana-prom/data/`**.
+
+| Directory                                                     | Hyper Backup | Method    |
+| ------------------------------------------------------------- | ------------ | --------- |
+| `${STACK_ROOT}/grafana-prom/data`                             | Include      | File copy |
+| `${STACK_ROOT}/grafana-prom/prom.yml`, `snmp.yml`, `secrets/` | Include      | File copy |
+
+Use **Hyper Backup** for off-device retention; pair with **Snapshot Replication** on the BTRFS volume per `docs/hive/NAS_DEPLOYMENT.md`.

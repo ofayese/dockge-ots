@@ -34,10 +34,10 @@ Replace `<name>` with a short unique router and service identifier (for example 
 
 ## Volumes
 
-| Host path | Mount | Purpose |
-| --------- | ----- | ------- |
-| `${STACK_ROOT}/traefik-ots/config` | `/etc/traefik` | Static config (`tls.yaml`, optional extra files) |
-| `${ACME_CERT_ROOT:-/volume1/certs/acme}/ots-sub` | `/certs/ots-sub` | PEM bundle from `acme-sh` (read-only) |
+| Host path                                        | Mount            | Purpose                                          |
+| ------------------------------------------------ | ---------------- | ------------------------------------------------ |
+| `${STACK_ROOT}/traefik-ots/config`               | `/etc/traefik`   | Static config (`tls.yaml`, optional extra files) |
+| `${ACME_CERT_ROOT:-/volume1/certs/acme}/ots-sub` | `/certs/ots-sub` | PEM bundle from `acme-sh` (read-only)            |
 
 Copy `.env.example` to `.env` and set `STACK_ROOT`, `CF_Token` (optional if Traefik never uses its own ACME), and tuning variables as needed.
 

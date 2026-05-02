@@ -106,6 +106,19 @@ diff \
 
 Expected: **empty output** (no diff).
 
+### HIVE_OBJECTIVE.md stack list parity (table row)
+
+Stack names in `HIVE_OBJECTIVE.md` live in a **markdown table** (backtick list in the “Stack folders” row), not as `-` bullets. To compare `ls stacks/` to that list:
+
+```bash
+diff \
+  <(ls stacks/ | sort) \
+  <(grep "Stack folders" HIVE_OBJECTIVE.md \
+    | grep -oE '`[a-z][a-z0-9_-]*`' | tr -d '`' | sort -u)
+```
+
+Expected: **empty output** (no diff).
+
 ## Permissions
 
 ```bash

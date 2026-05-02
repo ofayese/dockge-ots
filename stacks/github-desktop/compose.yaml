@@ -10,6 +10,7 @@ services:
     # See docs/hive/NAS_DEPLOYMENT.md for acknowledgement.
     security_opt:
       - seccomp:unconfined
+      - no-new-privileges:true
     cap_add:
       - IPC_LOCK
     # Healthcheck type: B — TCP probe on KasmVNC internal port 3000.

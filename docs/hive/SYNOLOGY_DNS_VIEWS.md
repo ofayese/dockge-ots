@@ -1,379 +1,254 @@
-# Synology DNS Server — Split-Horizon DNS Configuration
+# Synology DNS Server — Split-horizon DNS (internal forward zones)
+
+## Terminology (read this first)
+
+- **Split-horizon DNS** means *different DNS answers for the same hostname* depending on which resolver the client uses (e.g. LAN resolver → LAN IP; public resolver → public IP). That is what this guide implements.
+- **Internal forward zones** (Synology DSM **Primary zone** → **Forward zone**) are **authoritative forward DNS** for a zone the NAS owns on the LAN. They are **not** BIND **Views** (Views are per-client-subnet views of zones inside `named`).
+- **dnsmasq overrides:** optional `address=/zone/IP` lines under `/etc/dnsmasq.d/` are **static overrides**, not Views. They only apply if Synology’s DNS Server build still consults that dnsmasq layer on your DSM version—**prefer the DSM UI** unless validated.
+
+---
+
+## 0. Hairpin NAT preflight (do this before changing anything)
+
+Many routers (including ASUS) implement **NAT hairpin** / **NAT loopback**: a LAN client resolves a hostname to the **WAN** address, the router notices the target is on the LAN, and forwards traffic internally. If that works, **split-horizon DNS is optional**—it saves a hop and avoids some failure modes but adds moving parts.
+
+From a normal LAN client (not only the NAS), run:
+
+```bash
+nslookup otsdrv.ots.olutechsys.com
+# Use -k if your chain still serves a public cert while hitting LAN IP, or after trust store updates:
+curl -kI --max-time 15 https://otsdrv.ots.olutechsys.com
+# To inspect the cert without ignoring errors, omit -k once hairpin + trust are correct:
+# curl -I --max-time 15 https://otsdrv.ots.olutechsys.com
+```
+
+Automated summary: `bash scripts/verify-dns-views.sh --hairpin [hostname]` (default hostname if omitted: `otsdrv.ots.olutechsys.com`).
+
+| Outcome | Suggestion |
+|-----------|------------|
+| `curl` returns HTTP **2xx/3xx** and `nslookup` shows your **public** IP | Hairpin is fine; split-horizon is **optional** (complexity vs benefit). |
+| `nslookup` is correct but `curl` **times out** or TLS fails | Hairpin likely broken or blocked; **split-horizon** (internal A records to Traefik LAN IP) is worth doing. |
+| You want **internal-only names** or **different answers per VLAN** | Use **internal DNS** (forward zones or a dedicated resolver), not only the router. |
+
+Only after this, change DHCP DNS or add zones.
+
+---
 
 ## Overview
 
-This guide configures Synology DNS Server with Views to resolve internal service hostnames to their internal LAN IPs from within your home network, while external resolvers see the public IP. This solves the hairpin NAT problem where internal clients cannot reach services using their external DDNS hostnames.
+**Goal:** On your LAN, resolve names like `otsdrv.ots.olutechsys.com` to **Traefik’s LAN IP** (e.g. `10.0.1.15`) so clients talk to Traefik **without** relying on public DNS + hairpin.
 
-**Problem solved:**
+**What split-horizon does *not* do:** It does **not** “avoid double TLS termination.” **Traefik remains the TLS terminator** on `:443`. Internal A records only change **which IP** the client opens; the client still does TLS to Traefik once.
+
+**What it *does* improve:** Skips the **public / DDNS resolution path** for internal clients, improves **predictability**, and fixes setups where **hairpin NAT does not work**.
+
+**Problem solved (when hairpin fails):**
+
 ```
 Before: nslookup otsdrv.ots.olutechsys.com → 73.212.176.x (public IP)
         curl https://otsdrv.ots.olutechsys.com → TIMEOUT (hairpin NAT failure)
 
-After:  nslookup otsdrv.ots.olutechsys.com → 10.0.1.15 (internal IP)
-        curl https://otsdrv.ots.olutechsys.com → ✓ Works (local Traefik)
+After:  nslookup otsdrv.ots.olutechsys.com → 10.0.1.15 (Traefik LAN IP)
+        curl https://otsdrv.ots.olutechsys.com → 200/301 (TLS to Traefik on LAN)
 ```
 
 ---
 
 ## Prerequisites
 
-- **Synology DNS Server package installed** on OTS NAS (via Package Center)
-- **OTS NAS IP:** 10.0.1.15
-- **Router DHCP configured** to hand out NAS as primary DNS (done later)
-- **Cloudflare managing `olutechsys.com`** (for root domain and existing certs)
+- **Synology DNS Server** package installed on OTS NAS (Package Center).
+- **OTS NAS (Traefik) IP:** `10.0.1.15` (adjust if yours differs).
+- **Misfits NAS IP (optional second zone):** `10.0.1.24`.
+- **Cloudflare** (or other) still authoritative on the **public** internet for `olutechsys.com` unless you intentionally delegate subzones publicly (typical homelab: **no** public delegation for these internal names—only your **internal** resolver serves the internal A records).
 
 ---
 
 ## Step 1: Enable Synology DNS Server
 
-1. SSH into OTS NAS (10.0.1.15):
+1. SSH into OTS NAS, e.g. `ssh admin@10.0.1.15 -p 28`.
+2. Confirm the package is running (commands vary by DSM major):
+
    ```bash
-   ssh admin@10.0.1.15 -p 28
+   # DSM 7 (common): package service
+   sudo synopkg status DNSServer 2>/dev/null || true
+
+   # Older DSM: dnsmasq via synoservice
+   sudo synoservice --status dnsmasq 2>/dev/null || true
+
+   # systemd-style (some builds)
+   sudo synosystemctl status pkgctl-DNSServer 2>/dev/null || true
    ```
 
-2. Verify the DNS Server package is installed:
-   ```bash
-   sudo synoservice --status dnsmasq
-   # Should return: dnsmasq is running
-   ```
-
-3. If not installed, use **Synology Package Center** (DSM UI):
-   - Go to **Package Center** → search **DNS Server**
-   - Click **Install**
-   - Wait for completion
+3. If not installed: **Package Center** → **DNS Server** → **Install**, then open **DSM → DNS Server** and enable **resolution** per Synology’s wizard.
 
 ---
 
-## Step 2: Configure Synology DNS Server Views
+## Step 2: Configure internal zones (pick **one** path)
 
-Synology DNS Server stores configuration in `/etc/dnsmasq.d/` and the DSM UI. For Views, we'll configure zones directly and via the UI.
+### Option A — DSM UI (recommended)
 
-### Option A: Web UI (Recommended for first-time setup)
+1. **DSM** → **DNS Server** → **Zone** → **Create** → **Primary zone**.
+2. **Domain type:** **Forward zone**.
+3. **Domain name:** `ots.olutechsys.com`.
+4. **Primary DNS server** (SOA MNAME field in Synology UI): use a stable identifier—many homelabs use the **NAS LAN IP** (`10.0.1.15`) or an FQDN under the zone. This zone is for **internal** clients; it is **not** a public delegation from the parent zone unless you explicitly create NS glue at the registrar/Cloudflare.
+5. Create **Resource record** → **A**: name `*` (wildcard), IP `10.0.1.15`, TTL `300` (or your preference).
+6. Repeat for Misfits if needed: zone `mft.olutechsys.com`, wildcard **A** → `10.0.1.24`.
+7. **Apply** / ensure the zone is **enabled**.
 
-1. Open **DSM** → **Control Panel** → **DNS Server**
-2. Go to the **Zone** tab
-3. Click **Create** → **Master Zone**
+**Reverse zones / Active Directory:** Not required for this use case (Traefik hostnames, forward A/AAAA only). Reverse (PTR) is optional mail/reputation tooling.
 
-   **For OTS internal zone:**
-   - **Zone name:** `ots.olutechsys.com`
-   - **Type:** Master
-   - **Nameserver:** `otsorundscore.synology.me` (or your NAS FQDN)
-   - Click **Create**
+### Option B — dnsmasq drop-in (advanced)
 
-4. In the new zone, click **Create Record** and add:
-   ```
-   Name:  *                    (wildcard)
-   Type:  A
-   Value: 10.0.1.15           (OTS NAS internal IP)
-   TTL:   300
-   ```
-
-5. Repeat for MFT (if needed):
-   - **Zone name:** `mft.olutechsys.com`
-   - **Wildcard A record:** `10.0.1.24` (Misfits NAS internal IP)
-
-### Option B: CLI (Advanced / Scriptable)
-
-Create `/etc/dnsmasq.d/views.conf` with:
+Only if you confirmed `dnsmasq` is the backend for DNS Server on **your** DSM version and that files under `/etc/dnsmasq.d/` are honored.
 
 ```bash
-sudo tee /etc/dnsmasq.d/views.conf > /dev/null <<'EOF'
-# OTS internal zone — wildcard resolves to internal IP
+set -euo pipefail
+sudo mkdir -p /etc/dnsmasq.d
+sudo tee /etc/dnsmasq.d/split-horizon.conf > /dev/null <<'EOF'
+# OTS — wildcard to Traefik host
 address=/ots.olutechsys.com/10.0.1.15
 address=/.ots.olutechsys.com/10.0.1.15
-
-# MFT internal zone — wildcard resolves to internal IP
+# MFT
 address=/mft.olutechsys.com/10.0.1.24
 address=/.mft.olutechsys.com/10.0.1.24
 EOF
 ```
 
-Then reload dnsmasq:
+Restart the DNS Server package (try in order until one succeeds):
 
 ```bash
-sudo synoservice --restart dnsmasq
+sudo synopkg restart DNSServer \
+  || sudo synosystemctl restart pkgctl-DNSServer \
+  || sudo synoservice --restart dnsmasq
 ```
 
-Verify:
-
-```bash
-nslookup otsdrv.ots.olutechsys.com 127.0.0.1
-# Should return: 10.0.1.15
-```
+Use [`scripts/setup-dns-views.sh`](../../scripts/setup-dns-views.sh) as a helper—see script header for DSM compatibility notes.
 
 ---
 
-## Step 3: Update Router DHCP to Use NAS as DNS
+## Step 3: Router DHCP (only after you want LAN clients on this resolver)
 
-**Goal:** Clients on your LAN get 10.0.1.15 as their DNS server instead of the router's default.
+### DNS SPOF (single point of failure)
 
-### ASUS Web UI
+If DHCP lists **only** the NAS (`10.0.1.15`) as **DNS Server 1** and leaves **DNS Server 2** empty, **any NAS outage stops DNS for every client** (new lookups fail; cached TTLs may mask it briefly). **Always set DNS Server 2** to a fallback resolver (ASUS LAN gateway `192.168.x.1`, `1.1.1.1`, Pi-hole on another host, etc.). Split-horizon answers for `*.ots.*` / `*.mft.*` only apply when clients actually query the NAS—fallbacks won’t serve those internal zones unless you also forward those zones there.
 
-1. SSH into your ASUS router (or access via web UI):
-   ```bash
-   ssh admin@192.168.1.1
-   ```
+Prefer **DNS Server 1** = NAS (for internal zones), **DNS Server 2** = router or upstream (general internet + safety net).
 
-2. In the ASUS web UI, go to:
-   - **Advanced Settings** → **LAN** → **DHCP Server**
+ASUS: **Advanced Settings** → **LAN** → **DHCP Server** → set **DNS Server 1** = `10.0.1.15`, optional **DNS Server 2** = `192.168.x.1` or `1.1.1.1`.
 
-3. Find the **DNS Server** field:
-   - **DNS Server 1:** `10.0.1.15` (OTS NAS)
-   - **DNS Server 2:** `8.8.8.8` (fallback, optional)
-
-4. **Apply** and wait for DHCP lease renewal (or restart clients manually)
-
-5. Verify on a client:
-   ```bash
-   # On any device on your LAN
-   nslookup otsdrv.ots.olutechsys.com
-   # Should return: 10.0.1.15
-   ```
+Renew leases on clients after changing DHCP.
 
 ---
 
-## Step 4: Verify Internal Resolution
-
-From any device on your LAN:
+## Step 4: Verify from a LAN client
 
 ```bash
-# Test internal resolution
 nslookup otsdrv.ots.olutechsys.com
-# Expected: 10.0.1.15
-
-# Test that it works
-curl -kI https://otsdrv.ots.olutechsys.com
-# Expected: 200 / 301 (successful TLS + Traefik routing)
+curl -kI --max-time 15 https://otsdrv.ots.olutechsys.com
 ```
 
-From the OTS NAS itself:
+Automated checks: `bash scripts/verify-dns-views.sh`  
+Hairpin vs split comparison: `bash scripts/verify-dns-views.sh --hairpin` or `bash scripts/verify-dns-views.sh --hairpin mftdrv.mft.olutechsys.com`
 
-```bash
-ssh admin@10.0.1.15 -p 28
-nslookup otsdrv.ots.olutechsys.com
-# Should return: 10.0.1.15 (from local DNS on 127.0.0.1:53)
+---
+
+## Step 5: External resolution (optional)
+
+From **outside** your LAN, public resolvers should still return your **public** path (e.g. Cloudflare → DDNS). Internal zones on the NAS do **not** replace public DNS unless you delegate publicly.
+
+---
+
+## Split-DNS flow (Mermaid)
+
+```mermaid
+flowchart TB
+  subgraph lan [LAN_client]
+    C[Client]
+  end
+  subgraph internal [Internal_resolver_path]
+    NAS[OTS_NAS_DNS_:53]
+    T[Traefik_10.0.1.15:443]
+  end
+  subgraph pub [Public_resolver_path]
+    CF[Cloudflare_DNS]
+    WAN[Public_IP_DDNS]
+    RT[Router_port_forward]
+  end
+  C -->|query_when_DHCP_points_to_NAS| NAS
+  NAS -->|A_record| T
+  C -->|HTTPS| T
+  C -->|query_default_resolver| CF
+  CF --> WAN
+  C -->|HTTPS| WAN
+  WAN --> RT
+  RT --> T
 ```
 
 ---
 
-## Step 5: Verify External Resolution (Optional)
-
-External resolvers should still see your public IP:
-
-```bash
-# From a computer NOT on your LAN (e.g., phone on cellular or a friend's network)
-nslookup otsdrv.ots.olutechsys.com
-# Expected: 73.212.176.x (your public IP from Cloudflare)
-```
-
-This is handled by Cloudflare (external) and is unaffected by internal DNS changes.
-
----
-
-## How It Works
+## ASCII reference (same idea)
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│ Internal Client (10.0.1.x)                              │
-│ DHCP-configured to use 10.0.1.15 as DNS                 │
-└──────────────────┬──────────────────────────────────────┘
-                   │ DNS query: otsdrv.ots.olutechsys.com
-                   ↓ (UDP port 53)
-┌─────────────────────────────────────────────────────────┐
-│ Synology DNS Server on OTS NAS (10.0.1.15:53)           │
-│ Zone ots.olutechsys.com → *.ots → 10.0.1.15            │
-│ Zone mft.olutechsys.com → *.mft → 10.0.1.24            │
-│ Everything else → forward to router/8.8.8.8             │
-└──────────────────┬──────────────────────────────────────┘
-                   │ Response: 10.0.1.15
-                   ↓
-┌─────────────────────────────────────────────────────────┐
-│ Internal Client                                          │
-│ Connects to 10.0.1.15:443 → Traefik TLS termination     │
-│ ✓ Success — no external routing, no hairpin NAT needed  │
-└─────────────────────────────────────────────────────────┘
+LAN client (DHCP → NAS 10.0.1.15 as DNS)
+  → UDP/53 query otsdrv.ots.olutechsys.com
+  → Synology authoritative zone ots.olutechsys.com → A 10.0.1.15
+  → TCP/443 TLS to Traefik on 10.0.1.15
 
-────────────────────────────────────────────────────────────
+LAN client (default resolver, hairpin OK)
+  → public IP from Cloudflare
+  → router hairpins to Traefik
 
-┌─────────────────────────────────────────────────────────┐
-│ External Client (NOT on your LAN)                       │
-│ Queries public resolver (8.8.8.8, 1.1.1.1, etc.)        │
-│ No DHCP → uses configured/OS default resolver           │
-└──────────────────┬──────────────────────────────────────┘
-                   │ DNS query: otsdrv.ots.olutechsys.com
-                   ↓
-┌─────────────────────────────────────────────────────────┐
-│ Cloudflare (authoritative for olutechsys.com)           │
-│ *.ots → CNAME otsorundscore.synology.me                 │
-│ otsorundscore.synology.me → 73.212.176.x (DDNS IP)      │
-│ Response: 73.212.176.x (public IP)                      │
-└──────────────────┬──────────────────────────────────────┘
-                   │ Response: 73.212.176.x
-                   ↓
-┌─────────────────────────────────────────────────────────┐
-│ External Client                                         │
-│ Connects to 73.212.176.x:443 → ISP router → Traefik     │
-│ ✓ Success — Traefik terminates TLS, routes service      │
-└─────────────────────────────────────────────────────────┘
+Internet client
+  → Cloudflare → public IP → port forward → Traefik
 ```
 
 ---
 
 ## Troubleshooting
 
-### DNS still returns NXDOMAIN
-
-1. Verify Synology DNS Server is running:
-   ```bash
-   sudo synoservice --status dnsmasq
-   ```
-
-2. Verify the zone was created:
-   ```bash
-   sudo cat /etc/dnsmasq.d/views.conf
-   # Should show address=/ots.olutechsys.com/10.0.1.15
-   ```
-
-3. Restart dnsmasq:
-   ```bash
-   sudo synoservice --restart dnsmasq
-   ```
-
-4. Clear client DNS cache and retry:
-   ```bash
-   # On macOS:
-   sudo dscacheutil -flushcache
-   
-   # On Linux:
-   sudo resolvectl flush-caches
-   
-   # On Windows:
-   ipconfig /flushdns
-   ```
-
-### NAS is not being used as DNS by clients
-
-1. Verify router DHCP is set to `10.0.1.15`:
-   - ASUS UI: **Advanced Settings** → **LAN** → **DHCP Server** → **DNS Server 1**
-
-2. Force DHCP lease renewal on a test client:
-   ```bash
-   # On macOS:
-   sudo ipconfig set en0 BOOTP && sudo ipconfig set en0 DHCP
-   
-   # On Linux:
-   sudo dhclient -r && sudo dhclient
-   
-   # On Windows:
-   ipconfig /release && ipconfig /renew
-   ```
-
-3. Verify the client is using the NAS DNS:
-   ```bash
-   # On macOS:
-   scutil --dns | grep "nameserver\[0\]"
-   # Should show: 10.0.1.15
-   ```
-
-### Curl still times out after DNS works
-
-1. Verify Traefik is running on OTS:
-   ```bash
-   docker ps | grep traefik
-   ```
-
-2. Check Traefik logs:
-   ```bash
-   docker logs traefik-ots 2>&1 | tail -20
-   ```
-
-3. Verify the service hostname is configured in Traefik labels:
-   ```bash
-   docker inspect <service-container> --format='{{.Config.Labels}}'
-   ```
-
-4. Test TLS on Traefik directly:
-   ```bash
-   curl -kI https://10.0.1.15:443 -H "Host: otsdrv.ots.olutechsys.com"
-   # Should return 200 or 301
-   ```
+- **NXDOMAIN / wrong answer:** Confirm zones in DSM, or `sudo cat /etc/dnsmasq.d/split-horizon.conf` if using Option B; restart **DNSServer** package.
+- **Clients not using NAS DNS:** Router DHCP and lease renewal; on macOS `scutil --dns`.
+- **DNS works but curl fails:** Traefik down, wrong Host/SNI, or firewall—test `curl -kI https://10.0.1.15 -H "Host: otsdrv.ots.olutechsys.com"`.
 
 ---
 
-## Single Point of Failure (Optional: Secondary DNS)
+## Secondary resolver (mitigates DNS SPOF)
 
-Right now, if the OTS NAS reboots, DNS is down until it comes back. Options:
-
-### Option 1: Accept NAS availability coupling (simplest)
-
-Document that DNS follows NAS uptime. No secondary needed.
-
-### Option 2: Add Pi-hole in a container (recommended)
-
-Deploy Pi-hole on the Misfits NAS or another device:
-
-```yaml
-# Example: stacks/pihole/compose.yaml
-version: '3'
-services:
-  pihole:
-    image: pihole/pihole:latest
-    container_name: pihole
-    hostname: pihole
-    environment:
-      TZ: America/New_York
-      WEBPASSWORD: <PASSWORD>
-      DNSMASQ_LISTENING: all
-    ports:
-      - "53:53/tcp"
-      - "53:53/udp"
-      - "80:80/tcp"
-    volumes:
-      - ${STACK_ROOT}/pihole/config:/etc/dnsmasq.d/
-      - ${STACK_ROOT}/pihole/pihole:/etc/pihole/
-    restart: unless-stopped
-    networks:
-      - default
-```
-
-Then update router DHCP to prefer OTS, secondary to Pi-hole:
-- **DNS Server 1:** `10.0.1.15` (OTS)
-- **DNS Server 2:** `10.0.1.24` (Misfits / Pi-hole)
-
-### Option 3: Technitium DNS (lightweight, containerized)
-
-Similar to Pi-hole but lighter. Use if Pi-hole is overkill:
-
-```yaml
-services:
-  technitium:
-    image: technitium/dns-server:latest
-    ports:
-      - "53:53/tcp"
-      - "53:53/udp"
-    volumes:
-      - ${STACK_ROOT}/technitium/config:/etc/technitium/
-    restart: unless-stopped
-```
-
-**For now, skip the secondary.** Once internal DNS is working, add it as a follow-up.
+If the NAS running DNS Server is offline, clients need a **second resolver** that still answers generic internet queries. That resolver will **not** know your internal forward zones unless you replicate them—hence the split between “split-horizon convenience” vs “always-up public DNS path.” See **DNS SPOF** above.
 
 ---
 
-## Next Steps
+## ACME: acme-sh, Traefik, and internal DNS (Cloudflare DNS-01)
 
-1. **Immediate:** Apply Views configuration (Step 1–2)
-2. **Router DHCP:** Update to use NAS as DNS (Step 3)
-3. **Verify:** Test `nslookup` and `curl` from a client (Step 4)
-4. **Later:** Add secondary DNS (Pi-hole or Technitium) if desired
+**acme.sh (AcmeSh stack)** and **Traefik’s optional `certificatesResolvers.cloudflare` resolver** both use **Cloudflare’s API** for **DNS-01**. Neither consults your **internal** Synology forward zones or dnsmasq overrides. **No public delegation** of internal-only zones is required for issuance, and **split-horizon DNS is not part of the ACME trust path**.
 
-Once internal DNS works, document the secondary resolver setup in `docs/hive/NAS_DEPLOYMENT.md`.
+- **Wildcards** such as `*.ots.olutechsys.com` and `*.mft.olutechsys.com` are issued against **public** Cloudflare DNS (same account/token scope as always). Internal LAN DNS only affects **where clients connect after** they have a cert name—**not** whether Let’s Encrypt can validate `_acme-challenge` TXT records.
+
+- **Operational note:** this repo’s default Traefik TLS surface still uses **PEM files** produced by **acme-sh** under `${ACME_CERT_ROOT}` (see `stacks/traefik-*/config/tls.yaml`). Traefik’s built-in resolver is **additional** infrastructure for routers that opt into `tls.certresolver=cloudflare`; it does **not** replace acme-sh unless you migrate routers explicitly.
 
 ---
 
-## Key Points
+## Key points
 
-- **acme-sh is unaffected:** DNS-01 via Cloudflare API (direct, not through internal DNS)
-- **External clients unaffected:** Cloudflare serves public IP; split-horizon DNS is internal-only
-- **Traefik unchanged:** Still terminates TLS on `10.0.1.15:443`; DNS just gets clients to that IP locally
-- **No double TLS:** Internal clients hit Traefik directly (local path), no external routing
+| Topic | Fact |
+|--------|------|
+| TLS | **Traefik still terminates TLS** on internal access; split DNS only steers you to the right IP. |
+| Hairpin | Test **before** investing in split-horizon; many routers already work. |
+| ACME (acme-sh / Traefik Cloudflare resolver) | **Unaffected** by internal split-horizon — DNS-01 uses Cloudflare API only. |
+| Public DNS | **Unchanged** unless you deliberately delegate subzones to the NAS at the registrar. |
+| BIND “views” | This setup uses **forward zones** (DSM) or **dnsmasq address=** (CLI)—not BIND views. |
+
+---
+
+## Next steps
+
+1. Run **hairpin preflight** (section 0).
+2. If needed: create **forward zones** in DSM (Option A).
+3. Point DHCP DNS at the NAS **with a fallback**.
+4. Run **`scripts/verify-dns-views.sh`** (and **`--hairpin [hostname]`** once from a LAN client).
+
+### After TLS / ACME changes (operator checklist)
+
+On the NAS: `docker compose restart traefik-ots traefik-mft` (or your Dockge equivalent) so Traefik reloads certs. **Do not delete** `acme.json` / acme-sh state unless you are following `stacks/acme-sh/SETUP.md` rotation. From a LAN client: `curl -kI --max-time 15 https://<real-hostname>` and `echo | openssl s_client -servername <hostname> -connect <ip>:443 2>/dev/null | openssl x509 -noout -subject -dates` to confirm SAN and expiry.
+
+Further stack examples (Pi-hole, Technitium) live in git history of this doc if you reintroduce them; prefer Dockge stack paths under `/volume1/docker/dockge/stacks/` when adding containers.

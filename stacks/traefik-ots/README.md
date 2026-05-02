@@ -2,11 +2,15 @@
 
 ## Overview
 
-Traefik v3 runs on the **OTS** NAS and routes HTTPS for `*.ots.olutechsys.com`. It discovers backend services from Docker labels and terminates TLS using a **pre-issued** wildcard certificate from the `acme-sh` stack (`ots-sub/`).
+Traefik v3 runs on the **OTS** NAS and routes HTTPS for `*.ots.olutechsys.com`. It discovers backend services from Docker labels and terminates TLS using a **pre-issued** wildcard certificate from the `acme-sh` stack (`ots-sub/`), loaded via `config/tls.yaml`.
 
-## Cert source
+## Cert sources (two layers)
 
-Certificates are **not** requested by Traefik in normal operation. `acme-sh` issues `*.ots.olutechsys.com` and writes PEMs under `/volume1/certs/acme/ots-sub/`. This stack bind-mounts that directory **read-only** at `/certs/ots-sub` and loads paths via `config/tls.yaml`. When `acme-sh` renews, Traefik picks up updated files on the next configuration reload.
+1. **Default (production):** `acme-sh` issues `*.ots.olutechsys.com` via **Cloudflare DNS-01** and installs PEMs under `${ACME_CERT_ROOT}/ots-sub/`. Traefik mounts them read-only at `/certs/ots-sub`. **Internal split-horizon DNS is not involved** in issuance or renewal.
+
+2. **Optional:** Traefik also exposes **`certificatesResolvers.cloudflare`** (Cloudflare DNS-01, `CF_DNS_API_TOKEN`, `ACME_EMAIL`, state in `${STACK_ROOT}/traefik-ots/data/acme.json`). Use only on routers that set `traefik.http.routers.<n>.tls.certresolver=cloudflare`. Wildcards such as `*.ots.olutechsys.com` / `*.mft.olutechsys.com` remain **public-DNS** challenges at Cloudflare—same as acme-sh.
+
+**Renew / reload:** after `acme-sh` renews PEMs, restart Traefik (or reload) so file certs refresh. **Do not delete** `acme-sh` state or PEM dirs as part of Traefik restarts. For built-in resolver activity, check Traefik logs for `acme` / `lego` lines.
 
 ## Adding a new service
 
@@ -37,9 +41,10 @@ Replace `<name>` with a short unique router and service identifier (for example 
 | Host path                                        | Mount            | Purpose                                          |
 | ------------------------------------------------ | ---------------- | ------------------------------------------------ |
 | `${STACK_ROOT}/traefik-ots/config`               | `/etc/traefik`   | Static config (`tls.yaml`, optional extra files) |
+| `${STACK_ROOT}/traefik-ots/data`                 | `/data`          | Traefik built-in ACME `acme.json` (gitignored)   |
 | `${ACME_CERT_ROOT:-/volume1/certs/acme}/ots-sub` | `/certs/ots-sub` | PEM bundle from `acme-sh` (read-only)            |
 
-Copy `.env.example` to `.env` and set `STACK_ROOT`, `CF_Token` (optional if Traefik never uses its own ACME), and tuning variables as needed.
+Copy `.env.example` to `.env` and set `STACK_ROOT`, `CF_Token`, **`ACME_EMAIL`** (override the compose default `hostmaster@example.com` placeholder for real Let’s Encrypt account contact), and tuning variables as needed.
 
 ## Dashboard
 

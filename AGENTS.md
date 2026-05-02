@@ -3,7 +3,7 @@
 ## Repo layout (2026-04-30)
 
 - **Git repo root:** `/Volumes/docker/dockge` (NAS: `/volume1/docker/dockge`) — contains `HIVE_OBJECTIVE.md`, `.github/`, `scripts/` (see `scripts/README.txt`), and `stacks/`.
-- **Dockge stack root:** `/volume1/docker/dockge/stacks` — compose folders only. Hive docs live at repo `docs/hive/`. `WORKSPACE_PATH` for HolyClaude stays the stack root path.
+- **Dockge stack root:** `/volume1/docker/dockge/stacks` — compose folders only. Hive docs live at repo `docs/hive/`. `WORKSPACE_PATH` for HolyClaude stays the stack root path. Canonical bind-mount rules: **[CLAUDE.md](CLAUDE.md)** (`## Dockge path layout`).
 - **Compose CI:** run `scripts/compose-validate.sh` from any cwd (script locates repo root via `HIVE_OBJECTIVE.md`).
 - **Layout guard:** `scripts/verify-repo-layout.sh` (runs in **Stacks compose validate** CI) fails on root-level **`hive/`** (use **`docs/hive/`**) or a repo-root folder whose name duplicates a **`stacks/<stack>/`** child — avoids orphaned duplicates when paths are shown without `stacks/` in multi-root workspaces.
 - **NAS permissions:** on DSM, normalize bind-mount ownership with **`scripts/fix-permissions.sh`** (see `HIVE_OBJECTIVE.md` → NAS Deployment Notes). Default **`PUID`/`PGID` (or `SYNO_*`) = `0`** on the NAS unless you override in `.env` for local dev.

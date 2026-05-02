@@ -2,11 +2,11 @@
 
 ## Overview
 
-Traefik v3 runs on the **MFT** (Misfits) NAS and routes HTTPS for `*.mft.olutechsys.com`. It discovers backend services from Docker labels and terminates TLS using a **pre-issued** wildcard certificate from the `acme-sh` stack (`mft-sub/`).
+Traefik v3 runs on the **MFT** (Misfits) NAS and routes HTTPS for `*.mft.olutechsys.com`. Default TLS uses **`acme-sh`** PEMs (`mft-sub/`) via `config/tls.yaml`. A **`certificatesResolvers.cloudflare`** resolver (DNS-01, same token model as acme-sh) is also configured; internal split-horizon DNS is **not** used for ACME.
 
-## Cert source
+## Cert sources
 
-Certificates are **not** requested by Traefik in normal operation. `acme-sh` issues `*.mft.olutechsys.com` and writes PEMs under `/volume1/certs/acme/mft-sub/`. This stack bind-mounts that directory **read-only** at `/certs/mft-sub` and loads paths via `config/tls.yaml`. When `acme-sh` renews, Traefik picks up updated files on the next configuration reload.
+See [traefik-ots README](../traefik-ots/README.md#cert-sources-two-layers) — same pattern: file certs from `acme-sh`, optional Traefik resolver state under `${STACK_ROOT}/traefik-mft/data/acme.json`.
 
 ## Adding a new service
 
@@ -37,9 +37,10 @@ Replace `<name>` with a short unique router and service identifier (for example 
 | Host path                                        | Mount            | Purpose                                          |
 | ------------------------------------------------ | ---------------- | ------------------------------------------------ |
 | `${STACK_ROOT}/traefik-mft/config`               | `/etc/traefik`   | Static config (`tls.yaml`, optional extra files) |
+| `${STACK_ROOT}/traefik-mft/data`                 | `/data`          | Traefik built-in ACME `acme.json` (gitignored)   |
 | `${ACME_CERT_ROOT:-/volume1/certs/acme}/mft-sub` | `/certs/mft-sub` | PEM bundle from `acme-sh` (read-only)            |
 
-Copy `.env.example` to `.env` and set `STACK_ROOT`, `CF_Token` (optional if Traefik never uses its own ACME), and tuning variables as needed.
+Copy `.env.example` to `.env` and set `STACK_ROOT`, `CF_Token`, **`ACME_EMAIL`** (override the compose default placeholder), and tuning variables as needed.
 
 ## Dashboard
 

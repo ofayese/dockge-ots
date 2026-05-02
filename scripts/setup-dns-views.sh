@@ -1,39 +1,92 @@
 #!/bin/bash
-# One-line DNS Views setup for OTS + MFT
-# Run on OTS NAS: ssh admin@10.0.1.15 -p 28, then paste this
+# Optional split-horizon helper: dnsmasq address= overrides (NOT BIND Views).
+#
+# Preferred path: DSM → DNS Server → Primary zone → Forward zone (internal
+# authoritative forward DNS). This script only applies dnsmasq drop-ins if your
+# DSM build still honors /etc/dnsmasq.d/ for the DNS Server package — verify on
+# a non-production NAS or DSM minor version first.
+#
+# DSM 6 vs 7: restart path differs (synopkg / synosystemctl / synoservice). This
+# script tries multiple methods and fails loudly if none succeed.
+#
+# Run on Synology as admin with sudo.
 
-# Verify Synology DNS Server is installed
-sudo synoservice --status dnsmasq || (echo "ERROR: dnsmasq not running. Install DNS Server package first." && exit 1)
+set -euo pipefail
 
-# Create the views configuration
-sudo tee /etc/dnsmasq.d/views.conf > /dev/null <<'EOF'
-# Synology DNS Server Views — Internal split-horizon DNS
-# OTS internal zone
+CONF_NAME="split-horizon.conf"
+CONF_DIR="/etc/dnsmasq.d"
+CONF_PATH="${CONF_DIR}/${CONF_NAME}"
+
+dsm_major=""
+if [[ -r /etc.defaults/VERSION ]]; then
+	# shellcheck disable=SC1091
+	. /etc.defaults/VERSION || true
+	dsm_major="${majorversion:-}"
+fi
+
+restart_dns_server() {
+	if command -v synopkg &>/dev/null; then
+		if sudo synopkg restart DNSServer; then
+			return 0
+		fi
+	fi
+	if command -v synosystemctl &>/dev/null; then
+		if sudo synosystemctl restart pkgctl-DNSServer 2>/dev/null; then
+			return 0
+		fi
+		if sudo synosystemctl restart dnsmasq 2>/dev/null; then
+			return 0
+		fi
+	fi
+	if command -v synoservice &>/dev/null; then
+		if sudo synoservice --restart dnsmasq 2>/dev/null; then
+			return 0
+		fi
+	fi
+	return 1
+}
+
+echo "== Synology split-horizon dnsmasq overrides (optional) =="
+if [[ -n "$dsm_major" ]]; then
+	echo "Detected DSM major version: ${dsm_major}"
+else
+	echo "WARN: could not read DSM version from /etc.defaults/VERSION" >&2
+fi
+
+if ! command -v synopkg &>/dev/null && ! command -v synoservice &>/dev/null && ! command -v synosystemctl &>/dev/null; then
+	echo "ERROR: no synopkg/synoservice/synosystemctl — run this script on Synology DSM." >&2
+	exit 1
+fi
+
+if ! sudo mkdir -p "$CONF_DIR"; then
+	echo "ERROR: could not create ${CONF_DIR}" >&2
+	exit 1
+fi
+
+if ! sudo tee "$CONF_PATH" >/dev/null <<'EOF'; then
+# Split-horizon — dnsmasq address= overrides (see docs/hive/SYNOLOGY_DNS_VIEWS.md)
 address=/ots.olutechsys.com/10.0.1.15
 address=/.ots.olutechsys.com/10.0.1.15
-
-# MFT internal zone
 address=/mft.olutechsys.com/10.0.1.24
 address=/.mft.olutechsys.com/10.0.1.24
 EOF
+	echo "ERROR: failed to write ${CONF_PATH}" >&2
+	exit 1
+fi
 
-echo "✓ DNS Views configuration created"
+echo "Wrote ${CONF_PATH}"
 
-# Restart dnsmasq to apply changes
-sudo synoservice --restart dnsmasq
-echo "✓ dnsmasq restarted"
-
-# Verify it worked
-echo ""
-echo "Testing OTS zone..."
-nslookup otsdrv.ots.olutechsys.com 127.0.0.1 | grep "Address:"
-
-echo ""
-echo "Testing MFT zone..."
-nslookup mftdrv.mft.olutechsys.com 127.0.0.1 | grep "Address:"
+if restart_dns_server; then
+	echo "DNS Server (or dnsmasq) restart succeeded."
+else
+	echo "ERROR: could not restart DNS Server. Fix from DSM → Package Center or review logs." >&2
+	exit 1
+fi
 
 echo ""
-echo "✓ DNS Views enabled!"
+echo "Smoke tests (127.0.0.1) — failures here do not undo the config file."
+nslookup otsdrv.ots.olutechsys.com 127.0.0.1 || true
+nslookup mftdrv.mft.olutechsys.com 127.0.0.1 || true
+
 echo ""
-echo "Next: Update router DHCP to use 10.0.1.15 as DNS Server 1"
-echo "Then: Run verify-dns-views.sh from a client to confirm"
+echo "Next: hairpin preflight (docs), DHCP DNS1+DNS2, then: bash scripts/verify-dns-views.sh"

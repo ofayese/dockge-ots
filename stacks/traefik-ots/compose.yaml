@@ -24,14 +24,15 @@ services:
       # Pre-issued wildcard cert from acme-sh — Traefik reads PEMs directly.
       # acme-sh auto-renews; Traefik picks up the new PEM on next reload.
       - ${ACME_CERT_ROOT:-/volume1/certs/acme}/ots-sub:/certs/ots-sub:ro
-      # Traefik config and ACME state (if using Traefik's own ACME — see note)
+      # Traefik built-in ACME state (Cloudflare DNS-01) — separate mount so it does not overlay /etc/traefik.
+      - ${STACK_ROOT}/traefik-ots/data:/data:rw
+      # Traefik static/dynamic config (tls.yaml)
       - ${STACK_ROOT}/traefik-ots/config:/etc/traefik:rw
     environment:
       TZ: ${TZ:-America/New_York}
       PUID: ${PUID:-0}
       PGID: ${PGID:-0}
-      # CF_Token used by Traefik's own ACME resolver (optional — see note below).
-      # Remove if using pre-issued certs from acme-sh exclusively.
+      # Cloudflare DNS API (Lego) — used by certificatesResolvers.cloudflare; same token scope as acme-sh.
       CF_DNS_API_TOKEN: ${CF_Token}
     command:
       # ── Providers ────────────────────────────────────────────────────
@@ -45,9 +46,14 @@ services:
       - "--entrypoints.websecure.address=:443"
       - "--entrypoints.traefik.address=:8080"
       - "--ping=true"
-      # ── TLS — pre-issued cert from acme-sh ───────────────────────────
-      # Traefik loads the wildcard cert from the bind-mounted path.
-      # This is the preferred method — acme-sh owns the renewal lifecycle.
+      # Built-in ACME (Cloudflare DNS-01). Does not use internal split-horizon DNS.
+      # Default routers still use file certs (tls.yaml) from acme-sh; opt-in per router: tls.certresolver=cloudflare
+      - "--certificatesResolvers.cloudflare.acme.email=${ACME_EMAIL:-hostmaster@example.com}"
+      - "--certificatesResolvers.cloudflare.acme.storage=/data/acme.json"
+      - "--certificatesResolvers.cloudflare.acme.dnsChallenge.provider=cloudflare"
+      - "--certificatesResolvers.cloudflare.acme.dnsChallenge.delaybeforecheck=10s"
+      # ── TLS — default wildcard from acme-sh (file provider) ─────────
+      # Traefik loads PEMs from tls.yaml; acme-sh owns renewal to ACME_CERT_ROOT.
       # ── Dashboard (disable in production) ────────────────────────────
       - "--api.dashboard=${TRAEFIK_DASHBOARD:-false}"
       - "--api.insecure=${TRAEFIK_DASHBOARD:-false}"

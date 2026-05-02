@@ -1,105 +1,77 @@
-# DNS Views Quick Reference
+# Split-horizon DNS — quick reference
 
-## Problem
-```
-Internal client: nslookup otsdrv.ots.olutechsys.com
-Returns: 73.212.176.x (public IP)
-Result: curl times out (hairpin NAT failure)
-```
-
-## Solution: Split-Horizon DNS
-
-Internal clients get internal IP (10.0.1.15), external clients get public IP.
+**Terminology:** split-horizon DNS, **internal forward zones** (DSM Primary → Forward), optional **dnsmasq `address=` overrides** — not BIND “Views.” Full guide: [SYNOLOGY_DNS_VIEWS.md](SYNOLOGY_DNS_VIEWS.md).
 
 ---
 
-## Setup Checklist
+## 0. Hairpin-first (do before split-DNS)
 
-### ✓ Step 1: Enable Synology DNS Server
-```bash
-ssh admin@10.0.1.15 -p 28
-sudo synoservice --status dnsmasq
-# → dnsmasq is running
-```
+From a **LAN** machine:
 
-### ✓ Step 2: Create DNS Zones (Web UI or CLI)
-
-**Web UI:** DSM → Control Panel → DNS Server → Zone tab → Create Master Zone
-- Zone: `ots.olutechsys.com`
-- Record: `*` → A → `10.0.1.15`
-
-**CLI:**
-```bash
-sudo tee /etc/dnsmasq.d/views.conf > /dev/null <<'EOF'
-address=/ots.olutechsys.com/10.0.1.15
-address=/.ots.olutechsys.com/10.0.1.15
-address=/mft.olutechsys.com/10.0.1.24
-address=/.mft.olutechsys.com/10.0.1.24
-EOF
-
-sudo synoservice --restart dnsmasq
-```
-
-### ✓ Step 3: Test on NAS
-```bash
-nslookup otsdrv.ots.olutechsys.com 127.0.0.1
-# → 10.0.1.15 ✓
-
-curl -kI https://otsdrv.ots.olutechsys.com
-# → 200/301 ✓
-```
-
-### ✓ Step 4: Update Router DHCP
-
-ASUS Web UI: Advanced Settings → LAN → DHCP Server
-- DNS Server 1: `10.0.1.15`
-- DNS Server 2: `8.8.8.8` (optional fallback)
-- **Apply**
-
-### ✓ Step 5: Verify on Client
-
-From any LAN device (not NAS):
 ```bash
 nslookup otsdrv.ots.olutechsys.com
-# → 10.0.1.15 ✓
+curl -kI --max-time 15 https://otsdrv.ots.olutechsys.com
+```
 
-curl -kI https://otsdrv.ots.olutechsys.com
-# → 200/301 ✓
+| Result | Meaning |
+|--------|---------|
+| `curl` OK, `nslookup` shows **public** IP | Hairpin works → **split-DNS optional** |
+| `curl` fails, `nslookup` public IP | Hairpin broken / blocked → **split-DNS required** (or router fix) |
+| `nslookup` already shows **LAN** Traefik IP | Internal DNS already in path → **split-DNS not needed** for reachability |
+
+Automated: `bash scripts/verify-dns-views.sh --hairpin` or `bash scripts/verify-dns-views.sh --hairpin mftdrv.mft.olutechsys.com`
+
+---
+
+## DNS SPOF
+
+DHCP **DNS1 = NAS only** with no **DNS2** → NAS outage **breaks all DNS** for clients. Set **DNS2** to router or `1.1.1.1` (internal zones still only on NAS unless replicated).
+
+---
+
+## ACME (acme-sh / Traefik Cloudflare DNS-01)
+
+**Cloudflare DNS-01** uses the **Cloudflare API** only — **not** internal Synology DNS. Wildcards like `*.ots.olutechsys.com` / `*.mft.olutechsys.com` stay on **public** Cloudflare; see `stacks/acme-sh/SETUP.md`. Traefik’s optional built-in resolver (if enabled in compose) also uses **`CF_DNS_API_TOKEN`** — still **no** dependency on split-horizon.
+
+---
+
+## Setup checklist
+
+### Step 1 — Package
+
+DSM → **Package Center** → **DNS Server** → Install.
+
+```bash
+sudo synopkg status DNSServer 2>/dev/null || sudo synoservice --status dnsmasq 2>/dev/null
+```
+
+### Step 2 — Internal forward zones (DSM UI)
+
+**DNS Server** → **Zone** → **Create** → **Primary zone** → **Forward zone**
+
+- `ots.olutechsys.com` → `*` **A** → `10.0.1.15`
+- Optional: `mft.olutechsys.com` → `*` **A** → `10.0.1.24`
+
+**SOA / public DNS:** Cloudflare stays authoritative for public `olutechsys.com`; internal zones are **LAN-only** unless you delegate at the registrar.
+
+### Step 3 — Optional dnsmasq overrides (expert)
+
+See [scripts/setup-dns-views.sh](../../scripts/setup-dns-views.sh) — DSM-version-specific.
+
+### Step 4 — Router DHCP
+
+DNS1 = `10.0.1.15`, **DNS2 = fallback** (router / `1.1.1.1`).
+
+### Step 5 — Verify
+
+```bash
+bash scripts/verify-dns-views.sh
 ```
 
 ---
 
-## How to Know It Works
+## Files
 
-| Test | Command | Expected | Status |
-|------|---------|----------|--------|
-| Internal DNS | `nslookup otsdrv.ots.olutechsys.com` | `10.0.1.15` | ? |
-| Traefik TLS | `curl -kI https://otsdrv.ots.olutechsys.com` | `200` or `301` | ? |
-| External DNS | `nslookup otsdrv.ots.olutechsys.com` (from non-LAN) | `73.212.176.x` | ? |
-
----
-
-## Troubleshooting
-
-| Problem | Fix |
-|---------|-----|
-| nslookup returns NXDOMAIN | Verify `/etc/dnsmasq.d/views.conf` exists; restart dnsmasq |
-| Client not using NAS DNS | Verify router DHCP points to 10.0.1.15; renew DHCP lease on client |
-| curl still times out | Check Traefik is running: `docker ps \| grep traefik` |
-| Test after DNS changes | Clear client DNS cache: `sudo dscacheutil -flushcache` (macOS) |
-
----
-
-## Files Added
-
-- **`docs/hive/SYNOLOGY_DNS_VIEWS.md`** — Full setup guide
-- **`scripts/verify-dns-views.sh`** — Automated verification script
-
----
-
-## Key Facts
-
-- **acme-sh unaffected** — uses Cloudflare API directly, not internal DNS
-- **Traefik unaffected** — still terminates TLS on 10.0.1.15:443
-- **No double TLS** — internal clients bypass DDNS hop, hit Traefik locally
-- **External clients unaffected** — Cloudflare serves public IP
+- [SYNOLOGY_DNS_VIEWS.md](SYNOLOGY_DNS_VIEWS.md)
+- [scripts/verify-dns-views.sh](../../scripts/verify-dns-views.sh)
+- [scripts/setup-dns-views.sh](../../scripts/setup-dns-views.sh)

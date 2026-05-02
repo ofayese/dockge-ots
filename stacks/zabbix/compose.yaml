@@ -134,7 +134,7 @@ services:
   # privileged mode. See docs/hive/NAS_DEPLOYMENT.md.
   #
   # zabbix-agent2:
-  #   image: zabbix/zabbix-agent2:7.4-alpine
+  #   image: zabbix/zabbix-agent2:alpine-6.4-latest
   #   container_name: zabbix-agent2
   #   # privileged: true  # required to see host metrics from container
   #   # network_mode: host  # required for host-level monitoring

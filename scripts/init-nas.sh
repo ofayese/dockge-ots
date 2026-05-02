@@ -212,7 +212,7 @@ echo "STACK_ROOT = ${STACK_ROOT}"
 echo "Now open Dockge and deploy your stacks."
 echo "────────────────────────────────────────"
 
-if [[ "${IF_CHANGED_MODE}" -eq 1 ]]; then
+if [[ "${IF_CHANGED_MODE:-0}" -eq 1 ]]; then
 	echo "${CURRENT_HASH}" >"${HASH_FILE}"
 	echo "init-nas.sh: recorded manifest hash for --if-changed."
 fi

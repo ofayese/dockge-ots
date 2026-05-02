@@ -8,9 +8,11 @@ services:
     # to render inside a KasmVNC container. Standard for LinuxServer.io
     # GUI images. Security Advisor will flag these — intentional.
     # See docs/hive/NAS_DEPLOYMENT.md for acknowledgement.
+    # Omit no-new-privileges:true: Electron's setuid chrome-sandbox cannot
+    # gain privileges under PR_NO_NEW_PRIVS; on DSM (often no unprivileged
+    # user namespaces) that breaks the renderer. Do not add --no-sandbox here.
     security_opt:
       - seccomp:unconfined
-      - no-new-privileges:true
     cap_add:
       - IPC_LOCK
     # Healthcheck type: B — TCP probe on KasmVNC internal port 3000.

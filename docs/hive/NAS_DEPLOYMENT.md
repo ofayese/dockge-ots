@@ -221,6 +221,8 @@ Security Advisor will report the following warnings for this repo. All are inten
 | `IPC_LOCK` capability               | **github-desktop** (Electron memory locking)             | Intentional — documented in `stacks/github-desktop/compose.yaml`.                                                                         |
 | `privileged: true` on zabbix-agent2 | Docker agent needs host access for container metrics     | Only relevant if **zabbix-agent2** is uncommented. Document the exception here before enabling. See `stacks/zabbix/compose.yaml` comments. |
 
+**github-desktop** intentionally **omits** `no-new-privileges:true`: Electron’s setuid sandbox cannot work under `PR_NO_NEW_PRIVS` on typical DSM kernels, which can crash or blank the UI. Other stacks in this repo may still use `no-new-privileges:true` as the fleet baseline.
+
 Acknowledge these in **Security Advisor → Mark as acknowledged**. Do not remove settings from `compose.yaml` solely to silence warnings.
 
 ## Native vs Docker alternatives (SynoCommunity)

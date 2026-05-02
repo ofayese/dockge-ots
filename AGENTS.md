@@ -76,6 +76,7 @@
 - **Host port:** `5571` → container port `5001`. The homepage config previously pointed to `5001` (Synology DSM's port) — now corrected to `5571`.
 - **Container name:** `Dockge` (capital D). Homepage `server: my-docker` + `container: Dockge` now enabled.
 - **Path symmetry (correct):** `/volume1/docker/dockge/stacks:/volume1/docker/dockge/stacks` — inside-path = outside-path as required by Dockge.
+- **App state:** `scripts/dockge-start.sh` mounts the **repo root** (`DOCKGE_ROOT`, default `/volume1/docker/dockge`) at **`/app/data`** so Dockge’s DB/files live next to `stacks/` — **no** separate `.../dockge/data/` directory is required.
 - **PUID/PGID:** Added to startup script for correct stack file ownership (`1026`/`100` for `ofayese`/`users`).
 
 ### Homepage widget

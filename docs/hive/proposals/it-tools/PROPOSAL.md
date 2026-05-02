@@ -51,7 +51,7 @@ services:
     cpu_shares: 256
     security_opt:
       - no-new-privileges:true
-    restart: on-failure:5
+    restart: unless-stopped
     ports:
       - 10.0.1.15:8894:80
     environment:

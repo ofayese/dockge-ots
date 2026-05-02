@@ -44,7 +44,7 @@ Service environment keys:
 | Item | `watchtower` |
 |---|---|
 | `security_opt: no-new-privileges:true` | ✓ |
-| `restart: on-failure:5` | ✓ |
+| `restart: unless-stopped` | ✓ |
 | watchtower label | ✗ missing |
 | `mem_limit` | ✓ `128m` |
 | `cpu_shares` | ✓ `256` |

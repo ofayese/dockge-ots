@@ -5,8 +5,16 @@
 #   sudo bash scripts/init-nas.sh
 # Re-run after git pull only if new stacks have been added.
 # Idempotent — safe to run multiple times.
+#
+# Manifest exhaustiveness (BSD-safe; no grep -oP):
+#   diff <(grep -E '^\s*"[^"]+:' scripts/init-nas.sh | sed -E 's/^[[:space:]]*"([^"]+):.*/\1/' | sort) \
+#        <(ls stacks/ | grep -vE '^portainer$|^agents_gateway_data$|^it-tools$|^mcp-tools-config$|^openresume$|^warp-main$|^watchtower$|^docker-model-runner$' | sort)
+# Left: stack names from STACK_MANIFEST. Right: stack dirs excluding MANIFEST_EXEMPT (same as grep -vE list).
 
 set -euo pipefail
+
+LIST_ONLY=0
+[[ "${1:-}" == "--list-expected-dirs" ]] && LIST_ONLY=1
 
 # ── 1. Resolve repo root and STACK_ROOT ──────────────────────────────
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -18,17 +26,98 @@ STACKS_IN_REPO="${REPO_ROOT}/stacks"
 # clone parent. Else STACK_ROOT_OVERRIDE or /dockge/stacks.
 if [[ -d "${STACKS_IN_REPO}" ]]; then
 	STACK_ROOT="${STACKS_IN_REPO}"
-	echo "Auto-detected STACK_ROOT (repo stacks/): ${STACK_ROOT}"
+	[[ "${LIST_ONLY}" -eq 0 ]] && echo "Auto-detected STACK_ROOT (repo stacks/): ${STACK_ROOT}"
 else
 	CANDIDATE_STACKS="$(cd "${REPO_ROOT}/.." && pwd)/stacks"
 	if [[ -d "${CANDIDATE_STACKS}" ]]; then
 		STACK_ROOT="${CANDIDATE_STACKS}"
-		echo "Auto-detected STACK_ROOT (sibling stacks/): ${STACK_ROOT}"
+		[[ "${LIST_ONLY}" -eq 0 ]] && echo "Auto-detected STACK_ROOT (sibling stacks/): ${STACK_ROOT}"
 	else
 		STACK_ROOT="${STACK_ROOT_OVERRIDE:-/dockge/stacks}"
-		echo "Using default STACK_ROOT: ${STACK_ROOT}"
-		echo "(Override with: STACK_ROOT_OVERRIDE=/your/path sudo bash scripts/init-nas.sh)"
+		if [[ "${LIST_ONLY}" -eq 0 ]]; then
+			echo "Using default STACK_ROOT: ${STACK_ROOT}"
+			echo "(Override with: STACK_ROOT_OVERRIDE=/your/path sudo bash scripts/init-nas.sh)"
+		fi
 	fi
+fi
+
+# Format: "stack-name:sub1[,sub2]" — keep aligned with compose bind mounts under ${STACK_ROOT}/<stack>/...
+STACK_MANIFEST=(
+	# Sub-folder rules:
+	#   data   → default for all stacks with host bind mounts
+	#   db     → add only when a DB engine has its own host bind mount
+	#   config → add only when a non-db service writes runtime config
+	# Never add a folder speculatively.
+	# portainer: OPERATOR EXCEPTION — exempt from this manifest.
+	#   Path managed via ${PORTAINER_DATA_ROOT}. See repo AGENTS.md / stack README.
+
+	# ── data only ─────────────────────────────────────────────────────
+	"acme-sh:data"
+	"dozzle:data"
+	"ollama:data"
+
+	# ── data,config ───────────────────────────────────────────────────
+	"code-server:data,config"
+	"github-desktop:data,config"
+	"homepage:data,config"
+	"searxng:data,config"
+	"grafana-prom:data,config"
+
+	# ── data,db ───────────────────────────────────────────────────────
+	"codex-docs:data,db"
+	# databases: engine data under db/mariadb and db/postgres; secrets under secrets/ (compose).
+	"databases:db"
+	"zabbix:data,db"
+	"holyclaude:data"
+
+	# ── Omit (no ${STACK_ROOT} dirs in manifest) — audit trail only ───
+	# agents_gateway_data: docker.sock only — no ${STACK_ROOT} dirs needed.
+	# docker-model-runner: no host volume binds.
+	# it-tools: no volumes.
+	# mcp-tools-config: catalog only — no runtime dirs.
+	# openresume: no volumes.
+	# warp-main: no volumes.
+	# watchtower: docker.sock only — no ${STACK_ROOT} dirs needed.
+	#   Absent from manifest intentionally. Listed here for audit trail.
+
+	# ── New stacks: add entry here before first deploy ─────────────────
+)
+
+# Stacks intentionally absent from STACK_MANIFEST.
+# These have no persistent host bind mounts under ${STACK_ROOT}.
+# Listed here so the manifest exhaustiveness check can account
+# for them without requiring a dummy entry. (Not read by this script — see
+# docs/hive/NAS_DEPLOYMENT.md for the matching `diff` / `grep -vE` list.)
+# shellcheck disable=SC2034
+MANIFEST_EXEMPT=(
+	"agents_gateway_data" # docker.sock only
+	"it-tools"            # no volumes
+	"mcp-tools-config"    # catalog only
+	"openresume"          # no volumes
+	"warp-main"           # no volumes
+	"watchtower"          # docker.sock only
+	"portainer"           # operator exception — path outside STACK_ROOT
+	"docker-model-runner" # no host volume binds
+)
+
+# ── Manifest-derived expected directory list ─────────────────────────
+# Usage: bash scripts/init-nas.sh --list-expected-dirs
+# Prints paths init-nas.sh would create under STACK_ROOT, without mkdir or .env writes.
+if [[ "${LIST_ONLY}" -eq 1 ]]; then
+	for entry in "${STACK_MANIFEST[@]}"; do
+		[[ "${entry}" =~ ^[[:space:]]*# ]] && continue
+		[[ -z "${entry// /}" ]] && continue
+		entry="${entry//\"/}"
+		stack="${entry%%:*}"
+		sub_folders="${entry##*:}"
+		[[ -z "${sub_folders}" ]] && continue
+		IFS=',' read -ra folders <<<"${sub_folders}"
+		for folder in "${folders[@]}"; do
+			[[ -z "${folder}" ]] && continue
+			echo "${STACK_ROOT}/${stack}/${folder}"
+		done
+	done
+	exit 0
 fi
 
 # ── 2. Write STACK_ROOT into repo-root .env ───────────────────────────
@@ -71,38 +160,22 @@ done
 echo ""
 echo "Creating volume directories under ${STACK_ROOT} ..."
 
-# Format: "stack-name:sub1[,sub2]" — keep aligned with compose bind mounts under ${STACK_ROOT}/<stack>/...
-STACK_MANIFEST=(
-	"acme-sh:data"
-	"agents_gateway_data:data"
-	"code-server:config"
-	"codex-docs:data"
-	"databases:db"
-	"docker-model-runner:data"
-	"dozzle:data"
-	"github-desktop:config"
-	"grafana-prom:data,config"
-	"holyclaude:data"
-	"homepage:config"
-	"it-tools:data"
-	"mcp-tools-config:data"
-	"ollama:data"
-	"openresume:data"
-	"portainer:data"
-	"searxng:config"
-	"warp-main:data"
-	"watchtower:data"
-	"zabbix:db,data,config"
-)
-
 for entry in "${STACK_MANIFEST[@]}"; do
+	# Skip comments and blank lines
+	[[ "${entry}" =~ ^[[:space:]]*# ]] && continue
+	[[ -z "${entry// /}" ]] && continue
+	# Strip quotes if present
+	entry="${entry//\"/}"
 	stack="${entry%%:*}"
 	sub_folders="${entry##*:}"
+	# Trailing "stack:" with no sub-folders — omit stack: create nothing under STACK_ROOT.
+	[[ -z "${sub_folders}" ]] && continue
 	IFS=',' read -ra folders <<<"${sub_folders}"
 	for folder in "${folders[@]}"; do
+		[[ -z "${folder}" ]] && continue
 		dir="${STACK_ROOT}/${stack}/${folder}"
 		mkdir -p "${dir}"
-		echo "  ✓ ${dir}"
+		echo "  ✓ staged: ${dir}"
 	done
 done
 

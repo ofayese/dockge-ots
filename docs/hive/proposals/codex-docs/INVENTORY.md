@@ -13,8 +13,8 @@
 
 | Service | Host | Container | Mode |
 |---|---|---|---|
-| mongodb | `/volume1/docker/dockge/stacks/codex-docs/mongodb` | `/data/db` | rw |
-| codex-docs | `/volume1/docker/dockge/stacks/codex-docs/uploads` | `/usr/src/app/uploads` | rw |
+| mongodb | `/volume1/docker/dockge/stacks/codex-docs/db` | `/data/db` | rw |
+| codex-docs | `/volume1/docker/dockge/stacks/codex-docs/data` | `/usr/src/app/uploads` | rw |
 
 ## Networks
 
@@ -46,7 +46,7 @@ Service environment keys:
 | Item | `mongodb` | `codex-docs` |
 |---|---|---|
 | `security_opt: no-new-privileges:true` | ✓ | ✓ |
-| `restart: on-failure:5` | ✓ | ✓ |
+| `restart: unless-stopped` | ✓ | ✓ |
 | watchtower label | ✓ | ✓ |
 | `mem_limit` | ✓ `512m` | ✓ `256m` |
 | `cpu_shares` | ✓ `512` | ✓ `256` |

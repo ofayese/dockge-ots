@@ -35,7 +35,7 @@ Local LLM runtime (`ollama`) + open-webui front-end. CPU-only on this NAS — no
 
 ## Services
 - otsai-server (11434) — Ollama REST API; models persist at /volume1/.../ollama/data
-- otsai-webui (8893) — open-webui chat UI; depends on ollama; auth state in /volume1/.../ollama/webui
+- otsai-webui (8893) — open-webui chat UI; depends on ollama; auth state under /volume1/.../ollama/data/open-webui
 
 ## Public hostname
 - ai.otsorundscore.olutechsys.com (referenced in WEBUI_URL; resolved via extra_hosts)
@@ -51,7 +51,7 @@ Local LLM runtime (`ollama`) + open-webui front-end. CPU-only on this NAS — no
 ## Rollback
 - `git checkout -- ollama/compose.yaml && docker compose -f ollama/compose.yaml up -d`
 - Models survive: `/volume1/docker/dockge/stacks/ollama/data` not touched.
-- User accounts (open-webui) survive: `/volume1/docker/dockge/stacks/ollama/webui` not touched.
+- User accounts (open-webui) survive: `/volume1/docker/dockge/stacks/ollama/data/open-webui` not touched.
 
 ## Resource ceiling
 Without `mem_limit`, model loading can eat all NAS RAM. The compose enforces:
@@ -69,11 +69,11 @@ Without `mem_limit`, model loading can eat all NAS RAM. The compose enforces:
     cpu_shares: 1024         # heavy compute; let it dominate when active
     security_opt:
       - no-new-privileges:true
-    restart: on-failure:5
+    restart: unless-stopped
     ports:
       - 10.0.1.15:11434:11434
     volumes:
-      - /volume1/docker/dockge/stacks/ollama/data:/root/.ollama:rw
+      - /volume1/docker/dockge/stacks/ollama/data/ollama:/root/.ollama:rw
     environment:
       - OLLAMA_HOST=0.0.0.0
       - OLLAMA_NUM_PARALLEL=1
@@ -96,11 +96,11 @@ Without `mem_limit`, model loading can eat all NAS RAM. The compose enforces:
     cpu_shares: 512
     security_opt:
       - no-new-privileges:true
-    restart: on-failure:5
+    restart: unless-stopped
     ports:
       - 8893:8080
     volumes:
-      - /volume1/docker/dockge/stacks/ollama/webui:/app/backend/data:rw
+      - /volume1/docker/dockge/stacks/ollama/data/open-webui:/app/backend/data:rw
     environment:
       - OLLAMA_BASE_URL=http://ollama:11434
       - WEBUI_AUTH=true

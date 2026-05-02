@@ -23,4 +23,4 @@ Requires **HTTPS 443** to Warp and image registries for pulls and API calls.
 
 ## Compose
 
-Uses **`restart: on-failure:5`** and healthchecks for Synology-aligned operability. `warp-agent` **`user`** is `${PUID:-0}:${PGID:-0}` (same default as upstream `0:0`; set **`PUID`/`PGID`** in `.env` per `HIVE_OBJECTIVE.md`).
+Uses **`restart: unless-stopped`** and healthchecks for Synology-aligned operability. `warp-agent` **`user`** is `${PUID:-0}:${PGID:-0}` (same default as upstream `0:0`; set **`PUID`/`PGID`** in `.env` per `HIVE_OBJECTIVE.md`).

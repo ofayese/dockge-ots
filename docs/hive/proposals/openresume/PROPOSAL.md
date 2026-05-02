@@ -57,7 +57,7 @@ services:
     cpu_shares: 512
     security_opt:
       - no-new-privileges:true
-    restart: on-failure:5
+    restart: unless-stopped
     ports:
       - 10.0.1.15:8889:3000
     environment:

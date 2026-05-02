@@ -147,13 +147,9 @@ One-page document covering: purpose, services, ports, env vars, dependencies, wh
 
 ## §8 `restart` baseline
 
-HIVE_OBJECTIVE.md specifies `restart: on-failure:5`. Three stacks currently use `restart: always` (`code-server`, `portainer`).
+HIVE_OBJECTIVE.md specifies **`restart: unless-stopped`** as the repo default (adopted 2026-05-01). One-shot or init-style services may use **`restart: "no"`** with an **`# intentional`** comment in `compose.yaml`.
 
-**Decision needed (queen):**
-- **Option A:** rewrite `always` → `on-failure:5` everywhere for strict baseline parity.
-- **Option B:** keep `always` for IDE / orchestration UI services where you genuinely want them back regardless of exit code (operator convenience), and document the exception per-stack.
-
-Recommend **Option B** — `always` for `code-server` and `portainer` is operator-friendly and the cost is bounded (Synology's Docker reaper handles runaway restarts). Per-stack PROPOSALs will document the exception inline.
+Historical note: older drafts referenced `restart: on-failure:5` or `restart: always`; tracked compose has been aligned to **`unless-stopped`** except documented one-shots.
 
 ---
 

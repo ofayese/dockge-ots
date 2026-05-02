@@ -4,7 +4,7 @@
 
 ## Summary
 
-Document and baseline the **MCP gateway** stack: external bridge network, `restart: on-failure:5`, `security_opt`, logging, pinned gateway image, explicit `docker.sock` security comments.
+Document and baseline the **MCP gateway** stack: external bridge network, `restart: unless-stopped`, `security_opt`, logging, pinned gateway image, explicit `docker.sock` security comments.
 
 ## Rollback
 

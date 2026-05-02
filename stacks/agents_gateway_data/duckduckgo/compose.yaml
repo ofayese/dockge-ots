@@ -13,12 +13,19 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-    restart: on-failure:5
+    restart: unless-stopped
     ports:
       - 8811:8811
     volumes:
       # SECURITY: docker.sock grants Docker API access (host-level). Required for MCP gateway image.
       - /var/run/docker.sock:/var/run/docker.sock
+    # Healthcheck type: A — HTTP /health probe (same as root compose.yaml)
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8811/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
     environment:
       PUID: ${PUID:-0}
       PGID: ${PGID:-0}

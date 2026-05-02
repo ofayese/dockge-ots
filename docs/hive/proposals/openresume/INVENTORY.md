@@ -40,7 +40,7 @@ Service environment keys:
 | Item | `openresume` |
 |---|---|
 | `security_opt: no-new-privileges:true` | ✓ |
-| `restart: on-failure:5` | ✓ |
+| `restart: unless-stopped` | ✓ |
 | watchtower label | ✓ |
 | `mem_limit` | ✓ `512m` |
 | `cpu_shares` | ✓ `512` |

@@ -12,9 +12,10 @@ services:
       - no-new-privileges:true
     mem_limit: 4g # Dev workstation container with browser/tooling overhead.
     cpu_shares: 768 # Interactive IDE + agent workloads need higher relative priority.
-    restart: on-failure:5
+    restart: unless-stopped
     ports:
-      - "3059:3001"
+      - "3059:3059"
+      - "3000:3000"
     env_file:
       - .env
     environment:
@@ -25,7 +26,8 @@ services:
       - NOTIFY_DISCORD=${NOTIFY_DISCORD}
     volumes:
       - claude-home:/home/claude/.claude
-      - ${STACK_ROOT}:/workspace
+      # Scoped to holyclaude/data — container sees this as /workspace
+      - ${STACK_ROOT}/holyclaude/data:/workspace
       - cloudcli-data:/home/claude/.cloudcli
     labels:
       - com.centurylinklabs.watchtower.enable=true

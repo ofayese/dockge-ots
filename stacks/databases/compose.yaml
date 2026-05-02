@@ -11,9 +11,9 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-    restart: on-failure:5
+    restart: unless-stopped
     volumes:
-      - ${STACK_ROOT}/databases/mariadb:/var/lib/mysql:rw
+      - ${STACK_ROOT}/databases/db/mariadb:/var/lib/mysql:rw
     environment:
       - PUID=${PUID:-0}
       - PGID=${PGID:-0}
@@ -46,9 +46,9 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-    restart: on-failure:5
+    restart: unless-stopped
     volumes:
-      - ${STACK_ROOT}/databases/postgres:/var/lib/postgresql/data:rw
+      - ${STACK_ROOT}/databases/db/postgres:/var/lib/postgresql/data:rw
     environment:
       - PUID=${PUID:-0}
       - PGID=${PGID:-0}
@@ -79,7 +79,7 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-    restart: on-failure:5
+    restart: unless-stopped
     ports:
       - 10.0.1.15:8895:8080
     environment:

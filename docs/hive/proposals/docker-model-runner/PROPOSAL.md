@@ -4,7 +4,7 @@
 
 ## Summary
 
-Add Synology-aligned **logging**, **`restart: on-failure:5`**, **`security_opt`**, **`TZ`**, **`mem_limit`**, and HTTP **healthchecks** for each model-runner service without changing published models/ports.
+Add Synology-aligned **logging**, **`restart: unless-stopped`**, **`security_opt`**, **`TZ`**, **`mem_limit`**, and HTTP **healthchecks** for each model-runner service without changing published models/ports.
 
 ## Rollback
 

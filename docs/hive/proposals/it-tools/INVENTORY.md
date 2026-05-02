@@ -29,7 +29,7 @@ None.
 | Item | `it-tools` |
 |---|---|
 | `security_opt: no-new-privileges:true` | ✓ |
-| `restart: on-failure:5` | ✓ |
+| `restart: unless-stopped` | ✓ |
 | watchtower label | ✓ |
 | `mem_limit` | ✓ `256m` |
 | `cpu_shares` | ✓ `256` |

@@ -11,9 +11,9 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-    restart: on-failure:5
+    restart: unless-stopped
     volumes:
-      - ${STACK_ROOT}/codex-docs/mongodb:/data/db:rw
+      - ${STACK_ROOT}/codex-docs/db:/data/db:rw
     environment:
       - PUID=${PUID:-0}
       - PGID=${PGID:-0}
@@ -38,11 +38,11 @@ services:
     cpu_shares: 256
     security_opt:
       - no-new-privileges:true
-    restart: on-failure:5
+    restart: unless-stopped
     ports:
       - 10.0.1.15:8896:3000
     volumes:
-      - ${STACK_ROOT}/codex-docs/uploads:/usr/src/app/uploads:rw
+      - ${STACK_ROOT}/codex-docs/data:/usr/src/app/uploads:rw
     env_file:
       - .env
     environment:

@@ -41,7 +41,7 @@ Service environment keys:
 | Item | `redis` | `searxng` |
 |---|---|---|
 | `security_opt: no-new-privileges:true` | ✓ | ✓ |
-| `restart: on-failure:5` | ✓ | ✓ |
+| `restart: unless-stopped` | ✓ | ✓ |
 | watchtower label | ✓ | ✓ |
 | `mem_limit` | ✓ `256m` | ✓ `512m` |
 | `cpu_shares` | ✓ `512` | ✓ `768` |

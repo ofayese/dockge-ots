@@ -11,12 +11,12 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-    restart: on-failure:5
+    restart: unless-stopped
     ports:
       - 10.0.1.15:7575:3000
     volumes:
       - ${STACK_ROOT}/homepage/config:/app/config:rw
-      - ${STACK_ROOT}/homepage/icons:/app/public/icons:rw
+      - ${STACK_ROOT}/homepage/data:/app/public/icons:rw
       # Docker socket (ro): exposes container/meta to Homepage; read-only avoids mutating containers via the API.
       # Required for the docker.yaml `my-docker` socket integration.
       - /var/run/docker.sock:/var/run/docker.sock:ro

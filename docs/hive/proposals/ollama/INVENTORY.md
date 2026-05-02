@@ -13,8 +13,8 @@
 
 | Service | Host | Container | Mode |
 |---|---|---|---|
-| ollama | `/volume1/docker/dockge/stacks/ollama/data` | `/root/.ollama` | rw |
-| open-webui | `/volume1/docker/dockge/stacks/ollama/webui` | `/app/backend/data` | rw |
+| ollama | `/volume1/docker/dockge/stacks/ollama/data/ollama` | `/root/.ollama` | rw |
+| open-webui | `/volume1/docker/dockge/stacks/ollama/data/open-webui` | `/app/backend/data` | rw |
 
 ## Networks
 
@@ -51,7 +51,7 @@ Service environment keys:
 | Item | `ollama` | `open-webui` |
 |---|---|---|
 | `security_opt: no-new-privileges:true` | ✓ | ✓ |
-| `restart: on-failure:5` | ✓ | ✓ |
+| `restart: unless-stopped` | ✓ | ✓ |
 | watchtower label | ✓ | ✓ |
 | `mem_limit` | ✗ missing | ✗ missing |
 | `cpu_shares` | ✗ missing | ✗ missing |

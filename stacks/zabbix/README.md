@@ -6,10 +6,10 @@ Network and host monitoring with Zabbix Server (PostgreSQL), nginx web frontend,
 
 ## Ports
 
-| Port | Service |
-|------|---------|
-| `${ZABBIX_WEB_PORT:-8532}` (host) | Zabbix web (HTTP inside container on 8080) |
-| `${ZABBIX_SERVER_PUBLISH:-10051}` (host) | Zabbix server (trapper) |
+| Port                                     | Service                                    |
+| ---------------------------------------- | ------------------------------------------ |
+| `${ZABBIX_WEB_PORT:-8532}` (host)        | Zabbix web (HTTP inside container on 8080) |
+| `${ZABBIX_SERVER_PUBLISH:-10051}` (host) | Zabbix server (trapper)                    |
 
 ## Environment
 
@@ -17,11 +17,11 @@ Copy `.env.example` to `.env` and set `POSTGRES_PASSWORD` to a strong value. `ST
 
 ## Volumes
 
-| Host path | Container path | Purpose |
-|-----------|----------------|---------|
-| `${STACK_ROOT}/zabbix/db` | `/var/lib/postgresql/data` | PostgreSQL data |
-| `${STACK_ROOT}/zabbix/data` | `/var/lib/zabbix` | Zabbix server state (SNMP traps, export, etc.) |
-| `${STACK_ROOT}/zabbix/config` | `/etc/zabbix` | Reserved for optional **zabbix-agent2** (see commented service in `compose.yaml`) |
+| Host path                     | Container path             | Purpose                                                                           |
+| ----------------------------- | -------------------------- | --------------------------------------------------------------------------------- |
+| `${STACK_ROOT}/zabbix/db`     | `/var/lib/postgresql/data` | PostgreSQL data                                                                   |
+| `${STACK_ROOT}/zabbix/data`   | `/var/lib/zabbix`          | Zabbix server state (SNMP traps, export, etc.)                                    |
+| `${STACK_ROOT}/zabbix/config` | `/etc/zabbix`              | Reserved for optional **zabbix-agent2** (see commented service in `compose.yaml`) |
 
 > `STACK_ROOT` is resolved by `scripts/init-nas.sh` after `git clone`. Default when no repo `stacks/` is detected: `/dockge/stacks`. Directories are created automatically. Override: `STACK_ROOT_OVERRIDE=/your/path sudo bash scripts/init-nas.sh`
 

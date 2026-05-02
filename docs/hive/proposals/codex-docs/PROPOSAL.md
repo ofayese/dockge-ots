@@ -155,7 +155,7 @@ Internal documentation hub powered by codex.team's codex.docs CMS, backed by Mon
 
 ## Rollback
 - `git checkout -- codex-docs/compose.yaml && docker compose -f codex-docs/compose.yaml up -d`
-- Mongo data persists at `/volume1/docker/dockge/stacks/codex-docs/mongodb`; never `rm -rf` without a snapshot.
+- Mongo data persists at `/volume1/docker/dockge/stacks/codex-docs/db`; never `rm -rf` without a snapshot.
 ```
 
 ## Verification

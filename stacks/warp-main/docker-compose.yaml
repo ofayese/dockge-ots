@@ -18,7 +18,7 @@ services:
       - "host.docker.internal:host-gateway"
     networks:
       - warp-network
-    restart: on-failure:5
+    restart: unless-stopped
     healthcheck:
       test:
         [
@@ -48,7 +48,7 @@ services:
       - "host.docker.internal:host-gateway"
     networks:
       - warp-network
-    restart: on-failure:5
+    restart: unless-stopped
     healthcheck:
       test:
         [
@@ -78,7 +78,7 @@ services:
       - "host.docker.internal:host-gateway"
     networks:
       - warp-network
-    restart: on-failure:5
+    restart: unless-stopped
     healthcheck:
       test:
         [

@@ -6,7 +6,7 @@ services:
     cpu_shares: 256
     security_opt:
       - no-new-privileges:true
-    restart: on-failure:5
+    restart: unless-stopped
     ports:
       # Prometheus (grafana-prom) scrapes /v1/metrics here; restrict on firewall if needed.
       - "10.0.1.15:18787:8080"

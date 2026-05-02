@@ -4,7 +4,7 @@
 
 ## Summary
 
-Replace `unless-stopped` with **`on-failure:5`** and add **healthchecks** on **`warp`**, **`warp-agent`** (HTTP `8080`), and **`warp-claude-cli-sidecar`**. `warp-agent` **`user`** is **`${PUID:-0}:${PGID:-0}`** (defaults match upstream `0:0`).
+Use **`restart: unless-stopped`** and **healthchecks** on **`warp`**, **`warp-agent`** (HTTP `8080`), and **`warp-claude-cli-sidecar`**. `warp-agent` **`user`** is **`${PUID:-0}:${PGID:-0}`** (defaults match upstream `0:0`).
 
 ## Rollback
 

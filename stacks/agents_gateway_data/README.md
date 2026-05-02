@@ -21,6 +21,12 @@ Copy [`.env.example`](./.env.example) to `.env` if you add tunables. Defaults fo
 
 Images pull from Docker Hub / GHCR; outbound **HTTPS (443)** required. No extra ports documented for runtime beyond MCP HTTP.
 
+## Healthcheck
+
+> Probe type: **A** — HTTP GET `/health` on port **8811** (container listen port matches published mapping).
+> Source: [docker/mcp-gateway upstream health example](https://raw.githubusercontent.com/docker/mcp-gateway/main/examples/health/compose.yaml).
+> If the image is upgraded and the health endpoint changes, update the `healthcheck.test` line in `compose.yaml` accordingly.
+
 ## Related compose
 
 - Root [`compose.yaml`](./compose.yaml) — primary stack file Dockge should run.

@@ -11,7 +11,7 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-    restart: on-failure:5
+    restart: unless-stopped
     ports:
       - 10.0.1.15:8001:8000
     extra_hosts:
@@ -52,7 +52,7 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-    restart: on-failure:5
+    restart: unless-stopped
     ports:
       - 10.0.1.15:8003:8000
     extra_hosts:
@@ -92,7 +92,7 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-    restart: on-failure:5
+    restart: unless-stopped
     ports:
       - 10.0.1.15:8011:8000
     extra_hosts:

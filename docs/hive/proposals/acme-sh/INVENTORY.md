@@ -45,7 +45,7 @@ Service environment keys:
 | Item | `acme-sh` |
 |---|---|
 | `security_opt: no-new-privileges:true` | ✓ |
-| `restart: on-failure:5` | ✓ |
+| `restart: unless-stopped` | ✓ |
 | watchtower label | ✓ |
 | `mem_limit` | ✓ `128m` |
 | `cpu_shares` | ✓ `256` |

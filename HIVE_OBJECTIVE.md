@@ -55,12 +55,20 @@ Do **not** pipe `head -1` from this file into `-o` — the first line is not suf
 
 ---
 
+## Conventions
+
+### Restart policy
+
+- **Default:** `restart: unless-stopped` for long-running services.
+- **Adopted:** 2026-05-01 — replaces `restart: on-failure:5` and `restart: always` repo-wide.
+- **Exception:** one-shot or init containers may use `restart: "no"` with an `# intentional` inline comment in `compose.yaml`.
+
 ## Baselines (non-negotiable unless documented exception)
 
 Apply to every service where Compose and the image allow it:
 
 - `security_opt: [no-new-privileges:true]`
-- `restart: on-failure:5`
+- `restart: unless-stopped`
 - `com.centurylinklabs.watchtower.enable=true` label when Watchtower is in use
 - `mem_limit` and `cpu_shares` with a **one-line rationale** in the stack proposal
 - `TZ=America/New_York` where environment is used

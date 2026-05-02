@@ -14,8 +14,8 @@
 
 | Service | Host | Container | Mode |
 |---|---|---|---|
-| mariadb | `/volume1/docker/dockge/stacks/databases/mariadb` | `/var/lib/mysql` | rw |
-| postgres | `/volume1/docker/dockge/stacks/databases/postgres` | `/var/lib/postgresql/data` | rw |
+| mariadb | `/volume1/docker/dockge/stacks/databases/db/mariadb` | `/var/lib/mysql` | rw |
+| postgres | `/volume1/docker/dockge/stacks/databases/db/postgres` | `/var/lib/postgresql/data` | rw |
 
 ## Networks
 
@@ -56,7 +56,7 @@ Service environment keys:
 | Item | `mariadb` | `postgres` | `adminer` |
 |---|---|---|---|
 | `security_opt: no-new-privileges:true` | ✓ | ✓ | ✓ |
-| `restart: on-failure:5` | ✓ | ✓ | ✓ |
+| `restart: unless-stopped` | ✓ | ✓ | ✓ |
 | watchtower label | ✓ | ✓ | ✓ |
 | `mem_limit` | ✗ missing | ✗ missing | ✗ missing |
 | `cpu_shares` | ✗ missing | ✗ missing | ✗ missing |

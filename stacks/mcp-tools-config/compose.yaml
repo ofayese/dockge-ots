@@ -12,7 +12,7 @@ services:
     environment:
       PUID: ${PUID:-0}
       PGID: ${PGID:-0}
-    restart: "no"
+    restart: "no" # intentional: one-shot placeholder service
     logging:
       driver: json-file
       options:

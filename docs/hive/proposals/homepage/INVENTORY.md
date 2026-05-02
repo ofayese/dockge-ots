@@ -13,7 +13,7 @@
 | Service | Host | Container | Mode |
 |---|---|---|---|
 | homepage | `/volume1/docker/dockge/stacks/homepage/config` | `/app/config` | rw |
-| homepage | `/volume1/docker/dockge/stacks/homepage/icons` | `/app/public/icons` | rw |
+| homepage | `/volume1/docker/dockge/stacks/homepage/data` | `/app/public/icons` | rw |
 | homepage | `/var/run/docker.sock` | `/var/run/docker.sock` | ro |
 
 ## Networks
@@ -44,7 +44,7 @@ Service environment keys:
 | Item | `homepage` |
 |---|---|
 | `security_opt: no-new-privileges:true` | ✓ |
-| `restart: on-failure:5` | ✓ |
+| `restart: unless-stopped` | ✓ |
 | watchtower label | ✓ |
 | `mem_limit` | ✓ `512m` |
 | `cpu_shares` | ✓ `512` |

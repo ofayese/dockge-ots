@@ -8,4 +8,4 @@
 
 ## Compose notes
 
-`restart: on-failure:5`, healthchecks added for Synology operability; `WARP_API_KEY` required.
+`restart: unless-stopped`, healthchecks added for Synology operability; `WARP_API_KEY` required.

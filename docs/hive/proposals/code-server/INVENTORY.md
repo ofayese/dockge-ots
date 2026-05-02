@@ -17,14 +17,14 @@ Top-level named volumes: `mysql_data`.
 | Service | Host | Container | Mode |
 |---|---|---|---|
 | code-server | `/volume1/docker/dockge/stacks/code-server/config` | `/home/coder/.config` | rw |
-| code-server | `/volume1/docker/dockge/stacks/code-server/state` | `/home/coder/.local/share/code-server` | rw |
+| code-server | `/volume1/docker/dockge/stacks/code-server/data` | `/home/coder/.local/share/code-server` | rw |
 | code-server | `/volume1/docker` | `/home/coder/project/docker` | rw |
 | code-server | `/volume1/homes/ofayese` | `/home/coder/project/home` | rw |
 | code-server | `/var/run/docker.sock` | `/var/run/docker.sock` | rw |
 | db | `mysql_data` | `/var/lib/mysql` | (default) |
 | db | `/volume1/docker/dockge/stacks/code-server/config/mysql-init` | `/docker-entrypoint-initdb.d` | ro |
 | phpmyadmin | `/volume1/docker/dockge/stacks/code-server/config/phpmyadmin` | `/etc/phpmyadmin` | rw |
-| phpmyadmin | `/volume1/docker/dockge/stacks/code-server/config/phpmyadmin_sessions` | `/sessions` | rw |
+| phpmyadmin | `/volume1/docker/dockge/stacks/code-server/data/phpmyadmin_sessions` | `/sessions` | rw |
 
 ## Networks
 
@@ -66,7 +66,7 @@ Service environment keys:
 | Item | `code-server` | `db` | `phpmyadmin` |
 |---|---|---|---|
 | `security_opt: no-new-privileges:true` | ✓ | ✗ missing | ✓ |
-| `restart: on-failure:5` | variant `always` | variant `always` | variant `always` |
+| `restart: unless-stopped` | ✓ | ✓ | ✓ |
 | watchtower label | ✓ | ✓ | ✓ |
 | `mem_limit` | ✓ `4g` | ✓ `2g` | ✓ `512m` |
 | `cpu_shares` | ✓ `1024` | ✓ `512` | ✓ `256` |

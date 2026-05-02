@@ -85,7 +85,7 @@ docker image inspect --format '{{index .RepoDigests 0}}' searxng/searxng:latest
     cpu_shares: 768
     security_opt:
       - no-new-privileges:true
-    restart: on-failure:5
+    restart: unless-stopped
     ports:
       - 10.0.1.15:8888:8080
     volumes:

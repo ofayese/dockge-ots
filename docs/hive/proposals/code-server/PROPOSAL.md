@@ -7,7 +7,7 @@
 This stack is one of the better-built ones — explicit semver tags, healthchecks present, `.env.example` exists. Three changes:
 
 1. Add `security_opt: [no-new-privileges:true]` to `db` (only service in this stack missing it).
-2. Decision needed: keep `restart: always` as documented exception or align to `on-failure:5` per baseline.
+2. ~~Decision on `restart`~~ — resolved: all services use `restart: unless-stopped` per repo conventions (2026-05-01).
 3. Add `logging` blocks to all three services.
 4. Add stack `README.md`.
 
@@ -24,7 +24,7 @@ Plus a **scope question** for the queen (see Open questions) — `db`/`phpmyadmi
     container_name: CodeServerDB
     mem_limit: 2g
     cpu_shares: 512
-    restart: always
+    restart: unless-stopped
 ```
 
 **After:**
@@ -36,25 +36,14 @@ Plus a **scope question** for the queen (see Open questions) — `db`/`phpmyadmi
     cpu_shares: 512
     security_opt:
       - no-new-privileges:true
-    restart: always
+    restart: unless-stopped
 ```
 
 **Rationale:** `code-server` and `phpmyadmin` already have it; `db` is the lone exception in this stack. mysql:8.3 supports `no-new-privileges` without issue.
 
-### Change 2 — `restart` baseline (documented exception)
+### Change 2 — `restart` baseline
 
-Keep `restart: always` on all three services per `_baseline §8` Option B. **Add a comment** at the top of each service block explaining why:
-
-```yaml
-  code-server:
-    image: codercom/code-server:4.117.0-39
-    container_name: CodeServer
-    # restart: always — operator-convenience exception per _baseline §8: IDE
-    # should come back regardless of exit code (vs on-failure:5).
-    restart: always
-```
-
-(Apply analogous comment on `db` and `phpmyadmin`.)
+All three services use **`restart: unless-stopped`** per `HIVE_OBJECTIVE.md` conventions (no `always` / `on-failure:5` exceptions in tracked compose).
 
 ### Change 3 — Add `logging` block to all three services
 

@@ -38,7 +38,7 @@ Service environment keys:
 | Item | `dozzle` |
 |---|---|
 | `security_opt: no-new-privileges:true` | ✓ |
-| `restart: on-failure:5` | ✓ |
+| `restart: unless-stopped` | ✓ |
 | watchtower label | ✓ |
 | `mem_limit` | ✓ `3g` |
 | `cpu_shares` | ✓ `768` |

@@ -46,7 +46,7 @@ Service environment keys:
 | Item | `portainer` | `portainer_agent` |
 |---|---|---|
 | `security_opt: no-new-privileges:true` | ✓ | ✗ missing |
-| `restart: on-failure:5` | variant `always` | variant `always` |
+| `restart: unless-stopped` | ✓ | ✓ |
 | watchtower label | ✓ | ✓ |
 | `mem_limit` | ✗ missing | ✗ missing |
 | `cpu_shares` | ✗ missing | ✗ missing |

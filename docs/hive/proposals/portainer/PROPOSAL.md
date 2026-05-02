@@ -11,7 +11,7 @@ Three changes:
 2. Add `security_opt: [no-new-privileges:true]` to `portainer_agent` (consistency with portainer service and fleet baseline).
 3. Apply baseline (logging, mem/cpu, healthcheck, pinning) per [`../_baseline/PROPOSAL.md`](../_baseline/PROPOSAL.md).
 
-`restart: always` is kept on both services as documented exception per `_baseline §8` Option B (operator convenience for orchestration UI).
+Both services use **`restart: unless-stopped`** per repo-wide conventions (2026-05-01), matching `HIVE_OBJECTIVE.md`.
 
 ## Changes (ordered)
 

@@ -49,6 +49,63 @@ Then: `sudo bash scripts/init-nas.sh`
 
 All writable data lives under `${STACK_ROOT}/<stack>/<sub-folder>`. The resolved absolute path is written to repo-root `.env` by `init-nas.sh`. Do not edit `.env` manually — re-run `init-nas.sh` to align `STACK_ROOT` and defaults.
 
+### Restart policy
+
+Stacks use **`restart: unless-stopped`** by default. One-shot compose services (for example the `mcp-tools-config` Busybox placeholder) use **`restart: "no"`** with an **`# intentional`** comment in the stack `compose.yaml`.
+
+## STACK_ROOT exemptions
+
+The following stacks have **no persistent `${STACK_ROOT}` host bind mounts** and correctly **do not reference `STACK_ROOT`** in `compose.yaml`:
+
+- **agents_gateway_data** — `docker.sock` only
+- **it-tools** — no volumes
+- **mcp-tools-config** — catalog / one-shot placeholder only
+- **openresume** — no volumes
+- **warp-main** — no volumes
+- **watchtower** — `docker.sock` only
+
+This is expected. Post-change verification that requires `STACK_ROOT` in every `compose.yaml` must **exclude** these stack names (and **portainer**, which uses operator env paths instead).
+
+## Verifying staged directories
+
+### On Mac (development — no filesystem required)
+
+List paths `init-nas.sh` would create under the resolved `STACK_ROOT` (no `mkdir`, no `.env` writes):
+
+```bash
+bash scripts/init-nas.sh --list-expected-dirs
+```
+
+Line count should match the total number of **comma-separated sub-folders** in `STACK_MANIFEST` (for example `code-server:data,config` counts as **2**).
+
+### On NAS (after running init-nas.sh)
+
+Confirm directories exist on disk:
+
+```bash
+find "${STACK_ROOT}" -mindepth 2 -maxdepth 2 -type d | sort
+```
+
+The Mac command verifies **manifest** correctness. The NAS command verifies **filesystem** state. Both should describe the same set of paths.
+
+### Manifest exhaustiveness (BSD-safe `diff`)
+
+Compare sorted stack names from `STACK_MANIFEST` against `ls stacks/`, excluding stacks in `MANIFEST_EXEMPT` in `scripts/init-nas.sh` (same names as **STACK_ROOT exemptions** plus **`docker-model-runner`** and **`portainer`**):
+
+```bash
+diff \
+  <(grep -E '^\s*"[^"]+:' scripts/init-nas.sh \
+    | sed -E 's/^[[:space:]]*"([^"]+):.*/\1/' | sort) \
+  <(ls stacks/ \
+    | grep -vE \
+      "^portainer$|^agents_gateway_data$|^it-tools$|\
+^mcp-tools-config$|^openresume$|^warp-main$|^watchtower$|\
+^docker-model-runner$" \
+    | sort)
+```
+
+Expected: **empty output** (no diff).
+
 ## Permissions
 
 ```bash

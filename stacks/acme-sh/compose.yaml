@@ -6,7 +6,7 @@ services:
     cpu_shares: 256
     security_opt:
       - no-new-privileges:true
-    restart: on-failure:5
+    restart: unless-stopped
     # No healthcheck — `command: daemon` with `network_mode: host` and no listening
     # socket means there is no meaningful liveness probe. Operational signal comes
     # from log lines and successful renewals (via DISCORD_WEBHOOK_URL alerts).

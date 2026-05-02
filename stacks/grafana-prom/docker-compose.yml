@@ -29,7 +29,7 @@ services:
       PGID: ${PGID:-0}
       TZ: ${TIMEZONE}
       GF_INSTALL_PLUGINS: grafana-clock-panel,grafana-simple-json-datasource,natel-discrete-panel,grafana-piechart-panel
-    restart: on-failure:5
+    restart: unless-stopped
 
   prometheus:
     image: prom/prometheus:v3.11.3
@@ -64,7 +64,7 @@ services:
       - ${STACK_ROOT}/grafana-prom/prom.yml:/etc/prometheus/prometheus.yml:ro
       # Same token file Watchtower uses (see ../watchtower/compose.yaml + secrets/README.md).
       - ${STACK_ROOT}/grafana-prom/secrets/watchtower_bearer_token.txt:/etc/prometheus/watchtower_bearer_token:ro
-    restart: on-failure:5
+    restart: unless-stopped
     depends_on:
       - node-exporter
       - snmp-exporter
@@ -105,7 +105,7 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
-    restart: on-failure:5
+    restart: unless-stopped
 
   snmp-exporter:
     image: prom/snmp-exporter:v0.30.1
@@ -137,7 +137,7 @@ services:
       retries: 3
     volumes:
       - ${STACK_ROOT}/grafana-prom/snmp.yml:/etc/snmp_exporter/snmp.yml:ro
-    restart: on-failure:5
+    restart: unless-stopped
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:v0.52.1
@@ -178,7 +178,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
-    restart: on-failure:5
+    restart: unless-stopped
 
   # Watchtower is owned by the fleet stack at ../../watchtower/compose.yaml — do not
   # run a second instance here (avoids duplicate upgrades and conflicting schedules).

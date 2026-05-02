@@ -11,11 +11,12 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-    restart: on-failure:5
+    restart: unless-stopped
     ports:
       - 10.0.1.15:11434:11434
     volumes:
-      - ${STACK_ROOT}/ollama/data:/root/.ollama:rw
+      # Consolidated to data/ — ollama and open-webui use subdirs on the host.
+      - ${STACK_ROOT}/ollama/data/ollama:/root/.ollama:rw
     environment:
       - PUID=${PUID:-0}
       - PGID=${PGID:-0}
@@ -50,11 +51,11 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-    restart: on-failure:5
+    restart: unless-stopped
     ports:
       - 8893:8080
     volumes:
-      - ${STACK_ROOT}/ollama/webui:/app/backend/data:rw
+      - ${STACK_ROOT}/ollama/data/open-webui:/app/backend/data:rw
     environment:
       - PUID=${PUID:-0}
       - PGID=${PGID:-0}

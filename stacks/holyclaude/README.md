@@ -14,8 +14,8 @@ Dev-only HolyClaude workstation stack for Synology Dockge.
 
 - Agent/workstation config:
   - `claude-home:/home/claude/.claude`
-- Project workspace:
-  - `${WORKSPACE_PATH}:/workspace` (set in `.env`; use NAS stack root path)
+- Project workspace (host bind):
+  - `${STACK_ROOT}/holyclaude/data:/workspace` — scoped stack data; see `compose.yaml`. If you previously relied on the entire stacks tree at `/workspace`, migrate any needed paths (for example `.claude-flow`) **into** `holyclaude/data/` on the host before recreating the container.
 - CloudCLI persistent state (survives rebuild/recreate/down-up without `-v`):
   - `cloudcli-data:/home/claude/.cloudcli`
 

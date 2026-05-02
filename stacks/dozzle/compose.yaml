@@ -6,7 +6,7 @@ services:
     cpu_shares: 768
     security_opt:
       - no-new-privileges:true
-    restart: on-failure:5
+    restart: unless-stopped
     ports:
       - 8892:8080
     volumes:

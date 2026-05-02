@@ -42,6 +42,8 @@ For scheduled or post-receive runs (safe to call repeatedly):
 bash scripts/init-nas.sh --if-changed
 ```
 
+Hashes **`init-nas.sh` itself** (via `$0`). Skips `.env` writes, `mkdir`, and `fix-permissions.sh` when the script file has not changed since the last **successful** run. The hash is written **only** after a successful full init — a failed run never poisons the stored marker, so the next `--if-changed` retries.
+
 For forced full re-init (after adding new stacks or changing `STACK_MANIFEST` in `init-nas.sh`):
 
 ```bash
@@ -197,11 +199,14 @@ Back up `${STACK_ROOT}` to a remote destination (Synology C2, S3, Backblaze, ano
 
 Running database engines cannot be backed up consistently by file copy. Exclude all `db/` directories from Hyper Backup and use database dumps instead:
 
-| Stack      | Exclude from Hyper Backup     | Backup method                                        |
-| ---------- | ----------------------------- | ---------------------------------------------------- |
-| zabbix     | `${STACK_ROOT}/zabbix/db`     | `docker exec` Postgres → `pg_dumpall` → backup.sql   |
-| databases  | `${STACK_ROOT}/databases/db` | `docker exec` on each DB service → vendor dump       |
-| codex-docs | `${STACK_ROOT}/codex-docs/db` | `docker exec CodexDocs-MongoDB mongodump`            |
+| Stack        | Exclude from Hyper Backup      | Backup method                                                                 |
+| ------------ | ------------------------------- | ----------------------------------------------------------------------------- |
+| zabbix       | `${STACK_ROOT}/zabbix/db`       | `docker exec` Postgres → `pg_dumpall` → backup.sql                            |
+| databases    | `${STACK_ROOT}/databases/db`    | `docker exec` on each DB service → vendor dump                                |
+| codex-docs   | `${STACK_ROOT}/codex-docs/db`   | `docker exec mongodb mongodump` (compose **service** name `mongodb`)           |
+| grafana-prom | `${STACK_ROOT}/grafana-prom/db` | `docker exec postgres pg_dumpall` → backup.sql (only if you add a `db/` bind) |
+
+Default **grafana-prom** compose has **no** Postgres `db/` bind — back up **`data/`** with Hyper Backup; add a row-style dump only if you introduce a DB engine under `db/`.
 
 All `data/` and `config/` directories are safe to include in Hyper Backup.
 

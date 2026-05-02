@@ -95,6 +95,8 @@ hostname
 # Note the output exactly (example: orundscore)
 ```
 
+After initial setup, if DSM is renamed the agent picks up the new hostname automatically on the next agent restart. Update the Zabbix UI **Host name** field to match when that happens.
+
 #### Installation
 
 1. Add SynoCommunity to Package Center (if needed).

@@ -121,22 +121,22 @@ if [[ "${LIST_ONLY}" -eq 1 ]]; then
 	exit 0
 fi
 
-# ── --if-changed: skip if script unchanged since last run ───────────
-# Hash is written only after all init steps succeed (end of script).
+# ── --if-changed: skip if init-nas.sh itself has not changed ─────────
+# Hash is written only after a successful full init (end of script).
 if [[ "${1:-}" == "--if-changed" ]]; then
 	HASH_FILE="${REPO_ROOT}/.manifest-hash"
 	if command -v md5 &>/dev/null; then
-		CURRENT_HASH=$(md5 -q "${BASH_SOURCE[0]}")
+		CURRENT_HASH=$(md5 -q "$0")
 	else
-		CURRENT_HASH=$(md5sum "${BASH_SOURCE[0]}" | cut -d' ' -f1)
+		CURRENT_HASH=$(md5sum "$0" | cut -d' ' -f1)
 	fi
 	STORED_HASH=$(cat "${HASH_FILE}" 2>/dev/null || echo "")
 	if [[ "${CURRENT_HASH}" == "${STORED_HASH}" ]]; then
-		echo "init-nas.sh: manifest unchanged — skipping directory creation."
+		echo "init-nas.sh: unchanged — skipping directory creation."
 		exit 0
 	fi
 	IF_CHANGED_MODE=1
-	echo "init-nas.sh: manifest changed — running full init."
+	echo "init-nas.sh: changed — running full init."
 fi
 
 # ── 2. Write STACK_ROOT into repo-root .env ───────────────────────────
@@ -214,7 +214,8 @@ echo "STACK_ROOT = ${STACK_ROOT}"
 echo "Now open Dockge and deploy your stacks."
 echo "────────────────────────────────────────"
 
+# ── Write hash after successful full init (--if-changed runs only) ───
 if [[ "${IF_CHANGED_MODE:-0}" -eq 1 ]]; then
 	echo "${CURRENT_HASH}" >"${HASH_FILE}"
-	echo "init-nas.sh: recorded manifest hash for --if-changed."
+	echo "init-nas.sh: hash updated for next --if-changed run."
 fi

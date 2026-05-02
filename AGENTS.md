@@ -11,10 +11,40 @@
 - **SMB + pre-commit:** Synology SMB mounts often reject in-place writes under `docs/`, `.github/`, and `.cursor/`. `.pre-commit-config.yaml` **excludes** those prefixes from `trailing-whitespace`, `end-of-file-fixer`, and `prettier` so `pre-commit run --all-files` succeeds on `/Volumes/docker/dockge`. Run full markdown/YAML fixups on an APFS clone or on the NAS. **`ruff-format` is omitted** (the only tracked `.py` is `docs/hive/tools/inventory.py`, which is excluded from mutating hooks by path); run `ruff format docs/hive/tools/inventory.py` when needed from a non-SMB checkout.
 - **Audit (2026-04-30):** **`stacks/docs` → `../docs` must not exist**; **`stacks/._DAV`** is SMB/Finder noise—delete when idle, never commit. **`.ruff_cache/`** is gitignored. **Compose:** `scripts/compose-validate.sh` passes (includes **`stacks/mcp-tools-config/compose.yaml`** placeholder; **`docker-mcp.yaml`** there remains catalog-only). **Git / `inventory.py`:** if `git pull`/`git merge` fails with **Resource busy** or **EINVAL** on `docs/hive/tools/inventory.py`, close editor handles and retry, or merge from an **APFS git worktree** (`git worktree add -b <tmp-branch> <apfs-path> main` → `git merge origin/main` → `git push origin HEAD:main`). **`origin/main`:** merge `e15c4bd` (includes `1c774b3` — `out_dir` under `repo_root/docs/hive/proposals/…`, not `stacks/…/docs/…`).
 
+## Stack hardening defaults
+
+**Standing rule — `no-new-privileges` in compose stacks**
+
+- **Default:** `no-new-privileges:true` is the **hardening baseline** for stacks in this repo.
+
+- **Exception class — omit `no-new-privileges:true` only when all of the following hold:**
+
+  1. The image ships a **setuid helper** that must elevate at runtime (e.g. Electron `chrome-sandbox`, Chromium, any SUID binary the app relies on).
+  2. The **host kernel** does **not** provide unprivileged user namespaces — treat **Synology DSM** as **absent** unless you have explicitly confirmed otherwise.
+  3. **No** `--no-sandbox` (or equivalent env) is set in compose to provide an alternative sandbox path.
+
+- **When omitting NNP:**
+
+  - **`compose.yaml`:** document in an **inline comment directly above** `security_opt`, using this pattern:
+    - `# Omit no-new-privileges:true: [reason].`
+    - `# Do not add --no-sandbox here.`
+  - **Stack README:** add a note under **`## Permissions`**.
+  - **`docs/hive/NAS_DEPLOYMENT.md`:** add a row or prose under **Security Advisor warnings** for the intentional omission.
+
+- **New LinuxServer.io KasmVNC / Electron-style stacks:**
+
+  - **Assume NNP must be omitted** until confirmed safe with NNP on the target DSM.
+  - **`seccomp:unconfined`** — required for KasmVNC / Electron in this class of image.
+  - **`IPC_LOCK`** — required for Electron memory locking.
+  - Check **upstream image release notes** before adding `--no-sandbox` as a workaround.
+
+- **Audit trigger:** any `compose.yaml` that lists **`seccomp:unconfined`** and **`no-new-privileges:true`** in the **same** `security_opt` block should be **flagged for review** — the combination is often incompatible with setuid sandbox helpers (verify stack-by-stack; not every `seccomp:unconfined` stack is Electron).
+
+- **Reference commits:** **`c75af1b`** — `no-new-privileges:true` added to **github-desktop** (incorrect for Electron); **`bfa07bd`** — removed with documented rationale. Stack-specific detail remains in the **What Works** bullet for **github-desktop**.
+
 ## What Works
 
 - [2026-05-01] **Block 3 post-rework gates (healthcheck, paths, manifest, HIVE audit):** **`HEALTHCHECK POLICY`** — every stack must have a `healthcheck:` block **or** a documented `# No healthcheck:` reason in `compose.yaml`. Exemptions (no `healthcheck:` in compose) are listed in `docs/hive/HEALTHCHECK_EXEMPTIONS.md`: **`mcp-tools-config`** (one-shot Busybox), **`acme-sh`** (cron-style daemon, no stable HTTP/TCP probe). **`holyclaude`** has an in-compose type-B TCP healthcheck (`nc -z 127.0.0.1:3000`, `start_period: 90s`) — documented in that file as **not** exempt. **`github-desktop`** has the same pattern (type B on 3000, `start_period: 90s`) and is **not** exempt. **`DATABASES` stack:** manifest entry `"databases:db"` only; MariaDB and Postgres data both under `db/`; no separate app-level `databases/data` bind — intentional. **`HIVE_OBJECTIVE.md`:** stack names live in a markdown table (backtick list in the “Stack folders” row), not `-` bullets — parity vs `ls stacks/` uses the table-aware command in `docs/hive/NAS_DEPLOYMENT.md` (`grep "Stack folders"` + `grep -oE` on backtick names). **Path hygiene:** no bare `dockge/stacks/` in `stacks/` comments or examples without `STACK_ROOT` context (audit: `grep -rn "dockge/stacks/" stacks/ | grep -v "STACK_ROOT"`). **`github-desktop`** (post–Block 3 **`c75af1b`**, NNP fix **`bfa07bd`**): manifest `"github-desktop:config"`; **`security_opt` contains only `seccomp:unconfined`** — **`no-new-privileges:true` is intentionally absent** (Electron setuid `chrome-sandbox` vs `PR_NO_NEW_PRIVS`; DSM; no `--no-sandbox` in compose — **do not add NNP back**); `cap_add: IPC_LOCK`; `restart: unless-stopped`; PUID/PGID dual-mode; `${STACK_ROOT}/github-desktop/config:/config:rw`. Rationale in `compose.yaml` comments, `stacks/github-desktop/README.md`, `docs/hive/NAS_DEPLOYMENT.md`.
-- [2026-05-01] **`no-new-privileges:true` fleet baseline:** most stacks keep **`no-new-privileges:true`** as hardening. **`github-desktop`** is the documented exception (Electron + setuid sandbox + DSM — **`bfa07bd`**). Before adding NNP to a **new** stack, confirm the image does not rely on setuid helpers that must elevate; LinuxServer KasmVNC / Electron GUIs are the primary exception class — if omitting NNP, document why in `compose.yaml` comments.
 - [2026-04-30] **Compose validate** lives only at repo root **`scripts/compose-validate.sh`** (not under `stacks/scripts/`). CI runs that path; Dockge stack root stays compose-only.
 - [2026-04-30] Keep pre-commit language/file matching type-driven where possible: use `types` / `types_or` for JS/TS, Python, shell, Go, Rust, and PowerShell; only use regex `files` when a stable type tag is unavailable.
 - [2026-04-30] For local formatter hooks that depend on host tooling (`gofmt`, `rustfmt`, `dotnet`, `pwsh`), use `language: unsupported` and fail-fast entry checks with explicit install commands so contributors get actionable errors instead of opaque failures.
@@ -155,4 +185,4 @@ curl -s http://127.0.0.1:5571/ | head -5             # → HTML response from Do
 - [2026-04-30] Treat sustained low-memory worker deferrals as an ops gate: pause automation-dependent validation until memory headroom recovers.
 - [2026-05-01] Zabbix monitoring on the NAS uses three layers: (1) SNMPv3 as the default for hardware metrics (disks, RAID, temperatures, fans, UPS, network, volume) with the server polling UDP 161 and no agent; (2) the SynoCommunity native agent with `Server=127.0.0.1`, `ServerActive=127.0.0.1:10051`, and `HostnameItem=system.hostname` (never `Hostname=` alongside), where the Zabbix UI Host name must exactly match the DSM hostname and DSM renames require updating the Host name or active checks go silent; and (3) an optional Docker `zabbix-agent2` container for container metrics only, running privileged with host binds and explicitly documented Security Advisor flags, not a replacement for SNMP or the native agent.
 - [2026-05-01] `stacks/zabbix/compose.yaml` carries a commented `zabbix-agent2` section using `zabbix/zabbix-agent2:7.4-alpine` (aligned with the `7.4` server) with plain-text comments (no special symbols) that point to `stacks/zabbix/README.md` (Agent options, Option 1) for enabling the Docker agent; uncommenting this block is an explicit operator choice.
-- [2026-05-01] **Docker Security Advisor — intentional rows to acknowledge** (do not remove settings from `compose.yaml` just to silence warnings): **`seccomp:unconfined`** on **github-desktop** (Electron/KasmVNC); **`IPC_LOCK`** on **github-desktop** (Electron memory locking); **containers as root (UID 0)** fleet-wide (`PUID`/`PGID` default `0` by design); **`privileged: true`** on **zabbix-agent2** only when that service is uncommented. **`no-new-privileges:true` is not** an Advisor warning for **github-desktop** — that stack **omits** NNP on purpose (**`bfa07bd`**). See `docs/hive/NAS_DEPLOYMENT.md` → **Security Advisor warnings**.
+- [2026-05-01] **Docker Security Advisor — intentional rows to acknowledge** (do not remove settings from `compose.yaml` just to silence warnings): **`seccomp:unconfined`** on **github-desktop** (Electron/KasmVNC); **`IPC_LOCK`** on **github-desktop** (Electron memory locking); **containers as root (UID 0)** fleet-wide (`PUID`/`PGID` default `0` by design); **`privileged: true`** on **zabbix-agent2** only when that service is uncommented. **`no-new-privileges:true` is not** an Advisor warning for **github-desktop** — that stack **omits** NNP on purpose (**`bfa07bd`**). See `docs/hive/NAS_DEPLOYMENT.md` → **Security Advisor warnings**; generalized **`no-new-privileges`** policy — **## Stack hardening defaults** above.

@@ -208,7 +208,21 @@ Running database engines cannot be backed up consistently by file copy. Exclude 
 
 Default **grafana-prom** compose has **no** Postgres `db/` bind — back up **`data/`** with Hyper Backup; add a row-style dump only if you introduce a DB engine under `db/`.
 
-All `data/` and `config/` directories are safe to include in Hyper Backup.
+All data/ and config/ directories are safe to include in Hyper Backup.
+
+The following are also safe to include:
+
+| Path | Contents | Notes |
+| --- | --- | --- |
+| /volume1/certs/acme/wildcard/ | PEM files | Safe — no live database |
+| /volume1/certs/acme/ots-sub/ | PEM files | Safe — no live database |
+| /volume1/certs/acme/mft-sub/ | PEM files | Safe — no live database |
+| /volume1/certs/acme/otsorundscore-sub/ | PEM files | Safe — no live database |
+| /volume1/certs/acme/misfitsds-sub/ | PEM files | Safe — no live database |
+| /volume1/certs/acme/otsmbpro16/ | PEM files | Safe — no live database |
+| /volume1/certs/acme/hpdevcore/ | PEM files | Safe — no live database |
+
+Note: /volume1/certs/acme/docker-mtls/ (CA private key tree) is also safe to back up but treat as sensitive — restrict Hyper Backup destination access accordingly.
 
 ## OTS and MFT namespaces
 

@@ -1,0 +1,51 @@
+; olutechsys.com DNS zone — BIND-style reference
+; Managed in Cloudflare. This file is documentation.
+; Last updated: 2026-05-02
+
+$ORIGIN olutechsys.com.
+$TTL 300
+
+; ── SOA ───────────────────────────────────────────────────────────
+@   IN  SOA ns1.olutechsys.com. admin.olutechsys.com. (
+        2026050201 ; Serial — increment on each change (YYYYMMDDNN)
+        3600        ; Refresh
+        1800        ; Retry
+        1209600     ; Expire
+        300 )       ; Negative Cache TTL
+
+; ── NS ────────────────────────────────────────────────────────────
+@               IN  NS  ns1.olutechsys.com.
+@               IN  NS  ns2.olutechsys.com.
+
+; ── Root ──────────────────────────────────────────────────────────
+; Replace with actual public IP or Cloudflare-proxied target.
+; Do not Cloudflare-proxy anything in *.ots or *.mft — Docker TLS
+; and DDNS passthrough require direct TCP (grey cloud in Cloudflare).
+@               IN  A       <YOUR_PUBLIC_IP>
+www             IN  CNAME   <YOUR_WWW_TARGET>
+
+; ── OTS namespace (NAS #1 — otsorundscore.synology.me) ───────────
+; Cert: /volume1/certs/acme/ots-sub/ (*.ots.olutechsys.com)
+; Traefik on OTS NAS terminates TLS and routes by hostname.
+ots             IN  CNAME   otsorundscore.synology.me.
+*.ots           IN  CNAME   otsorundscore.synology.me.
+
+; ── MFT namespace (NAS #2 — misfitsds.synology.me) ───────────────
+; Cert: /volume1/certs/acme/mft-sub/ (*.mft.olutechsys.com)
+; Traefik on MFT NAS terminates TLS and routes by hostname.
+mft             IN  CNAME   misfitsds.synology.me.
+*.mft           IN  CNAME   misfitsds.synology.me.
+
+; ── Future namespaces (reserved — not yet active) ─────────────────
+; Uncomment when the corresponding NAS or service is ready.
+; lab and dev intentionally point to OTS NAS — review before enabling.
+;lab            IN  CNAME   otsorundscore.synology.me.
+;*.lab           IN  CNAME   otsorundscore.synology.me.
+;dev             IN  CNAME   otsorundscore.synology.me.
+;*.dev           IN  CNAME   otsorundscore.synology.me.
+
+; ── Cloudflare notes ──────────────────────────────────────────────
+; *.ots and *.mft CNAME records: set to DNS-only (grey cloud).
+; Cloudflare cannot proxy wildcard CNAMEs to third-party DDNS
+; hostnames on the free/pro plan. Grey cloud passes traffic direct
+; to the NAS; Traefik handles TLS termination.

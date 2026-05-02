@@ -210,6 +210,49 @@ Default **grafana-prom** compose has **no** Postgres `db/` bind — back up **`d
 
 All `data/` and `config/` directories are safe to include in Hyper Backup.
 
+## OTS and MFT namespaces
+
+Two second-level subdomains route traffic to each NAS:
+
+- `*.ots.olutechsys.com` → otsorundscore NAS (`traefik-ots` stack)
+- `*.mft.olutechsys.com` → misfitsds NAS (`traefik-mft` stack)
+
+Both are wildcard CNAMEs to the NAS DDNS hostname — no per-service DNS entry is needed. Add a new service by adding Traefik labels to its `compose.yaml` and joining the `traefik-ots` or `traefik-mft` network.
+
+See [docs/hive/SERVICE_MAP.md](SERVICE_MAP.md) for the full service inventory.  
+See [docs/hive/dns/olutechsys.com.zone](dns/olutechsys.com.zone) for the DNS zone reference.
+
+## Traefik deployment
+
+Traefik runs as a container on each NAS in its own Dockge stack. It is **not** part of the service stacks — it is a shared infrastructure stack deployed once per NAS.
+
+### Deploy order
+
+1. Deploy `traefik-ots` (or `traefik-mft`) stack first via Dockge.
+2. Confirm Traefik is healthy:
+
+   ```bash
+   docker exec traefik-ots wget -qO- http://127.0.0.1:8080/ping
+   ```
+
+3. Deploy service stacks — they join the `traefik-ots` / `traefik-mft` network and appear in Traefik automatically.
+
+### Cert bind-mount dependency
+
+Traefik reads certs from `/volume1/certs/acme/ots-sub/` (or `mft-sub/`). Issue certs via **acme-sh** before deploying Traefik (see `SETUP.md` in `stacks/acme-sh/`). If the cert path is missing at startup, Traefik starts but serves a self-signed fallback — browsers will warn. Issue the cert first.
+
+### Updating service ports
+
+Edit the service's `compose.yaml` labels:
+
+`traefik.http.services.<name>.loadbalancer.server.port=<port>`
+
+Restart the service container. No Traefik restart needed.
+
+### Security Advisor warning
+
+Traefik mounts `/var/run/docker.sock` read-only. Security Advisor will flag this. It is intentional and documented in `stacks/traefik-ots/compose.yaml` and `stacks/traefik-mft/compose.yaml`.
+
 ## Security Advisor warnings
 
 Security Advisor will report the following warnings for this repo. All are intentional and documented here.
@@ -220,6 +263,7 @@ Security Advisor will report the following warnings for this repo. All are inten
 | `seccomp: unconfined`               | **github-desktop** (Electron / KasmVNC requirement)      | Intentional — documented in `stacks/github-desktop/compose.yaml`.                                                                         |
 | `IPC_LOCK` capability               | **github-desktop** (Electron memory locking)             | Intentional — documented in `stacks/github-desktop/compose.yaml`.                                                                         |
 | `privileged: true` on zabbix-agent2 | Docker agent needs host access for container metrics     | Only relevant if **zabbix-agent2** is uncommented. Document the exception here before enabling. See `stacks/zabbix/compose.yaml` comments. |
+| `/var/run/docker.sock` mount        | **traefik-ots** and **traefik-mft** (Docker label discovery) | Read-only (`:ro`). Required for Traefik service auto-discovery. Documented in `compose.yaml`. |
 
 **github-desktop** intentionally **omits** `no-new-privileges:true`: Electron’s setuid sandbox cannot work under `PR_NO_NEW_PRIVS` on typical DSM kernels, which can crash or blank the UI. Other stacks in this repo may still use `no-new-privileges:true` as the fleet baseline.
 

@@ -82,6 +82,8 @@ STACK_MANIFEST=(
 	#   Absent from manifest intentionally. Listed here for audit trail.
 
 	# ── New stacks: add entry here before first deploy ─────────────────
+	"traefik-ots:config" # Traefik config (tls.yaml) — no runtime data dir
+	"traefik-mft:config" # Traefik config (tls.yaml) — no runtime data dir
 )
 
 # Stacks intentionally absent from STACK_MANIFEST.

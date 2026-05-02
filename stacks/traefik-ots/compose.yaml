@@ -1,0 +1,70 @@
+services:
+  traefik:
+    image: traefik:v3
+    container_name: traefik-ots
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # docker.sock required: Traefik reads Docker labels to auto-discover
+    # services. Grant read-only access only.
+    # Security Advisor will flag this — intentional. See NAS_DEPLOYMENT.md.
+    ports:
+      - "80:80"
+      - "443:443"
+      - "${TRAEFIK_DASHBOARD_PORT:-8080}:8080"
+    volumes:
+      # docker.sock grants Traefik read access to container labels.
+      # Read-only (:ro) — Traefik does not need write access.
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Pre-issued wildcard cert from acme-sh — Traefik reads PEMs directly.
+      # acme-sh auto-renews; Traefik picks up the new PEM on next reload.
+      - ${ACME_CERT_ROOT:-/volume1/certs/acme}/ots-sub:/certs/ots-sub:ro
+      # Traefik config and ACME state (if using Traefik's own ACME — see note)
+      - ${STACK_ROOT}/traefik-ots/config:/etc/traefik:rw
+    environment:
+      TZ: ${TZ:-America/New_York}
+      PUID: ${PUID:-0}
+      PGID: ${PGID:-0}
+      # CF_Token used by Traefik's own ACME resolver (optional — see note below).
+      # Remove if using pre-issued certs from acme-sh exclusively.
+      CF_DNS_API_TOKEN: ${CF_Token}
+    command:
+      # ── Providers ────────────────────────────────────────────────────
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.file.filename=/etc/traefik/tls.yaml"
+      # ── Entrypoints ──────────────────────────────────────────────────
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.traefik.address=:8080"
+      - "--ping=true"
+      # ── TLS — pre-issued cert from acme-sh ───────────────────────────
+      # Traefik loads the wildcard cert from the bind-mounted path.
+      # This is the preferred method — acme-sh owns the renewal lifecycle.
+      # ── Dashboard (disable in production) ────────────────────────────
+      - "--api.dashboard=${TRAEFIK_DASHBOARD:-false}"
+      - "--api.insecure=${TRAEFIK_DASHBOARD:-false}"
+      # ── Logging ──────────────────────────────────────────────────────
+      - "--log.level=${TRAEFIK_LOG_LEVEL:-WARN}"
+      - "--accesslog=true"
+    # Healthcheck type: A — HTTP probe on Traefik ping endpoint
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
+    networks:
+      - traefik-ots
+
+networks:
+  traefik-ots:
+    name: traefik-ots
+    driver: bridge

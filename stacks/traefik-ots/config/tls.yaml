@@ -1,0 +1,9 @@
+tls:
+  certificates:
+    - certFile: /certs/ots-sub/fullchain.pem
+      keyFile: /certs/ots-sub/privkey.pem
+  stores:
+    default:
+      defaultCertificate:
+        certFile: /certs/ots-sub/fullchain.pem
+        keyFile: /certs/ots-sub/privkey.pem

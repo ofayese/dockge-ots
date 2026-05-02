@@ -14,6 +14,7 @@
 set -euo pipefail
 
 LIST_ONLY=0
+IF_CHANGED_MODE=0
 [[ "${1:-}" == "--list-expected-dirs" ]] && LIST_ONLY=1
 
 # ── 1. Resolve repo root and STACK_ROOT ──────────────────────────────
@@ -121,6 +122,7 @@ if [[ "${LIST_ONLY}" -eq 1 ]]; then
 fi
 
 # ── --if-changed: skip if script unchanged since last run ───────────
+# Hash is written only after all init steps succeed (end of script).
 if [[ "${1:-}" == "--if-changed" ]]; then
 	HASH_FILE="${REPO_ROOT}/.manifest-hash"
 	if command -v md5 &>/dev/null; then
@@ -133,7 +135,7 @@ if [[ "${1:-}" == "--if-changed" ]]; then
 		echo "init-nas.sh: manifest unchanged — skipping directory creation."
 		exit 0
 	fi
-	echo "${CURRENT_HASH}" >"${HASH_FILE}"
+	IF_CHANGED_MODE=1
 	echo "init-nas.sh: manifest changed — running full init."
 fi
 

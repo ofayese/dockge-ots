@@ -262,6 +262,7 @@ Security Advisor will report the following warnings for this repo. All are inten
 | Containers running as root (UID 0)  | `PUID`/`PGID` default to `0` across stacks               | Intentional — Synology Docker default. See UID/GID dual-mode docs in stack `.env.example` files and `HIVE_OBJECTIVE.md`.                    |
 | `seccomp: unconfined`               | **github-desktop** (Electron / KasmVNC requirement)      | Intentional — documented in `stacks/github-desktop/compose.yaml`.                                                                         |
 | `IPC_LOCK` capability               | **github-desktop** (Electron memory locking)             | Intentional — documented in `stacks/github-desktop/compose.yaml`.                                                                         |
+| `no-new-privileges` omitted         | **github-desktop** (Electron setuid sandbox vs DSM)    | Intentional — **`bfa07bd`**. Do not re-add NNP. Documented in `stacks/github-desktop/compose.yaml`.                                      |
 | `privileged: true` on zabbix-agent2 | Docker agent needs host access for container metrics     | Only relevant if **zabbix-agent2** is uncommented. Document the exception here before enabling. See `stacks/zabbix/compose.yaml` comments. |
 | `/var/run/docker.sock` mount        | **traefik-ots** and **traefik-mft** (Docker label discovery) | Read-only (`:ro`). Required for Traefik service auto-discovery. Documented in `compose.yaml`. |
 

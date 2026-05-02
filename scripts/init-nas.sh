@@ -65,7 +65,7 @@ STACK_MANIFEST=(
 
 	# ── data,db ───────────────────────────────────────────────────────
 	"codex-docs:data,db"
-	# databases: engine data under db/mariadb and db/postgres; secrets under secrets/ (compose).
+	# databases: mariadb + postgres engine data dirs both under db/ (no separate app data layer).
 	"databases:db"
 	"zabbix:data,db"
 	"holyclaude:data"

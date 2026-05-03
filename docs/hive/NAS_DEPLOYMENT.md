@@ -48,6 +48,8 @@ git config --global --add safe.directory /volume1/docker/dockge
 
 (use your real repo path if it differs), or align ownership with your NAS Git workflow (see **`scripts/fix-permissions.sh`** / operator policy for **`${STACK_ROOT}`** vs repo root).
 
+If **`git pull`** fails with **`Permission denied (publickey)`** against **`git@github.com`**, you are running **git** as a user whose **`~/.ssh`** has no key **GitHub** accepts (common when using **`sudo su`** / **root**: root’s **`~/.ssh`** is not the same as your DSM user’s). Prefer **`git pull`** as the **same DSM account** that owns the deploy SSH key, or add a **read-only deploy key** for this repo (GitHub → **Settings → Deploy keys**) and install its private key only for the user that runs **`git pull`**. Alternatively switch **`origin`** to **HTTPS** and use a **fine-grained PAT** with **`repo`** scope (store via DSM / `git credential` — never commit tokens).
+
 If new stacks were added: re-run `sudo bash scripts/init-nas.sh` so new volume directories exist.
 
 For scheduled or post-receive runs (safe to call repeatedly):

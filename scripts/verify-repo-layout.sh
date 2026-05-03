@@ -27,6 +27,8 @@ fi
 err=0
 while IFS= read -r -d '' stack_dir; do
 	name="$(basename "${stack_dir}")"
+	# Synology / macOS SMB: @eaDir is AppleDouble metadata, not a Dockge stack.
+	[[ "${name}" == "@eaDir" ]] && continue
 	if [[ -e "${ROOT}/${name}" ]]; then
 		echo "ERROR: root-level duplicate path \"${ROOT}/${name}\" shadows stacks/${name}/ — remove or move under stacks/." >&2
 		err=1

@@ -40,6 +40,14 @@ STACK_ROOT_OVERRIDE=/volume1/docker/dockge/stacks \
 
 Preferred: SSH into NAS → `cd /dockge` → `git pull`.
 
+If **`git pull`** fails with **detected dubious ownership**, the repo directory is owned by another user (often **root** after `sudo` operations) while you run **git** as your login user. Either mark the path trusted once (per user):
+
+```bash
+git config --global --add safe.directory /volume1/docker/dockge
+```
+
+(use your real repo path if it differs), or align ownership with your NAS Git workflow (see **`scripts/fix-permissions.sh`** / operator policy for **`${STACK_ROOT}`** vs repo root).
+
 If new stacks were added: re-run `sudo bash scripts/init-nas.sh` so new volume directories exist.
 
 For scheduled or post-receive runs (safe to call repeatedly):

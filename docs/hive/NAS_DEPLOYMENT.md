@@ -21,6 +21,13 @@ The repo lives on a Mac (or other dev machine). The NAS receives it via `git clo
 
 6. Open Dockge UI and deploy stacks.
 
+## Dockge UI and HAProxy (stretch)
+
+- **Dockge** is started by **`scripts/dockge-start.sh`** (install as `/usr/local/etc/rc.d/dockge.sh`). The container listens on **5001** inside the image; the script publishes **host `5571` → container `5001`**. After any script update, re-run the rc script; the script **recreates** the `Dockge` container if the port binding is wrong (for example after an older `5571:5571` map).
+- **Smoke test on the NAS:** `bash scripts/check-dockge-http.sh` (defaults to `http://127.0.0.1:5571/`).
+- **HAProxy:** The reviewed spec is **[docs/hive/proposals/_haproxy/haproxy.cfg](proposals/_haproxy/haproxy.cfg)**. Install the Synology **HAProxy** package, merge that file into the config the package loads (path varies by DSM; see comments at the top of `haproxy.cfg`), then **`haproxy -c -f <path>`** before reload. On a machine with `haproxy` in `PATH`, you can run **`bash scripts/validate-haproxy-proposal.sh`** from the repo root.
+- **Dockge via HAProxy:** The proposal includes **`dockge-be`** → `10.0.1.15:5571` (adjust IP if needed). Add the **`dockge.*`** hostnames to the same TLS material used by **`bind :8443 ssl crt ...`**, create matching **DNS** records, and allow **8443** (and **8080** if you use the HTTP→HTTPS redirect frontend) in **DSM → Security → Firewall**.
+
 ## If your Dockge path differs from the default
 
 Run with an override before or during init:

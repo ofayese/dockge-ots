@@ -10,7 +10,8 @@
 #   2. Security: added --security-opt no-new-privileges:true
 #   3. Resources: added --memory 512m --cpu-shares 512
 #   4. Logging: added --log-driver json-file with size cap
-#   5. Port: host 5571→container 5571 (image default). Homepage/HAProxy must use 5571.
+#   5. Port: host 5571→container 5001 (louislam/dockge listens on 5001 inside the image).
+#      Homepage/HAProxy backends must target host port 5571.
 #   6. PUID/PGID: default root (0:0) for Synology bind-mount ownership; override if needed.
 #   7. sleep 20 retained — required for Synology Docker daemon startup sequence.
 #
@@ -71,11 +72,21 @@ current_image() {
 	$DOCKER inspect -f '{{.Config.Image}}' "$NAME" 2>/dev/null || true
 }
 
+# Image listens on 5001/tcp; host publishes 5571. Recreate if map is missing/wrong (e.g. old 5571:5571).
+# Use HostConfig.PortBindings so stopped containers still evaluate correctly.
+dockge_port_map_ok() {
+	binds="$($DOCKER inspect -f '{{json .HostConfig.PortBindings}}' "$NAME" 2>/dev/null || echo '')"
+	[ -n "$binds" ] || return 1
+	echo "$binds" | grep -q '"5001/tcp"' || return 1
+	echo "$binds" | grep -q '"HostPort":"5571"' || return 1
+	return 0
+}
+
 create_container() {
 	mkdir -p "${DOCKGE_ROOT}/stacks"
 	$DOCKER run -d \
 		--name="$NAME" \
-		-p 5571:5571 \
+		-p 5571:5001 \
 		--restart=on-failure:5 \
 		--security-opt no-new-privileges:true \
 		--memory 512m \
@@ -97,7 +108,12 @@ $DOCKER pull "$IMAGE"
 
 if exists; then
 	CURR="$(current_image)"
-	if [ "$CURR" != "$IMAGE" ]; then
+	if [ "$CURR" != "$IMAGE" ] || ! dockge_port_map_ok; then
+		if [ "$CURR" != "$IMAGE" ]; then
+			echo "dockge-start: recreating ${NAME} (image: ${CURR:-none} -> ${IMAGE})"
+		else
+			echo "dockge-start: recreating ${NAME} (host 5571 must map to container 5001)"
+		fi
 		$DOCKER stop "$NAME" || true
 		$DOCKER rm "$NAME" || true
 		create_container

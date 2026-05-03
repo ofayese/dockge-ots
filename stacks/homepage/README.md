@@ -14,7 +14,7 @@ A customizable, real-time dashboard for the olutechsys homelab infrastructure. A
 
 1. **Via Dockge UI:**
 
-   - Open Dockge at http://10.0.1.15:5001
+   - Open Dockge at http://10.0.1.15:5571
    - Create a new stack named `homepage`
    - Point it to `/volume1/​docker/dockge​/stacks/homepage/compose.yaml`
    - Click "Deploy"
@@ -356,7 +356,7 @@ Homepage uses port **7575** because your existing stacks occupy:
 - 8377–8378 (Code-Server, phpMyAdmin-dev)
 - 9000–9001, 9443 (Portainer, Portainer Agent)
 - 11434 (Ollama)
-- 5001 (Dockge)
+- 5571 (Dockge host port; container listens on 5001)
 - 3307 (MySQL dev)
 
 7575 is free and aligns with Homepage's upstream default.

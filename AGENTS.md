@@ -98,7 +98,7 @@ sh /usr/local/etc/rc.d/dockge.sh
 # 3. Verify
 docker inspect Dockge --format '{{.Config.Image}}'  # → louislam/dockge:1
 docker inspect Dockge --format '{{.State.Status}}'   # → running
-curl -s http://127.0.0.1:5571/ | head -5             # → HTML response from Dockge
+bash scripts/check-dockge-http.sh                      # → HTTP 200/301/302 from Dockge
 ```
 
 ### Recurring reminders
@@ -107,6 +107,7 @@ curl -s http://127.0.0.1:5571/ | head -5             # → HTML response from Do
 - [2026-04-30] `louislam/dockge:base` is a builder image, NOT the Dockge app. Always use `:1` or an explicit semver tag like `:1.5.0` for production.
 - [2026-04-30] Dockge host port is **5571**, not 5001. Port 5001 on this NAS is Synology DSM. These two must not be confused in homepage config, HAProxy backends, or siteMonitor entries.
 - [2026-04-30] Dockge has a native Homepage widget (`type: dockge`) that shows running/stopped stack counts. Requires login credentials in `.env`.
+- [2026-05-02] **HAProxy stretch:** `docs/hive/proposals/_haproxy/haproxy.cfg` includes **`dockge-be`** (backend `10.0.1.15:5571`). Apply/merge on the NAS per **`docs/hive/NAS_DEPLOYMENT.md`** → *Dockge UI and HAProxy*; run **`bash scripts/validate-haproxy-proposal.sh`** when `haproxy` is available.
 
 ## Deploy-Readiness Audit (2026-04-30)
 

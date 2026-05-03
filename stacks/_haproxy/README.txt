@@ -1,5 +1,7 @@
 Infrastructure folder for HAProxy (canonical config: haproxy.cfg next to these dirs):
-  certs/  — PEM files (see certs/README.txt); gitignored *.pem
+  certs/  — PEM files only (full chain + private key, one file per bundle, .pem names).
+            HAProxy bind uses ssl crt …/certs/ and loads every non-hidden file there;
+            do not put README or other text in certs/ (only *.pem). *.pem is gitignored.
   maps/   — host.map (Host header -> backend name)
 
 If the NAS already has /volume1/docker/haproxy.cfg (sibling of dockge/), keep that file as

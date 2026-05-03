@@ -86,6 +86,9 @@ STACK_MANIFEST=(
 	"traefik-ots:data"   # Traefik built-in ACME state (acme.json) — separate from acme-sh PEMs
 	"traefik-mft:config"
 	"traefik-mft:data"
+
+	# HAProxy bind-mount assets (certs + host map); not a Dockge compose stack — see stacks/_haproxy/README.txt
+	"_haproxy:certs,maps"
 )
 
 # Stacks intentionally absent from STACK_MANIFEST.

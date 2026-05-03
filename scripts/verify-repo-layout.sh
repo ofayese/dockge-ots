@@ -19,6 +19,11 @@ if [[ -e "${ROOT}/hive" ]]; then
 	exit 1
 fi
 
+if [[ -e "${STACKS}/docs" ]]; then
+	echo "ERROR: stacks/docs/ must not exist. Hive docs belong at repo-root docs/hive/ (not under stacks/)." >&2
+	exit 1
+fi
+
 err=0
 while IFS= read -r -d '' stack_dir; do
 	name="$(basename "${stack_dir}")"

@@ -17,6 +17,9 @@
 #
 # Default PUID/PGID are root (0:0), matching `HIVE_OBJECTIVE.md` NAS notes. Override only
 # if a non-root owner is required for the stacks directory.
+#
+# App state: ${DOCKGE_ROOT}/data/ is bind-mounted at /app/data (dockge.db, etc.) so the
+# git repo root stays free of SQLite files. Stacks stay at ${DOCKGE_ROOT}/stacks.
 # =============================================================================
 
 set -e
@@ -26,43 +29,25 @@ NAME="Dockge"
 IMAGE="louislam/dockge:1"
 PUID="${PUID:-0}"
 PGID="${PGID:-0}"
-# Repo root on the NAS (contains stacks/, scripts/, .git, etc.). Dockge app state
-# (SQLite, etc.) lives here — no separate .../data/ subfolder required.
-# Legacy layout: .../dockge/data/ was mounted at /app/data (dockge.db lived there).
-# This script one-time-moves ${DOCKGE_ROOT}/data/* into ${DOCKGE_ROOT}/ when
-# data/dockge.db exists and repo-root dockge.db does not — avoids silent DB loss.
 DOCKGE_ROOT="${DOCKGE_ROOT:-/volume1/docker/dockge}"
+DATA_DIR="${DOCKGE_ROOT}/data"
 
 sleep 20
 
-# One-time migration from old .../dockge/data/ bind to repo-root /app/data bind.
-migrate_legacy_app_data() {
-	legacy_dir="${DOCKGE_ROOT}/data"
-	[ -f "${legacy_dir}/dockge.db" ] || return 0
-	# Real config already at repo root — do not overwrite.
-	[ -f "${DOCKGE_ROOT}/dockge.db" ] && [ -s "${DOCKGE_ROOT}/dockge.db" ] && return 0
-	echo "dockge-start: migrating Dockge app state from ${legacy_dir}/ to ${DOCKGE_ROOT}/ (one-time)"
-	find "${legacy_dir}" -mindepth 1 -maxdepth 1 | while IFS= read -r f; do
-		[ -n "$f" ] || continue
-		bn=$(basename "$f")
-		case "$bn" in
-		stacks | scripts | .git) continue ;;
-		esac
-		dest="${DOCKGE_ROOT}/${bn}"
-		if [ -e "$dest" ]; then
-			# Replace only empty placeholder files (e.g. first boot wrote 0-byte dockge.db).
-			if [ -f "$dest" ] && [ ! -s "$dest" ] && [ -s "$f" ]; then
-				rm -f "$dest"
-			else
-				echo "dockge-start: migration skip (exists): ${dest}"
-				continue
-			fi
-		fi
-		mv "$f" "$dest"
-	done
+# One-time: previous script used -v ${DOCKGE_ROOT}:/app/data (DB at repo root). Move known
+# app files into ${DATA_DIR}/ before we mount only data/ at /app/data.
+migrate_app_data_into_data_dir() {
+	mkdir -p "${DATA_DIR}"
+	if [ ! -f "${DATA_DIR}/dockge.db" ] && [ -f "${DOCKGE_ROOT}/dockge.db" ]; then
+		echo "dockge-start: moving Dockge app state from repo root into ${DATA_DIR}/ (one-time)"
+		for f in dockge.db dockge.db-shm dockge.db-wal db-config.json; do
+			[ -e "${DOCKGE_ROOT}/$f" ] || continue
+			mv "${DOCKGE_ROOT}/$f" "${DATA_DIR}/"
+		done
+	fi
 }
 
-migrate_legacy_app_data
+migrate_app_data_into_data_dir
 
 exists() {
 	$DOCKER ps -a --format '{{.Names}}' | grep -qx "$NAME"
@@ -82,8 +67,16 @@ dockge_port_map_ok() {
 	return 0
 }
 
+# Recreate if /app/data is still bound to repo root (old script) instead of ${DATA_DIR}/.
+dockge_data_mount_ok() {
+	mounts="$($DOCKER inspect -f '{{json .Mounts}}' "$NAME" 2>/dev/null || echo '[]')"
+	echo "$mounts" | grep -Fq "${DATA_DIR}" || return 1
+	echo "$mounts" | grep -Fq '"/app/data"' || return 1
+	return 0
+}
+
 create_container() {
-	mkdir -p "${DOCKGE_ROOT}/stacks"
+	mkdir -p "${DOCKGE_ROOT}/stacks" "${DATA_DIR}"
 	$DOCKER run -d \
 		--name="$NAME" \
 		-p 5571:5001 \
@@ -96,7 +89,7 @@ create_container() {
 		--log-opt max-file=3 \
 		-v /var/run/docker.sock:/var/run/docker.sock \
 		-v "${DOCKGE_ROOT}/stacks:${DOCKGE_ROOT}/stacks" \
-		-v "${DOCKGE_ROOT}:/app/data" \
+		-v "${DATA_DIR}:/app/data" \
 		-e "DOCKGE_STACKS_DIR=${DOCKGE_ROOT}/stacks" \
 		-e PUID="$PUID" \
 		-e PGID="$PGID" \
@@ -108,11 +101,13 @@ $DOCKER pull "$IMAGE"
 
 if exists; then
 	CURR="$(current_image)"
-	if [ "$CURR" != "$IMAGE" ] || ! dockge_port_map_ok; then
+	if [ "$CURR" != "$IMAGE" ] || ! dockge_port_map_ok || ! dockge_data_mount_ok; then
 		if [ "$CURR" != "$IMAGE" ]; then
 			echo "dockge-start: recreating ${NAME} (image: ${CURR:-none} -> ${IMAGE})"
-		else
+		elif ! dockge_port_map_ok; then
 			echo "dockge-start: recreating ${NAME} (host 5571 must map to container 5001)"
+		else
+			echo "dockge-start: recreating ${NAME} (/app/data must bind ${DATA_DIR}/)"
 		fi
 		$DOCKER stop "$NAME" || true
 		$DOCKER rm "$NAME" || true

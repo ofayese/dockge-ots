@@ -32,6 +32,7 @@ Do these in order. Long command sequences live in linked docs—do not skip them
 
 - Image **`louislam/dockge:1`** (not **`:base`**).
 - Publish **`5571:5001`** (host 5571 → container 5001). Wrong **`5571:5571`** breaks the UI; the start script recreates the container when the binding is wrong.
+- App state: **`/volume1/docker/dockge/data`** (or **`${DOCKGE_ROOT}/data`**) is mounted at **`/app/data`** in the container — not the repo root — so **`dockge.db`** does not live next to **`.git`**.
 - Local probe: `curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:5571/` → **200** or **302**.
 
 ---

@@ -1,0 +1,154 @@
+# Stack: rag-stack
+# RAG pipeline: Qdrant vector DB + AnythingLLM (RAG UI/API) + Open WebUI Pipelines
+# (LangChain/LangGraph pipeline server extending the existing open-webui in the ollama stack).
+#
+# Ollama (otsai-server) is consumed via the NAS LAN IP — no shared Docker network required.
+# Open WebUI (otsai-webui) connects to this stack's pipelines service at http://10.0.1.15:9099.
+# HolyClaude can call the AnythingLLM REST API at http://10.0.1.15:3001/api/v1/.
+#
+# First deploy on the NAS:
+#   mkdir -p /volume1/docker/dockge/stacks/rag-stack/{data/qdrant,data/anythingllm,config/pipelines}
+#   cp .env.example .env && vim .env   # fill ANYTHINGLLM_JWT_SECRET, PIPELINES_API_KEY
+#   docker compose up -d
+
+services:
+  qdrant:
+    container_name: rag-qdrant
+    image: qdrant/qdrant:v1.14.0
+    mem_limit: 2g
+    # Qdrant is Rust; 2g covers typical NAS workloads. Raise to 4g if collections > 1M vectors.
+    cpu_shares: 768
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    ports:
+      - "10.0.1.15:6333:6333"   # REST + web UI
+      - "10.0.1.15:6334:6334"   # gRPC
+    volumes:
+      - ${STACK_ROOT}/rag-stack/data/qdrant:/qdrant/storage:rw
+    environment:
+      - PUID=${PUID:-0}
+      - PGID=${PGID:-0}
+      - TZ=${TZ:-America/New_York}
+      # Disable anonymous telemetry
+      - QDRANT__TELEMETRY_DISABLED=true
+      # Optional: enable Qdrant API key auth (set in .env — leave blank to disable)
+      - QDRANT__SERVICE__API_KEY=${QDRANT_API_KEY:-}
+    # Healthcheck type: A — HTTP probe on Qdrant readiness endpoint
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:6333/readyz >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+
+  anythingllm:
+    container_name: rag-anythingllm
+    image: mintplexlabs/anythingllm:1.7.6
+    mem_limit: 2g
+    # Node.js RAG server with embedding pipeline + vector DB client; 2g covers typical workloads.
+    cpu_shares: 768
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    ports:
+      - "10.0.1.15:3001:3001"
+    volumes:
+      - ${STACK_ROOT}/rag-stack/data/anythingllm:/app/server/storage:rw
+    environment:
+      - PUID=${PUID:-0}
+      - PGID=${PGID:-0}
+      - TZ=${TZ:-America/New_York}
+      - SERVER_PORT=3001
+      # ── LLM provider: Ollama ─────────────────────────────────────────────────
+      - LLM_PROVIDER=ollama
+      - OLLAMA_BASE_PATH=http://10.0.1.15:11434
+      - OLLAMA_MODEL_PREF=${ANYTHINGLLM_LLM_MODEL:-phi4:mini}
+      - OLLAMA_MODEL_TOKEN_LIMIT=${ANYTHINGLLM_MODEL_CTX:-4096}
+      # ── Embedding: Ollama ────────────────────────────────────────────────────
+      # Pull nomic-embed-text on the NAS first: docker exec otsai-server ollama pull nomic-embed-text
+      - EMBEDDING_ENGINE=ollama
+      - EMBEDDING_BASE_PATH=http://10.0.1.15:11434
+      - EMBEDDING_MODEL_PREF=${ANYTHINGLLM_EMBED_MODEL:-nomic-embed-text:latest}
+      - EMBEDDING_MODEL_MAX_CHUNK_LENGTH=8192
+      # ── Vector DB: Qdrant ────────────────────────────────────────────────────
+      - VECTOR_DB=qdrant
+      - QDRANT_ENDPOINT=http://qdrant:6333
+      - QDRANT_API_KEY=${QDRANT_API_KEY:-}
+      # ── Auth ─────────────────────────────────────────────────────────────────
+      # Generate with: openssl rand -hex 32
+      - JWT_SECRET=${ANYTHINGLLM_JWT_SECRET}
+      # Set to 'false' to require login for all access
+      - DISABLE_TELEMETRY=true
+    depends_on:
+      qdrant:
+        condition: service_healthy
+    extra_hosts:
+      - "otsorundscore.olutechsys.com:10.0.1.15"
+    # Healthcheck type: A — HTTP probe on AnythingLLM health endpoint
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3001/api/ping >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+
+  pipelines:
+    container_name: rag-pipelines
+    image: ghcr.io/open-webui/pipelines:main
+    mem_limit: 1g
+    # Python LangChain pipeline server extending Open WebUI; 1g sufficient for LangGraph agents.
+    cpu_shares: 512
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    ports:
+      - "10.0.1.15:9099:9099"
+    volumes:
+      - ${STACK_ROOT}/rag-stack/config/pipelines:/app/pipelines:rw
+    environment:
+      - PUID=${PUID:-0}
+      - PGID=${PGID:-0}
+      - TZ=${TZ:-America/New_York}
+      # Shared secret — paste this into Open WebUI > Settings > Connections > Pipelines
+      - PIPELINES_API_KEY=${PIPELINES_API_KEY}
+      # Ollama reachable from this container via host IP
+      - OLLAMA_BASE_URL=http://10.0.1.15:11434
+      # Qdrant available at service name within this compose network
+      - QDRANT_URL=http://qdrant:6333
+      - QDRANT_API_KEY=${QDRANT_API_KEY:-}
+      # GitHub token for GitHub RAG pipeline (optional — leave blank to skip)
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+    depends_on:
+      qdrant:
+        condition: service_healthy
+    extra_hosts:
+      - "otsorundscore.olutechsys.com:10.0.1.15"
+    # Healthcheck type: A — HTTP probe on pipelines root endpoint
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:9099/ >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    labels:
+      - com.centurylinklabs.watchtower.enable=true

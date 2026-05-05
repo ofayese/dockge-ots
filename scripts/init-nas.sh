@@ -56,6 +56,8 @@ STACK_MANIFEST=(
 	"acme-sh:data"
 	"dozzle:data"
 	"ollama:data"
+	# rag-stack: qdrant vector storage + anythingllm workspaces + pipelines pipeline definitions
+	"rag-stack:data,config"
 
 	# ── data,config ───────────────────────────────────────────────────
 	"code-server:data,config"

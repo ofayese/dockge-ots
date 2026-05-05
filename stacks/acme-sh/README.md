@@ -14,10 +14,44 @@ Containerized acme.sh in daemon mode — issues and renews TLS certificates via 
 
 ## Required env (`.env`, gitignored)
 
+- `STACK_ROOT` — absolute path to the Dockge stacks folder (same as repo `stacks/` on disk), e.g. `/volume1/docker/dockge/stacks`
 - `CF_Token` — Cloudflare API token with `Zone.DNS Edit` on `olutechsys.com` and `olutech.systems`
 - `DISCORD_WEBHOOK_URL` — optional; renewal notifications
 
 See `.env.example` for the full set.
+
+### Where you run `docker compose` matters
+
+Variable substitution for `compose.yaml` uses the **default `.env` in your shell’s current directory**, not automatically `acme-sh/.env` when you pass `-f acme-sh/compose.yaml` from the parent `stacks/` folder.
+
+- **Recommended:** `cd /volume1/docker/dockge/stacks/acme-sh` then `sudo docker compose up -d` (picks up `./.env` next to `compose.yaml`).
+- **From `stacks/`:** `sudo docker compose --env-file acme-sh/.env -f acme-sh/compose.yaml up -d` (only after `acme-sh/.env` exists on that machine — see below)
+
+A `.env` file that only exists under `acme-sh/` will still produce “not set” warnings if Compose never loads it (wrong cwd, no `--env-file`).
+
+### “Couldn't find env file: …/acme-sh/.env”
+
+That path is **not** created by `git pull`: `.env` is gitignored. On the NAS (or any host), create it once next to `compose.yaml`:
+
+```bash
+cd /volume1/docker/dockge/stacks/acme-sh
+test -f .env || cp .env.example .env || sudo cp .env.example .env
+# edit .env (CF_Token, STACK_ROOT, etc.) — if the copy was done with sudo, see below
+sudo docker compose up -d
+```
+
+If you passed `--env-file` to a path that does not exist yet, Compose fails hard — either create that file first or drop `--env-file` until you have copied and filled `.env`.
+
+### Permission denied creating `.env` (`cp: cannot create regular file '.env'`)
+
+If `ls -ld .` shows **`root`** (or another user) as owner and the mode is not group/world-writable, your account cannot create new files there. Use **`sudo cp`** — the command name is **`cp`**, not the source file:
+
+```bash
+sudo cp .env.example .env
+sudo chown "$(id -un)":"$(id -gn)" .env   # optional: own the file so you can edit without sudo
+```
+
+Then edit `.env` and run `sudo docker compose up -d` as usual. (Parent `stacks/` may be yours while this folder was created or normalized as **`root`** — that mismatch is normal on DSM.)
 
 ## Health
 
@@ -36,8 +70,8 @@ No probe (host networking + daemon mode → no meaningful liveness probe). Verif
 ## Rollback
 
 ```bash
-git checkout -- acme-sh/compose.yaml
-docker compose -f acme-sh/compose.yaml up -d
+git checkout -- compose.yaml   # run from inside acme-sh/
+sudo docker compose up -d
 ```
 
 Cert issuance state is on disk — survives container rebuild.

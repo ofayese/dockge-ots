@@ -4,6 +4,10 @@
 
 Traefik v3 runs on the **OTS** NAS and routes HTTPS for `*.ots.olutechsys.com`. It discovers backend services from Docker labels and terminates TLS using a **pre-issued** wildcard certificate from the `acme-sh` stack (`ots-sub/`), loaded via `config/tls.yaml`.
 
+## Image pinning
+
+`compose.yaml` uses **`traefik:v3`** (floating major). For production, pin to a specific semver (for example **`traefik:v3.3.4`**) and bump deliberately after reading release notes. Current tags: [Docker Hub — traefik](https://hub.docker.com/_/traefik/tags).
+
 ## Cert sources (two layers)
 
 1. **Default (production):** `acme-sh` issues `*.ots.olutechsys.com` via **Cloudflare DNS-01** and installs PEMs under `${ACME_CERT_ROOT}/ots-sub/`. Traefik mounts them read-only at `/certs/ots-sub`. **Internal split-horizon DNS is not involved** in issuance or renewal.

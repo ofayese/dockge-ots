@@ -36,6 +36,12 @@ STACK_ROOT_OVERRIDE=/volume1/docker/dockge/stacks \
   sudo bash scripts/init-nas.sh
 ```
 
+## Known outstanding issues
+
+### Router SSL certificate (batcavegtaxe16k.asuscomm.com)
+
+The GT-AXE16000 router admin certificate (Let's Encrypt on the ASUS DDNS hostname) **expired 2025-06-06**. The UI remains reachable at **`https://10.0.1.1:8443`** but browsers show an expired cert. Renew from the router: **Administration → System** and use the control next to the certificate (“click here to manage” / ASUS certificate UI), or trigger renewal from the DDNS / certificate page. The DDNS hostname must resolve to the current WAN IP for validation to succeed.
+
 ## Keeping the NAS in sync
 
 Preferred: SSH into NAS → `cd /dockge` → `git pull`.

@@ -4,6 +4,10 @@
 
 Traefik v3 runs on the **MFT** (Misfits) NAS and routes HTTPS for `*.mft.olutechsys.com`. Default TLS uses **`acme-sh`** PEMs (`mft-sub/`) via `config/tls.yaml`. A **`certificatesResolvers.cloudflare`** resolver (DNS-01, same token model as acme-sh) is also configured; internal split-horizon DNS is **not** used for ACME.
 
+## Image pinning
+
+`compose.yaml` uses **`traefik:v3`** (floating major). For production, pin to a specific semver (for example **`traefik:v3.3.4`**) and bump deliberately. Tags: [Docker Hub — traefik](https://hub.docker.com/_/traefik/tags).
+
 ## Cert sources
 
 See [traefik-ots README](../traefik-ots/README.md#cert-sources-two-layers) — same pattern: file certs from `acme-sh`, optional Traefik resolver state under `${STACK_ROOT}/traefik-mft/data/acme.json`.

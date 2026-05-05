@@ -19,8 +19,6 @@ services:
       - "otsorundscore.olutechsys.com:10.0.1.15"
     labels:
       - com.centurylinklabs.watchtower.enable=true
-    networks:
-      - bridge
     environment:
       - PUID=${PUID:-0}
       - PGID=${PGID:-0}
@@ -60,8 +58,6 @@ services:
       - "otsorundscore.olutechsys.com:10.0.1.15"
     labels:
       - com.centurylinklabs.watchtower.enable=true
-    networks:
-      - bridge
     environment:
       - PUID=${PUID:-0}
       - PGID=${PGID:-0}
@@ -100,8 +96,6 @@ services:
       - "otsorundscore.olutechsys.com:10.0.1.15"
     labels:
       - com.centurylinklabs.watchtower.enable=true
-    networks:
-      - bridge
     environment:
       - PUID=${PUID:-0}
       - PGID=${PGID:-0}
@@ -119,7 +113,3 @@ services:
     x-models:
       llm:
         model: ai/smollm3
-
-networks:
-  bridge:
-    external: true

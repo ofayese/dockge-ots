@@ -19,8 +19,6 @@ services:
       - PGID=${PGID:-0}
       - MONGO_INITDB_DATABASE=codexdocs
       - TZ=America/New_York
-    networks:
-      - bridge
     healthcheck:
       test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 30s
@@ -59,13 +57,7 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-    networks:
-      - bridge
     extra_hosts:
       - "otsorundscore.olutechsys.com:10.0.1.15"
     labels:
       - com.centurylinklabs.watchtower.enable=true
-
-networks:
-  bridge:
-    external: true

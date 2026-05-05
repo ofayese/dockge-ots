@@ -47,14 +47,8 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-    networks:
-      - bridge
 
 secrets:
   watchtower_bearer:
     # Single source of truth for bearer auth (Prometheus uses the same file).
     file: ../grafana-prom/secrets/watchtower_bearer_token.txt
-
-networks:
-  bridge:
-    external: true

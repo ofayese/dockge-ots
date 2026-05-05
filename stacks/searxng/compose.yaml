@@ -12,8 +12,6 @@ services:
       - PUID=${PUID:-0}
       - PGID=${PGID:-0}
       - TZ=America/New_York
-    networks:
-      - bridge
     healthcheck:
       test: ["CMD", "valkey-cli", "ping"]
       interval: 30s
@@ -50,8 +48,6 @@ services:
     # Plain depends_on (no condition) for Synology Package Center docker compose compatibility.
     depends_on:
       - redis
-    networks:
-      - bridge
     cap_drop:
       - ALL
     cap_add:
@@ -65,7 +61,3 @@ services:
         max-file: "3"
     labels:
       - com.centurylinklabs.watchtower.enable=true
-
-networks:
-  bridge:
-    external: true

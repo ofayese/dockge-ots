@@ -41,8 +41,6 @@ services:
       start_period: 30s
     labels:
       - com.centurylinklabs.watchtower.enable=true
-    networks:
-      - bridge
 
   db:
     image: mysql:8.3
@@ -82,8 +80,6 @@ services:
       start_period: 30s
     labels:
       - com.centurylinklabs.watchtower.enable=true
-    networks:
-      - bridge
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin:5.2.3-apache
@@ -124,13 +120,7 @@ services:
       - db
     labels:
       - com.centurylinklabs.watchtower.enable=true
-    networks:
-      - bridge
 
 volumes:
   mysql_data:
     driver: local
-
-networks:
-  bridge:
-    external: true

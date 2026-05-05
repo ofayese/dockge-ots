@@ -31,11 +31,5 @@ services:
     environment:
       PUID: ${PUID:-0}
       PGID: ${PGID:-0}
-    networks:
-      - bridge
     labels:
       - com.centurylinklabs.watchtower.enable=true
-
-networks:
-  bridge:
-    external: true

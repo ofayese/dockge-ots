@@ -18,8 +18,8 @@
 # Default PUID/PGID are root (0:0), matching `HIVE_OBJECTIVE.md` NAS notes. Override only
 # if a non-root owner is required for the stacks directory.
 #
-# App state: ${DOCKGE_ROOT}/data/ is bind-mounted at /app/data (dockge.db, etc.) so the
-# git repo root stays free of SQLite files. Stacks stay at ${DOCKGE_ROOT}/stacks.
+# App state: ${DOCKGE_ROOT}/data/ is bind-mounted at /app/data (dockge.db, etc.).
+# Stacks stay at ${DOCKGE_ROOT}/stacks.
 # =============================================================================
 
 set -e
@@ -34,20 +34,7 @@ DATA_DIR="${DOCKGE_ROOT}/data"
 
 sleep 20
 
-# One-time: previous script used -v ${DOCKGE_ROOT}:/app/data (DB at repo root). Move known
-# app files into ${DATA_DIR}/ before we mount only data/ at /app/data.
-migrate_app_data_into_data_dir() {
-	mkdir -p "${DATA_DIR}"
-	if [ ! -f "${DATA_DIR}/dockge.db" ] && [ -f "${DOCKGE_ROOT}/dockge.db" ]; then
-		echo "dockge-start: moving Dockge app state from repo root into ${DATA_DIR}/ (one-time)"
-		for f in dockge.db dockge.db-shm dockge.db-wal db-config.json; do
-			[ -e "${DOCKGE_ROOT}/$f" ] || continue
-			mv "${DOCKGE_ROOT}/$f" "${DATA_DIR}/"
-		done
-	fi
-}
-
-migrate_app_data_into_data_dir
+mkdir -p "${DATA_DIR}"
 
 exists() {
 	$DOCKER ps -a --format '{{.Names}}' | grep -qx "$NAME"
@@ -57,8 +44,6 @@ current_image() {
 	$DOCKER inspect -f '{{.Config.Image}}' "$NAME" 2>/dev/null || true
 }
 
-# Image listens on 5001/tcp; host publishes 5571. Recreate if map is missing/wrong (e.g. old 5571:5571).
-# Use HostConfig.PortBindings so stopped containers still evaluate correctly.
 dockge_port_map_ok() {
 	binds="$($DOCKER inspect -f '{{json .HostConfig.PortBindings}}' "$NAME" 2>/dev/null || echo '')"
 	[ -n "$binds" ] || return 1
@@ -67,7 +52,6 @@ dockge_port_map_ok() {
 	return 0
 }
 
-# Recreate if /app/data is still bound to repo root (old script) instead of ${DATA_DIR}/.
 dockge_data_mount_ok() {
 	mounts="$($DOCKER inspect -f '{{json .Mounts}}' "$NAME" 2>/dev/null || echo '[]')"
 	echo "$mounts" | grep -Fq "${DATA_DIR}" || return 1

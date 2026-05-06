@@ -25,3 +25,18 @@ TLS — fixing “cannot open …/certs/ots.olutechsys.com.pem” (or any missin
   - Validate before reload (use the same -f path your package actually loads):
       sudo /volume1/@appstore/haproxy/sbin/haproxy -c -f /volume1/@appdata/haproxy/haproxy.cfg
     or: … -f /volume1/docker/dockge/stacks/_haproxy/haproxy.cfg
+
+Synology Package Center HAProxy — “password prompt” / can’t save / config not sticking
+  DSM may use more than one path; confirm which file the running process loads, e.g.:
+      ps auxww | grep '[h]aproxy'
+  Common locations: /var/packages/haproxy/var/haproxy.cfg  and/or  /volume1/@appdata/haproxy/haproxy.cfg
+  Package stock config uses: user sc-haproxy, daemon, log ring@httplog, ring httplog { … }. The repo
+  haproxy.cfg uses a different global (e.g. log stdout). Blindly pasting the whole repo file over the
+  package file can break logging or startup — validate with haproxy -c after any merge.
+  Saving under /var/packages/ or @appdata/ from SMB/Finder often fails or loops “password” because
+  only root/admin may write there. Prefer SSH as an admin-capable user:
+      sudo cp /volume1/docker/dockge/stacks/_haproxy/haproxy.cfg /volume1/@appdata/haproxy/haproxy.cfg
+  (Adjust destination to match ps/haproxy -c.) Or: sudo vi … / sudo tee < file
+  Stats page “admin:admin” vs your password: that line is HTTP Basic Auth for :8280 only — not your
+  DSM login. After you change stats auth, reload HAProxy; if the browser keeps asking, use a private
+  window or clear saved credentials for http://<nas-ip>:8280/ (cached wrong user/pass).

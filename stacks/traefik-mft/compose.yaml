@@ -14,9 +14,10 @@ services:
     # services. Grant read-only access only.
     # Security Advisor will flag this — intentional. See NAS_DEPLOYMENT.md.
     ports:
-      - "80:80"
-      - "443:443"
-      - "${TRAEFIK_DASHBOARD_PORT:-8080}:8080"
+      # Same pattern as traefik-ots — override host binds when 80/443 are taken (HAProxy, DSM, etc.).
+      - ${TRAEFIK_HTTP_PUBLISH:-80}:80
+      - ${TRAEFIK_HTTPS_PUBLISH:-443}:443
+      - ${TRAEFIK_DASHBOARD_PORT:-8080}:8080
     volumes:
       # docker.sock grants Traefik read access to container labels.
       # Read-only (:ro) — Traefik does not need write access.

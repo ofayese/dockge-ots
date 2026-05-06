@@ -32,12 +32,8 @@ services:
     secrets:
       - watchtower_bearer
     healthcheck:
-      # /v1/health requires no auth token — safe liveness probe.
-      test:
-        [
-          "CMD-SHELL",
-          "wget -qO- http://127.0.0.1:8080/v1/health >/dev/null || exit 1",
-        ]
+      # Watchtower image is shell-less, so CMD-SHELL (/bin/sh) probes fail.
+      test: ["CMD", "/watchtower", "--version"]
       interval: 30s
       timeout: 5s
       retries: 3

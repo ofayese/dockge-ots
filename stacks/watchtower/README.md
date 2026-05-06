@@ -35,7 +35,7 @@ Watchtower does **not** auto-update itself by label even with `watchtower.enable
 
 ## Health
 
-HTTP probe on `/v1/health` (verify endpoint exists in pinned version; falls back to `pgrep watchtower` if not).
+Shell-free probe (`/watchtower --version`) because current Watchtower images do not ship `/bin/sh` for `CMD-SHELL` healthchecks.
 
 ## Rollback
 

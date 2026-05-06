@@ -17,21 +17,27 @@ services:
     logging:
       driver: json-file
       options:
-        max-size: "10m"
+        max-size: 10m
         max-file: "3"
     environment:
       - PUID=${PUID:-0}
       - PGID=${PGID:-0}
       - TZ=America/New_York
     healthcheck:
+<<<<<<< HEAD
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:9000/api/system/status"]
+=======
+      test:
+        - CMD-SHELL
+        - wget --no-verbose --tries=1 --spider
+          http://127.0.0.1:9000/api/system/status || exit 1
+>>>>>>> 646f2ed (local changes)
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
     labels:
       - com.centurylinklabs.watchtower.enable=true
-
   portainer_agent:
     image: portainer/agent:2.39.1
     container_name: portainer_agent
@@ -51,7 +57,7 @@ services:
     logging:
       driver: json-file
       options:
-        max-size: "10m"
+        max-size: 10m
         max-file: "3"
     cap_drop:
       - ALL
@@ -66,5 +72,4 @@ services:
       TZ: America/New_York
     labels:
       - com.centurylinklabs.watchtower.enable=true
-
 networks: {}

@@ -17,9 +17,11 @@ TLS — fixing “cannot open …/certs/ots.olutechsys.com.pem” (or any missin
   - If your Synology copy under /volume1/@appdata/haproxy/haproxy.cfg still points at a single file
     …/certs/ots.olutechsys.com.pem, that file must exist OR change line 59 to match the repo directory form
     after git pull, then reload.
-  - Build a HAProxy PEM (full chain + private key, same order as below) from acme.sh output, e.g. OTS wildcard:
-      sudo sh -c 'cat /volume1/certs/acme/ots-sub/fullchain.pem /volume1/certs/acme/ots-sub/privkey.pem > /volume1/docker/dockge/stacks/_haproxy/certs/ots-sub.pem'
-    Adjust paths if your acme layout differs (see stacks/acme-sh/SETUP.md). If HAProxy expects the exact
-    name ots.olutechsys.com.pem, write to that filename instead. chmod 640 the file; ensure the HAProxy
-    process user can read it (often root on DSM Package Center).
-  - Validate before reload:  /volume1/@appstore/haproxy/sbin/haproxy -c -f /volume1/docker/dockge/stacks/_haproxy/haproxy.cfg
+  - Build a HAProxy PEM (full chain + private key, concatenated in that order) from acme.sh output. Use one
+    shell line — do not break inside the single-quoted sh -c '…' string (newlines become bogus cat args):
+      sudo sh -c 'cat /volume1/certs/acme/ots-sub/fullchain.pem /volume1/certs/acme/ots-sub/privkey.pem > /volume1/docker/dockge/stacks/_haproxy/certs/ots.olutechsys.com.pem'
+    (Or ots-sub.pem if you prefer; any *.pem name is fine when bind uses the certs/ directory.)
+    Adjust paths if your acme layout differs (see stacks/acme-sh/SETUP.md). Then: chmod 640 that PEM.
+  - Validate before reload (use the same -f path your package actually loads):
+      sudo /volume1/@appstore/haproxy/sbin/haproxy -c -f /volume1/@appdata/haproxy/haproxy.cfg
+    or: … -f /volume1/docker/dockge/stacks/_haproxy/haproxy.cfg

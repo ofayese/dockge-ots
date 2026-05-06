@@ -26,8 +26,8 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     healthcheck:
-      test:
-        ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/ >/dev/null || exit 1"]
+      # Dozzle image is shell-less, so CMD-SHELL (/bin/sh) probes fail.
+      test: ["CMD", "/dozzle", "--version"]
       interval: 30s
       timeout: 5s
       retries: 3

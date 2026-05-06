@@ -16,7 +16,7 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:80/ || exit 1"]
+      test: ["CMD", "wget", "-qO-", "http://localhost:80/"]
       interval: 30s
       timeout: 5s
       retries: 3

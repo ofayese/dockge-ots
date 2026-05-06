@@ -41,7 +41,7 @@ services:
       - QDRANT__SERVICE__API_KEY=${QDRANT_API_KEY:-}
     # Healthcheck type: A — HTTP probe on Qdrant readiness endpoint
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:6333/readyz >/dev/null || exit 1"]
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:6333/readyz"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -99,7 +99,7 @@ services:
       - "otsorundscore.olutechsys.com:10.0.1.15"
     # Healthcheck type: A — HTTP probe on AnythingLLM health endpoint
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3001/api/ping >/dev/null || exit 1"]
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3001/api/ping"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -145,7 +145,7 @@ services:
       - "otsorundscore.olutechsys.com:10.0.1.15"
     # Healthcheck type: A — HTTP probe on pipelines root endpoint
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:9099/ >/dev/null || exit 1"]
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:9099/"]
       interval: 30s
       timeout: 10s
       retries: 5

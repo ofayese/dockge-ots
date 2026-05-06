@@ -18,7 +18,7 @@ Append the output to `dozzle/users.yml`. The file is mounted read-only into the 
 
 ## Health
 
-HTTP 200 on `/healthz` (Dozzle ≥ v6).
+Shell-free probe (`/dozzle --version`) because current Dozzle images do not ship `/bin/sh` for `CMD-SHELL` healthchecks.
 
 ## RACI
 

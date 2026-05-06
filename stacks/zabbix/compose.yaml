@@ -19,7 +19,7 @@ services:
     volumes:
       - ${STACK_ROOT}/zabbix/db:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      test: ["CMD", "pg_isready", "-U", "zabbix", "-d", "zabbix"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -58,7 +58,7 @@ services:
     volumes:
       - ${STACK_ROOT}/zabbix/data:/var/lib/zabbix
     healthcheck:
-      test: ["CMD-SHELL", "zabbix_server -R diaginfo 2>/dev/null || exit 1"]
+      test: ["CMD", "zabbix_server", "-R", "diaginfo"]
       interval: 30s
       timeout: 10s
       retries: 5

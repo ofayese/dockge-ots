@@ -15,7 +15,7 @@ services:
     restart: unless-stopped
     # Healthcheck type: B — TCP probe (published 3000; internal listener for UI/VNC-style stack)
     healthcheck:
-      test: ["CMD-SHELL", "nc -z 127.0.0.1 3000 || exit 1"]
+      test: ["CMD", "nc", "-z", "127.0.0.1", "3000"]
       interval: 30s
       timeout: 10s
       retries: 5

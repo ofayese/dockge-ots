@@ -33,8 +33,7 @@ services:
     group_add:
       - "0"
     healthcheck:
-      test:
-        ["CMD-SHELL", "curl -fs http://localhost:8080/ >/dev/null || exit 1"]
+      test: ["CMD", "curl", "-fs", "http://localhost:8080/"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -69,11 +68,7 @@ services:
       MYSQL_PASSWORD: ${PMA_CONTROLPASS}
       TZ: ${TZ:-America/New_York}
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          'mysqladmin ping -h localhost -uroot -p"$$MYSQL_ROOT_PASSWORD" --silent',
-        ]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "--silent"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -111,7 +106,7 @@ services:
       HIDE_PHP_VERSION: "true"
       TZ: ${TZ:-America/New_York}
     healthcheck:
-      test: ["CMD-SHELL", "curl -fs http://localhost/ >/dev/null || exit 1"]
+      test: ["CMD", "curl", "-fs", "http://localhost/"]
       interval: 30s
       timeout: 5s
       retries: 3

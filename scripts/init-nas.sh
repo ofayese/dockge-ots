@@ -7,9 +7,10 @@
 # Idempotent — safe to run multiple times.
 #
 # Manifest exhaustiveness (BSD-safe; no grep -oP):
-#   diff <(grep -E '^\s*"[^"]+:' scripts/init-nas.sh | sed -E 's/^[[:space:]]*"([^"]+):.*/\1/' | sort) \
+#   diff <(grep -E '^\s*"[^"]+:' scripts/init-nas.sh | sed -E 's/^[[:space:]]*"([^"]+):.*/\1/' | sort -u) \
 #        <(ls stacks/ | grep -vE '^portainer$|^agents_gateway_data$|^it-tools$|^mcp-tools-config$|^openresume$|^warp-main$|^watchtower$|^docker-model-runner$' | sort)
-# Left: stack names from STACK_MANIFEST. Right: stack dirs excluding MANIFEST_EXEMPT (same as grep -vE list).
+# Left: unique stack names from STACK_MANIFEST (sort -u: traefik-ots / traefik-mft each listed twice for config+data).
+# Right: stack dirs excluding MANIFEST_EXEMPT (same as grep -vE list). _haproxy stays on both sides.
 
 set -euo pipefail
 

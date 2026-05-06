@@ -50,7 +50,7 @@ STACK_MANIFEST=(
 	#   config → add only when a non-db service writes runtime config
 	# Never add a folder speculatively.
 	# portainer: OPERATOR EXCEPTION — exempt from this manifest.
-	#   Path managed via ${PORTAINER_DATA_ROOT}. See repo AGENTS.md / stack README.
+	#   State path fixed at /volume1/docker/portainer in compose.yaml (outside STACK_ROOT).
 
 	# ── data only ─────────────────────────────────────────────────────
 	"acme-sh:data"

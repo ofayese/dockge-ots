@@ -10,7 +10,7 @@ services:
     volumes:
       # SECURITY: docker.sock grants control of the host Docker API. Portainer requires rw for management UI.
       - /var/run/docker.sock:/var/run/docker.sock
-      - ${PORTAINER_DATA_ROOT:?set PORTAINER_DATA_ROOT in .env}:/data # EXEMPT operator legacy Portainer state (outside STACK_ROOT)
+      - ${PORTAINER_DATA_ROOT}:/data:rw  # EXEMPT operator legacy Portainer state (outside STACK_ROOT)
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
@@ -43,7 +43,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - /volume1/@docker/volumes:/var/lib/docker/volumes # EXEMPT Portainer agent Docker volumes
       - /:/host # EXEMPT Portainer agent host rootfs
-      - ${PORTAINER_CERT_ROOT:?set PORTAINER_CERT_ROOT in .env}:/certs:ro # EXEMPT operator Portainer TLS
+      - ${PORTAINER_CERT_ROOT}:/certs:ro # EXEMPT operator Portainer TLS
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true

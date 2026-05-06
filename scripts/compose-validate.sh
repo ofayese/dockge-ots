@@ -31,7 +31,7 @@ for f in mariadb_root_pw.txt mariadb_app_pw.txt postgres_pw.txt; do
 done
 
 mkdir -p /tmp/workspace 2>/dev/null || true
-mkdir -p /tmp/code-server-host-docker-bind /tmp/code-server-host-home-bind /tmp/portainer-data /tmp/portainer-certs 2>/dev/null || true
+mkdir -p /tmp/code-server-host-docker-bind /tmp/code-server-host-home-bind /tmp/portainer-certs 2>/dev/null || true
 
 created_env_files=()
 cleanup() {
@@ -71,7 +71,6 @@ fi
 if [[ ! -f "${STACKS}/portainer/.env" ]]; then
 	cat >"${STACKS}/portainer/.env" <<EOF
 STACK_ROOT=${STACKS}
-PORTAINER_DATA_ROOT=/tmp/portainer-data
 PORTAINER_CERT_ROOT=/tmp/portainer-certs
 EDGE_ID=
 EDGE_KEY=

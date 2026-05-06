@@ -9,7 +9,7 @@ services:
     restart: unless-stopped
     ports:
       # Prometheus (grafana-prom) scrapes /v1/metrics here; restrict on firewall if needed.
-      - "10.0.1.15:18787:8080"
+      - 10.0.1.15:18787:8080
     volumes:
       # Docker socket (ro): Watchtower needs daemon API for image updates; ro is sufficient for its operations.
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -32,8 +32,15 @@ services:
     secrets:
       - watchtower_bearer
     healthcheck:
+<<<<<<< HEAD
       # Watchtower image is shell-less, so CMD-SHELL (/bin/sh) probes fail.
       test: ["CMD", "/watchtower", "--version"]
+=======
+      # /v1/health requires no auth token — safe liveness probe.
+      test:
+        - CMD-SHELL
+        - wget -qO- http://127.0.0.1:8080/v1/health >/dev/null || exit 1
+>>>>>>> 9d18f30 (local changes)
       interval: 30s
       timeout: 5s
       retries: 3
@@ -41,10 +48,10 @@ services:
     logging:
       driver: json-file
       options:
-        max-size: "10m"
+        max-size: 10m
         max-file: "3"
-
 secrets:
   watchtower_bearer:
     # Single source of truth for bearer auth (Prometheus uses the same file).
     file: ../grafana-prom/secrets/watchtower_bearer_token.txt
+networks: {}

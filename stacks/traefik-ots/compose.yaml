@@ -10,59 +10,38 @@ services:
       options:
         max-size: 10m
         max-file: "3"
-    # docker.sock required: Traefik reads Docker labels to auto-discover
-    # services. Grant read-only access only.
-    # Security Advisor will flag this — intentional. See NAS_DEPLOYMENT.md.
     ports:
-      # If bind fails (address already in use): something else owns host 80/443 — often Synology HAProxy or DSM.
-      # Publish Traefik on alternates (e.g. TRAEFIK_HTTP_PUBLISH=9080 TRAEFIK_HTTPS_PUBLISH=9443) and front with HAProxy/router.
-      - ${TRAEFIK_HTTP_PUBLISH:-80}:80
-      - ${TRAEFIK_HTTPS_PUBLISH:-443}:443
+      - ${TRAEFIK_HTTP_PUBLISH:-8880}:8880
+      - ${TRAEFIK_HTTPS_PUBLISH:-5443}:5443
       - ${TRAEFIK_DASHBOARD_PORT:-8080}:8080
     volumes:
-      # docker.sock grants Traefik read access to container labels.
-      # Read-only (:ro) — Traefik does not need write access.
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      # Pre-issued wildcard cert from acme-sh — Traefik reads PEMs directly.
-      # acme-sh auto-renews; Traefik picks up the new PEM on next reload.
       - ${ACME_CERT_ROOT:-/volume1/certs/acme}/ots-sub:/certs/ots-sub:ro
-      # Traefik built-in ACME state (Cloudflare DNS-01) — separate mount so it does not overlay /etc/traefik.
       - ${STACK_ROOT}/traefik-ots/data:/data:rw
-      # Traefik static/dynamic config (tls.yaml)
       - ${STACK_ROOT}/traefik-ots/config:/etc/traefik:rw
     environment:
       TZ: ${TZ:-America/New_York}
       PUID: ${PUID:-0}
       PGID: ${PGID:-0}
-      # Cloudflare DNS API (Lego) — used by certificatesResolvers.cloudflare; same token scope as acme-sh.
       CF_DNS_API_TOKEN: ${CF_Token}
     command:
-      # ── Providers ────────────────────────────────────────────────────
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
       - --providers.file.filename=/etc/traefik/tls.yaml
-      # ── Entrypoints ──────────────────────────────────────────────────
       - --entrypoints.web.address=:80
       - --entrypoints.web.http.redirections.entrypoint.to=websecure
       - --entrypoints.web.http.redirections.entrypoint.scheme=https
       - --entrypoints.websecure.address=:443
       - --entrypoints.traefik.address=:8080
       - --ping=true
-      # Built-in ACME (Cloudflare DNS-01). Does not use internal split-horizon DNS.
-      # Default routers still use file certs (tls.yaml) from acme-sh; opt-in per router: tls.certresolver=cloudflare
       - --certificatesResolvers.cloudflare.acme.email=${ACME_EMAIL:-hostmaster@example.com}
       - --certificatesResolvers.cloudflare.acme.storage=/data/acme.json
       - --certificatesResolvers.cloudflare.acme.dnsChallenge.provider=cloudflare
       - --certificatesResolvers.cloudflare.acme.dnsChallenge.delaybeforecheck=10s
-      # ── TLS — default wildcard from acme-sh (file provider) ─────────
-      # Traefik loads PEMs from tls.yaml; acme-sh owns renewal to ACME_CERT_ROOT.
-      # ── Dashboard (disable in production) ────────────────────────────
       - --api.dashboard=${TRAEFIK_DASHBOARD:-false}
       - --api.insecure=${TRAEFIK_DASHBOARD:-false}
-      # ── Logging ──────────────────────────────────────────────────────
       - --log.level=${TRAEFIK_LOG_LEVEL:-WARN}
       - --accesslog=true
-    # Healthcheck type: A — HTTP probe on Traefik ping endpoint
     healthcheck:
       test:
         - CMD

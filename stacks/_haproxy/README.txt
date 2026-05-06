@@ -30,9 +30,10 @@ Synology Package Center HAProxy — “password prompt” / can’t save / confi
   DSM may use more than one path; confirm which file the running process loads, e.g.:
       ps auxww | grep '[h]aproxy'
   Common locations: /var/packages/haproxy/var/haproxy.cfg  and/or  /volume1/@appdata/haproxy/haproxy.cfg
-  Package stock config uses: user sc-haproxy, daemon, log ring@httplog, ring httplog { … }. The repo
-  haproxy.cfg uses a different global (e.g. log stdout). Blindly pasting the whole repo file over the
-  package file can break logging or startup — validate with haproxy -c after any merge.
+  Package stock config uses: user sc-haproxy, daemon, log ring@httplog, ring httplog { … }. Repository
+  stacks/_haproxy/haproxy.cfg merges those globals with Dockge frontends/backends (paste-ready for DSM).
+  Non-package HAProxy (e.g. Docker): replace global with log stdout and omit user/daemon/ring as needed.
+  Always validate after edits: haproxy -c -f …
   Saving under /var/packages/ or @appdata/ from SMB/Finder often fails or loops “password” because
   only root/admin may write there. Prefer SSH as an admin-capable user:
       sudo cp /volume1/docker/dockge/stacks/_haproxy/haproxy.cfg /volume1/@appdata/haproxy/haproxy.cfg

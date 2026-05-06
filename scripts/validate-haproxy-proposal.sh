@@ -51,24 +51,31 @@ fi
 openssl req -x509 -nodes -newkey rsa:2048 -keyout "${TMP}/k.pem" -out "${TMP}/c.pem" -days 1 \
 	-subj "/CN=haproxy-syntax-check" >/dev/null 2>&1
 cat "${TMP}/c.pem" "${TMP}/k.pem" >"${TMP}/certs/_syntax-check.pem"
-sed "s|/volume1/docker/dockge/stacks/_haproxy|${TMP}|g" "${cfg}" >"${TMP}/haproxy.cfg"
+# DSM-merge globals use user sc-haproxy + ring httplog paths that do not exist off-NAS; strip for syntax-only -c.
+sed "s|/volume1/docker/dockge/stacks/_haproxy|${TMP}|g" "${cfg}" |
+	sed -e '/^[[:space:]]*user sc-haproxy[[:space:]]*$/d' -e '/^[[:space:]]*daemon[[:space:]]*$/d' \
+		-e 's|^[[:space:]]*log ring@httplog local0 info|    log stdout format raw local0|' |
+	perl -0777 -pe 's/\nring httplog\n(?:[ \t].*\n)+/\n/s' >"${TMP}/haproxy.cfg"
 
-echo "validate-haproxy-proposal: haproxy -c -f ${TMP}/haproxy.cfg (paths rewritten to temp)"
+echo "validate-haproxy-proposal: haproxy -c -f ${TMP}/haproxy.cfg (DSM globals sanitized off-NAS; paths rewritten to temp)"
 if ! run_haproxy_check "${TMP}/haproxy.cfg"; then
 	echo "validate-haproxy-proposal: FAIL (stacks/_haproxy/haproxy.cfg)" >&2
 	exit 1
 fi
 
-# Wrapper include (docs path) — same temp tree, include target beside generated haproxy.cfg
-cp "${TMP}/haproxy.cfg" "${TMP}/haproxy-main.cfg"
-cat >"${TMP}/haproxy.cfg" <<EOF
-include ${TMP}/haproxy-main.cfg
-EOF
-echo "validate-haproxy-proposal: haproxy -c -f ${TMP}/haproxy.cfg (include smoke)"
-if ! run_haproxy_check "${TMP}/haproxy.cfg"; then
-	echo "validate-haproxy-proposal: FAIL (include chain)" >&2
+# Proposal wrapper must resolve to this canonical file (OSS HAProxy docker builds omit `include` — cannot smoke-test include via -c).
+_wrapper_dir="$(cd "$(dirname "${wrapper}")" && pwd)"
+_include_line="$(grep -E '^[[:space:]]*include[[:space:]]+' "${wrapper}" | head -1 || true)"
+if [[ -z "${_include_line}" ]]; then
+	echo "validate-haproxy-proposal: FAIL (no include line in ${wrapper})" >&2
 	exit 1
 fi
-
-echo "validate-haproxy-proposal: OK (stacks/_haproxy/haproxy.cfg + include)"
+_include_rel="$(echo "${_include_line}" | awk '{print $2}')"
+_resolved="$(cd "${_wrapper_dir}" && realpath "${_include_rel}" 2>/dev/null || true)"
+_canonical="$(realpath "${cfg}" 2>/dev/null || echo "${cfg}")"
+if [[ "${_resolved}" != "${_canonical}" ]]; then
+	echo "validate-haproxy-proposal: FAIL (proposal include resolves to '${_resolved}', expected '${_canonical}')" >&2
+	exit 1
+fi
+echo "validate-haproxy-proposal: OK (canonical cfg + proposal include path)"
 exit 0

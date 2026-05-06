@@ -7,9 +7,13 @@ Container management UI (server) + agent for daemon access on the host.
 - **portainer** (9000 HTTP, 9443 HTTPS) — UI; mounts host `docker.sock` and `/volume1/​docker/portainer` for state
 - **portainer_agent** (9001) — daemon-side agent; runs with `cap_drop: ALL` and only `cap_add: NET_RAW`; mounts `/` as `/host` for full filesystem visibility
 
+## Bootstrap (bind mounts)
+
+`compose.yaml` requires **`PORTAINER_DATA_ROOT`** and **`PORTAINER_CERT_ROOT`** to exist on the host before `docker compose up`. If either path is missing (for example `/tmp/portainer-certs` from an old `.env.example`), the daemon returns **Bind mount failed: … does not exist**. Create dirs and install agent TLS material first — see **`stacks/portainer/.env.example`** comments.
+
 ## TLS certs (agent)
 
-`/volume1/​docker/portainer/certs/{cert,key}.pem` — mounted read-only into the agent. Do not modify; certs are issued and rotated separately.
+`/volume1/​docker/portainer/certs/` — mount read-only at `/certs`; files must be named **`cert.pem`** and **`key.pem`** (see `compose.yaml`). Issue or copy TLS material separately; do not commit keys to git.
 
 ## Health
 

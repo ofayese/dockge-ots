@@ -26,6 +26,18 @@ TLS — fixing “cannot open …/certs/ots.olutechsys.com.pem” (or any missin
       sudo /volume1/@appstore/haproxy/sbin/haproxy -c -f /volume1/@appdata/haproxy/haproxy.cfg
     or: … -f /volume1/docker/dockge/stacks/_haproxy/haproxy.cfg
 
+Missing LF on last line (HAProxy 3.x — “file might have been truncated”)
+  Package UI paste/copy often strips the final newline. Prefer deploy via sudo cp from git checkout:
+      sudo cp /volume1/docker/dockge/stacks/_haproxy/haproxy.cfg /volume1/@appdata/haproxy/haproxy.cfg
+  Or normalize EOF on the NAS (ensure exactly one trailing newline):
+      sudo python3 <<'PY'
+      from pathlib import Path
+      p = Path("/volume1/@appdata/haproxy/haproxy.cfg")
+      t = p.read_text(encoding="utf-8", errors="surrogateescape")
+      p.write_text(t.rstrip("\n") + "\n", encoding="utf-8")
+      PY
+  Then run haproxy -c again.
+
 Synology Package Center HAProxy — “password prompt” / can’t save / config not sticking
   DSM may use more than one path; confirm which file the running process loads, e.g.:
       ps auxww | grep '[h]aproxy'

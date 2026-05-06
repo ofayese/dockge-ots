@@ -24,14 +24,7 @@ services:
       - PGID=${PGID:-0}
       - TZ=America/New_York
     healthcheck:
-<<<<<<< HEAD
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:9000/api/system/status"]
-=======
-      test:
-        - CMD-SHELL
-        - wget --no-verbose --tries=1 --spider
-          http://127.0.0.1:9000/api/system/status || exit 1
->>>>>>> 646f2ed (local changes)
       interval: 30s
       timeout: 10s
       retries: 3

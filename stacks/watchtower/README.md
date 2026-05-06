@@ -35,7 +35,7 @@ Watchtower does **not** auto-update itself by label even with `watchtower.enable
 
 ## Health
 
-Shell-free probe (`/watchtower --version`) because current Watchtower images do not ship `/bin/sh` for `CMD-SHELL` healthchecks.
+Scratch-based image: no `/bin/sh` or `wget`, so `CMD-SHELL` probes fail. Use exec-form `["CMD", "/watchtower", "--health-check"]` (matches upstream image `HEALTHCHECK`).
 
 ## Rollback
 

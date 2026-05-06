@@ -10,7 +10,7 @@ services:
     volumes:
       # SECURITY: docker.sock grants control of the host Docker API. Portainer requires rw for management UI.
       - /var/run/docker.sock:/var/run/docker.sock
-      - ${PORTAINER_DATA_ROOT}:/data:rw  # EXEMPT operator legacy Portainer state (outside STACK_ROOT)
+      - ${PORTAINER_DATA_ROOT}:/data:rw # EXEMPT operator legacy Portainer state (outside STACK_ROOT)
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
@@ -24,7 +24,13 @@ services:
       - PGID=${PGID:-0}
       - TZ=America/New_York
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:9000/api/system/status"]
+      test:
+        - CMD
+        - wget
+        - --no-verbose
+        - --tries=1
+        - --spider
+        - http://127.0.0.1:9000/api/system/status
       interval: 30s
       timeout: 10s
       retries: 3

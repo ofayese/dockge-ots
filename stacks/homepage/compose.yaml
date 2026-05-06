@@ -9,7 +9,7 @@ services:
     logging:
       driver: json-file
       options:
-        max-size: "10m"
+        max-size: 10m
         max-file: "3"
     restart: unless-stopped
     ports:
@@ -27,7 +27,11 @@ services:
       # Allow access from the Synology LAN IP and your domain
       - HOMEPAGE_ALLOWED_HOSTS=10.0.1.15:7575,otsorundscore.olutechsys.com:7575,otsorundscore.olutech.systems:7575,localhost:7575
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:3000/"]
+      test:
+        - CMD
+        - wget
+        - -qO-
+        - http://localhost:3000/
       interval: 30s
       timeout: 5s
       retries: 3
@@ -35,4 +39,5 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     extra_hosts:
-      - "otsorundscore.olutechsys.com:10.0.1.15"
+      - otsorundscore.olutechsys.com:10.0.1.15
+networks: {}

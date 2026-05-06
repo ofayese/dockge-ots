@@ -11,8 +11,8 @@ For 4096-bit RSA, substitute `--keylength 4096` in every `--issue` block below
 ```text
 /volume1/certs/acme/               (= /Volumes/certs/acme/ on Mac)
 ├── wildcard/                      *.olutechsys.com + *.olutech.systems
-├── otsorundscore-sub/                *.otsorundscore.olutechsys.com + apex/wildcard on olutech.systems
-├── misfitsds-sub/                 misfitsds.olutechsys.com + *.misfitsds.olutechsys.com + misfitsds.olutech.systems + *.misfitsds.olutech.systems
+├── otsorundscore-sub/             apex + wildcards on both zones + optional `*.ots` / `*.mft` SANs (see SETUP)
+├── misfitsds-sub/                 apex + wildcards on both zones + optional `*.ots` / `*.mft` SANs (see SETUP)
 ├── otsmbpro16/                    otsmbpro16.olutechsys.com
 ├── hpdevcore/                     hpdevcore.olutechsys.com
 ├── ots-sub/                       *.ots.olutechsys.com
@@ -32,6 +32,103 @@ For 4096-bit RSA, substitute `--keylength 4096` in every `--issue` block below
 
 > **`*.asus.com` cannot be issued.** ASUSTeK owns that DNS zone.
 > Use `olutechsys.com` or `olutech.systems` for device hostnames.
+
+## NAS hosts & LAN IPs (reference)
+
+Use these for firewall rules, HAProxy/Traefik backends, split-DNS, or `/etc/hosts` — **not** as Let’s Encrypt certificate names.
+
+| Role | Hostname (examples) | Typical LAN IP | Notes |
+| ---- | ------------------- | -------------- | ----- |
+| OTS NAS | `otsorundscore`, `otsorundscore.olutechsys.com` | **`10.0.1.15`** | Runs Dockge stacks; HAProxy examples bind backends here; Docker narrow-TCP examples use this IP |
+| MFT NAS | `misfitsds`, `misfitsds.olutechsys.com` | **`10.0.1.24`** | Separate Synology; same DNS-01 / pem layout under `${ACME_CERT_ROOT}` after issue |
+
+Adjust IPs if your VLAN differs. Optionally mirror them as comments in `acme-sh/.env` (see `.env.example` — compose does not consume those vars).
+
+### Can I put NAS IPs on the Let’s Encrypt cert?
+
+**Not for private LAN addresses (e.g. `10.x`, `192.168.x`).** Let’s Encrypt does not issue certificates whose SANs are **RFC1918/private IPs**. This stack validates with **Cloudflare DNS-01**, which proves control of **DNS names**, not arbitrary IP identifiers.
+
+**What to do instead**
+
+- Serve HTTPS by **hostname** (`*.ots.…`, `*.otsorundscore.…`, etc.) and resolve those names on the LAN via **split DNS**, **`/etc/hosts`**, or your router — the PEM from acme.sh stays valid for those names.
+- Need TLS **to an IP** or **Docker daemon** identity? Use **hostname + DNS** for LE-backed services, or **private PKI** (e.g. mTLS scripts under your acme tree: `SAN_IPS=10.0.1.15` for daemon certs — not the same as LE).
+
+---
+
+## Deploy acme-sh end-to-end (checklist)
+
+Do this on **each Synology** that runs the acme-sh container (often **OTS only** if one NAS issues for all zones via Cloudflare).
+
+### 1. Prerequisites
+
+- Cloudflare API token (`Zone.DNS:Edit`) on **`olutechsys.com`** and **`olutech.systems`** (grey-cloud / DNS-only on wildcards you use for Synology DDNS is OK for issuance).
+- Repo path on NAS: `${STACK_ROOT}/acme-sh` (e.g. `/volume1/docker/dockge/stacks/acme-sh`).
+- Parent dirs exist for **`${ACME_CERT_ROOT}`** (default `/volume1/certs/acme`).
+
+### 2. Configure `.env`
+
+```bash
+cd /volume1/docker/dockge/stacks/acme-sh
+test -f .env || sudo cp .env.example .env
+# Edit: CF_Token, STACK_ROOT, ACME_CERT_ROOT (if not default), optional DISCORD_WEBHOOK_URL
+```
+
+### 3. Start the stack
+
+```bash
+sudo docker compose up -d
+sudo docker logs AcmeSh --tail 30
+```
+
+Expect daemon mode (cron); no HTTP port — renewals run inside the container.
+
+### 4. Create PEM output directories
+
+```bash
+sudo mkdir -p \
+  /volume1/certs/acme/wildcard \
+  /volume1/certs/acme/otsorundscore-sub \
+  /volume1/certs/acme/misfitsds-sub \
+  /volume1/certs/acme/ots-sub \
+  /volume1/certs/acme/mft-sub \
+  /volume1/certs/acme/otsmbpro16 \
+  /volume1/certs/acme/hpdevcore
+```
+
+(Omit dirs you never issue.)
+
+### 5. Issue certificates
+
+Run the **`--issue`** blocks in [Issue all certs](#issue-all-certs) that you need (DNS propagation ~1–2 minutes each). Watch logs:
+
+```bash
+sudo docker logs -f AcmeSh
+```
+
+### 6. Install PEMs to `${ACME_CERT_ROOT}`
+
+Run matching **`--install-cert`** blocks in [Configure output paths](#configure-output-paths-run-once-per-cert-after-issue). Use each order’s **primary** `-d` from:
+
+```bash
+sudo docker exec AcmeSh acme.sh --list
+```
+
+### 7. Reload consumers
+
+After new or renewed PEMs:
+
+- **Traefik** (`traefik-ots` / `traefik-mft`): restart or reload so file certs pick up changes (see Traefik stack README).
+- **HAProxy**: `haproxy -c` then reload Synology HAProxy package if it reads `_haproxy/certs/`.
+- **DSM / deploy scripts**: run `deploy-otsorundscore.bash` / `deploy-misfitsds.bash` from your workflow when you push DSM/Docker TLS copies.
+
+### 8. Verify
+
+```bash
+openssl x509 -in /volume1/certs/acme/ots-sub/fullchain.pem -noout -subject -dates 2>/dev/null || true
+sudo docker exec AcmeSh acme.sh --list
+```
+
+---
 
 ## Deploy script tests
 
@@ -67,9 +164,9 @@ Recommended posture, in order:
 on the LAN. To allow narrow remote TCP, edit `hosts` to a single,
 firewalled lab IP **before** merging — for this lab that is
 `tcp://10.0.1.15:2376` for otsorundscore (`10.0.1.15`); misfitsds is
-`10.0.1.24` (no Docker daemon TLS bundle in this tree). Add the same IP
-to SANs and tighten the firewall to the trusted client subnet at the
-same time.
+`10.0.1.24` (no Docker daemon TLS bundle in this tree). For **private Docker mTLS**
+certs only, add that IP to server SANs (`SAN_IPS` in the mTLS scripts) — **not**
+on Let’s Encrypt DNS-01 certs (see [Can I put NAS IPs on the Let’s Encrypt cert?](#can-i-put-nas-ips-on-the-lets-encrypt-cert)). Tighten the firewall to the trusted client subnet.
 
 1. **SSH context (recommended default — no TCP needed):**
 
@@ -255,12 +352,12 @@ sudo docker exec AcmeSh acme.sh --set-notify --notify-hook discord
 Run each block once (DNS ~1–2 min per cert). Default key is `--keylength 2048`.
 
 Primary `-d` strings (for `--install-cert`, `--renew`, and non-`--ecc` remove):
-`*.olutechsys.com`, `*.otsorundscore.olutechsys.com`, `misfitsds.olutechsys.com`,
+`*.olutechsys.com`, `otsorundscore.olutechsys.com` (otsorundscore-sub), `misfitsds.olutechsys.com` (misfitsds-sub),
 `otsmbpro16.olutechsys.com`, `hpdevcore.olutechsys.com`, `*.ots.olutechsys.com`,
 `*.mft.olutechsys.com` — confirm with
 `acme.sh --list` if anything differs.
 
-### wildcard — _.olutechsys.com +_.olutech.systems
+### wildcard — \*.olutechsys.com + \*.olutech.systems
 
 ```bash
 sudo docker exec AcmeSh acme.sh --issue \
@@ -270,24 +367,43 @@ sudo docker exec AcmeSh acme.sh --issue \
   --dns dns_cf --server letsencrypt
 ```
 
-### otsorundscore-sub — \*.otsorundscore.olutechsys.com
+### otsorundscore-sub — apex + `*.otsorundscore.*` (+ optional namespace wildcards)
+
+First `-d` is the acme.sh order key (CN / “main” in many UIs); remaining `-d` values are SANs.
+
+Optional `*.ots.olutechsys.com` and `*.mft.olutechsys.com` duplicate coverage from dedicated
+`ots-sub/` and `mft-sub/` orders — omit those two lines if you prefer separate cert rotation only.
 
 ```bash
 sudo docker exec AcmeSh acme.sh --issue \
+  -d 'otsorundscore.olutechsys.com' \
+  -d 'otsorundscore.olutech.systems' \
   -d '*.otsorundscore.olutechsys.com' \
   -d '*.otsorundscore.olutech.systems' \
+  -d '*.ots.olutechsys.com' \
+  -d '*.mft.olutechsys.com' \
   --keylength 2048 \
   --dns dns_cf --server letsencrypt
 ```
 
-### misfitsds-sub — misfitsds.olutechsys.com + wildcards on both zones
+**Re-issue after an older order used `*.otsorundscore.olutechsys.com` as primary:** remove the old RSA order first, then issue again (match `-d` from `acme.sh --list`):
+
+```bash
+sudo docker exec AcmeSh acme.sh --remove -d '*.otsorundscore.olutechsys.com'
+```
+
+### misfitsds-sub — apex + `*.misfitsds.*` (+ optional namespace wildcards)
+
+Same optional SAN overlap note as otsorundscore-sub.
 
 ```bash
 sudo docker exec AcmeSh acme.sh --issue \
   -d 'misfitsds.olutechsys.com' \
-  -d '*.misfitsds.olutechsys.com' \
   -d 'misfitsds.olutech.systems' \
+  -d '*.misfitsds.olutechsys.com' \
   -d '*.misfitsds.olutech.systems' \
+  -d '*.ots.olutechsys.com' \
+  -d '*.mft.olutechsys.com' \
   --keylength 2048 \
   --dns dns_cf --server letsencrypt
 ```
@@ -313,6 +429,8 @@ sudo docker exec AcmeSh acme.sh --issue \
 ```
 
 ## Issue ots and mft namespace certs
+
+Dedicated `ots-sub/` and `mft-sub/` PEM dirs are still recommended for Traefik stacks that mount only those paths. If you already included `*.ots.olutechsys.com` / `*.mft.olutechsys.com` as extra SANs on **otsorundscore-sub** or **misfitsds-sub**, you can skip the duplicate orders below (same names on two certs = two independent renewals).
 
 ```bash
 sudo docker exec AcmeSh acme.sh --issue \
@@ -361,7 +479,7 @@ sudo docker exec AcmeSh acme.sh --install-cert \
 
 ```bash
 sudo docker exec AcmeSh acme.sh --install-cert \
-  -d '*.otsorundscore.olutechsys.com' \
+  -d 'otsorundscore.olutechsys.com' \
   --cert-file      /volume1/certs/acme/otsorundscore-sub/cert.pem \
   --key-file       /volume1/certs/acme/otsorundscore-sub/privkey.pem \
   --ca-file        /volume1/certs/acme/otsorundscore-sub/chain.pem \
@@ -695,8 +813,8 @@ sudo docker exec AcmeSh acme.sh --renew -d '*.olutechsys.com' --force
 sudo docker exec AcmeSh acme.sh --renew -d 'hpdevcore.olutechsys.com' --force
 ```
 
-Repeat for `*.otsorundscore.olutechsys.com`, `misfitsds.olutechsys.com`,
-`otsmbpro16.olutechsys.com`, `*.ots.olutechsys.com`, `*.mft.olutechsys.com`, etc.
+Repeat for `otsorundscore.olutechsys.com`, `misfitsds.olutechsys.com`,
+`otsmbpro16.olutechsys.com`, `*.ots.olutechsys.com`, `*.mft.olutechsys.com`, etc. (each cert’s primary `-d` from `acme.sh --list`).
 
 ---
 

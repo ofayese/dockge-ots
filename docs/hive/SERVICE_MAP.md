@@ -46,8 +46,8 @@ Cert: `/volume1/certs/acme/mft-sub/` (`*.mft.olutechsys.com`, RSA 2048)
 | wildcard/          | `*.olutechsys.com`, `*.olutech.systems` | Let's Encrypt | acme-sh daemon    |
 | ots-sub/           | `*.ots.olutechsys.com`               | Let's Encrypt | acme-sh daemon    |
 | mft-sub/           | `*.mft.olutechsys.com`               | Let's Encrypt | acme-sh daemon    |
-| otsorundscore-sub/ | `*.otsorundscore.olutechsys.com`     | Let's Encrypt | acme-sh daemon    |
-| misfitsds-sub/     | `*.misfitsds.olutechsys.com`         | Let's Encrypt | acme-sh daemon    |
+| otsorundscore-sub/ | `otsorundscore.{olutechsys,olutech.systems}` + `*.otsorundscore.*` + optional `*.ots` / `*.mft` SANs | Let's Encrypt | acme-sh daemon    |
+| misfitsds-sub/     | `misfitsds.{olutechsys,olutech.systems}` + `*.misfitsds.*` + optional `*.ots` / `*.mft` SANs | Let's Encrypt | acme-sh daemon    |
 
 Traefik reads certs directly from `/volume1/certs/acme/<dir>/` via bind-mount. `acme-sh` renews automatically; Traefik picks up renewed PEMs on the next configuration reload (no Traefik restart needed).
 

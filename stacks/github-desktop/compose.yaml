@@ -28,7 +28,7 @@ services:
     volumes:
       - ${STACK_ROOT}/github-desktop/config:/config:rw
     environment:
-      - TZ=${TZ:-Europe/London}
+      - TZ=${TZ:-America/New_York}
       - PUID=${PUID:-0}
       - PGID=${PGID:-0}
       - CUSTOM_USER=${GITHUB_DESKTOP_USER:?set GITHUB_DESKTOP_USER in .env}

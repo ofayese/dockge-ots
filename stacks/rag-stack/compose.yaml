@@ -37,9 +37,8 @@ services:
       - TZ=${TZ:-America/New_York}
       - QDRANT__TELEMETRY_DISABLED=true
       - QDRANT__SERVICE__API_KEY=${QDRANT_API_KEY:-}
-    # Healthcheck type: E — qdrant binary self-probe.
-    # Image has no wget/curl/nc. The qdrant binary accepts --uri flag for health checks.
-    # /readyz is unauthenticated even when API key is set.
+    # Healthcheck type: E — nc TCP/HTTP probe (/readyz is unauthenticated even when API key is set).
+    # qdrant image has no wget/curl — nc is available via busybox sh.
     healthcheck:
       test: ["CMD", "/bin/sh", "-c", "printf 'GET /readyz HTTP/1.0\\r\\n\\r\\n' | nc 127.0.0.1 6333 | grep -q '200 OK'"]
       interval: 30s
@@ -66,7 +65,9 @@ services:
     ports:
       - 10.0.1.15:3002:3001
     volumes:
-      - ${STACK_ROOT}/rag-stack/data/anythingllm:/app/server/storage:rw
+      # AnythingLLM working dir is /app/server; Prisma schema resolves db at ../storage
+      # which equals /app/storage — mount must target /app/storage not /app/server/storage
+      - ${STACK_ROOT}/rag-stack/data/anythingllm:/app/storage:rw
     environment:
       - PUID=${PUID:-0}
       - PGID=${PGID:-0}

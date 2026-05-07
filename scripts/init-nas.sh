@@ -70,7 +70,10 @@ STACK_MANIFEST=(
 	# ── data,db ───────────────────────────────────────────────────────
 	"codex-docs:data,db"
 	# databases: mariadb + postgres engine data dirs both under db/ (no separate app data layer).
-	"databases:db"
+	# Subdirs db/mariadb and db/postgres must exist before deploy: Synology Docker (Container
+	# Manager) does not auto-create leaf bind-mount source paths and fails with
+	# "Bind mount failed: '<path>' does not exist". mkdir -p handles slashes here.
+	"databases:db/mariadb,db/postgres"
 	"zabbix:data,db"
 	"holyclaude:data"
 

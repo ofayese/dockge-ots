@@ -16,7 +16,11 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:80/"]
+      test:
+        - CMD
+        - wget
+        - -qO-
+        - http://localhost:80/
       interval: 30s
       timeout: 5s
       retries: 3
@@ -24,5 +28,6 @@ services:
     logging:
       driver: json-file
       options:
-        max-size: "10m"
+        max-size: 10m
         max-file: "3"
+networks: {}

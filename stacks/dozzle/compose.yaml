@@ -26,8 +26,23 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     healthcheck:
+<<<<<<< HEAD
       test: ["CMD", "/dozzle", "--version"]
+=======
+      test:
+        - CMD
+        - wget
+        - --no-verbose
+        - --tries=1
+        - --spider
+        - http://127.0.0.1:9000/api/system/status
+>>>>>>> 9e0745f (local changes on nas)
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
+<<<<<<< HEAD
+=======
+    networks: {}
+networks: {}
+>>>>>>> 9e0745f (local changes on nas)

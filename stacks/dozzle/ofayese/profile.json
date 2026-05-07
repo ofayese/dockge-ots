@@ -1,0 +1,23 @@
+{
+  "settings": {
+    "search": true,
+    "menuWidth": 15,
+    "smallerScrollbars": false,
+    "showTimestamp": true,
+    "showStd": true,
+    "showAllContainers": false,
+    "softWrap": true,
+    "collapseNav": false,
+    "automaticRedirect": "delayed",
+    "size": "medium",
+    "compact": true,
+    "lightTheme": "auto",
+    "hourStyle": "auto",
+    "dateLocale": "auto",
+    "locale": "",
+    "groupContainers": "at-least-2"
+  },
+  "pinned": [],
+  "releaseSeen": "v10.5.2",
+  "collapsedGroups": null
+}

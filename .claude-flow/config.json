@@ -1,0 +1,6 @@
+{
+  "daemon.autoStart": false,
+  "daemon.maxConcurrent": 1,
+  "daemon.resourceThresholds.maxCpuLoad": 20,
+  "daemon.resourceThresholds.minFreeMemoryPercent": 0.5
+}

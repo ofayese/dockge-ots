@@ -1,0 +1,16 @@
+{
+  "id": "session-1778092491911",
+  "startedAt": "2026-05-06T18:34:51.911Z",
+  "platform": "darwin",
+  "cwd": "/Users/laolufayese/dev/dockge",
+  "context": {},
+  "metrics": {
+    "edits": 0,
+    "commands": 0,
+    "tasks": 0,
+    "errors": 0
+  },
+  "restoredAt": "2026-05-06T18:34:52.626Z",
+  "endedAt": "2026-05-06T18:34:52.897Z",
+  "duration": 987
+}

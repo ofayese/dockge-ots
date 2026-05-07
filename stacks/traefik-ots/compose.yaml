@@ -42,12 +42,13 @@ services:
       - --api.insecure=${TRAEFIK_DASHBOARD:-false}
       - --log.level=${TRAEFIK_LOG_LEVEL:-WARN}
       - --accesslog=true
+    # Healthcheck type E: built-in binary healthcheck (traefik, watchtower)
     healthcheck:
       test:
         - CMD
-        - wget
-        - -qO-
-        - http://127.0.0.1:8080/ping
+        - traefik
+        - healthcheck
+        - --ping
       interval: 30s
       timeout: 10s
       retries: 5

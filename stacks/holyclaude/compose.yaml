@@ -13,9 +13,12 @@ services:
     mem_limit: 4g # Dev workstation container with browser/tooling overhead.
     cpu_shares: 768 # Interactive IDE + agent workloads need higher relative priority.
     restart: unless-stopped
-    # Healthcheck type: B — TCP probe (published 3000; internal listener for UI/VNC-style stack)
+    # Healthcheck type B: own binary probe (image ships CLI tool for this)
     healthcheck:
-      test: ["CMD", "nc", "-z", "127.0.0.1", "3000"]
+      test:
+        - CMD-SHELL
+        - curl -fs http://127.0.0.1:3000/ >/dev/null 2>&1 || wget -qO-
+          http://127.0.0.1:3000/ >/dev/null 2>&1 || exit 1
       interval: 30s
       timeout: 10s
       retries: 5

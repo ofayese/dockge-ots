@@ -1,0 +1,40 @@
+{
+  "initialized": true,
+  "topology": "hierarchical-mesh",
+  "workers": [
+    "hive-worker-1777524553233-m64y",
+    "hive-worker-1777524553233-mjt1",
+    "hive-worker-1777524553233-miuc",
+    "hive-worker-1777524553233-rc19",
+    "hive-worker-1777524553233-8iq1",
+    "hive-worker-1777524553233-49ow",
+    "hive-worker-1777524553233-1f0a",
+    "hive-worker-1777524553233-23rt",
+    "hive-worker-1777524553233-sf5n",
+    "hive-worker-1777524553233-3yo3",
+    "hive-worker-1777524553233-4cl3",
+    "hive-worker-1777524553233-y989"
+  ],
+  "consensus": {
+    "pending": [],
+    "history": []
+  },
+  "sharedMemory": {
+    "broadcasts": [
+      {
+        "messageId": "msg-1777525822405-ju4nz6",
+        "message": "TEST: status check",
+        "priority": "normal",
+        "fromId": "system",
+        "timestamp": "2026-04-30T05:10:22.405Z"
+      }
+    ]
+  },
+  "createdAt": "2026-04-30T04:48:49.358Z",
+  "updatedAt": "2026-04-30T05:10:22.405Z",
+  "queen": {
+    "agentId": "queen-1777524529358",
+    "electedAt": "2026-04-30T04:48:49.358Z",
+    "term": 1
+  }
+}

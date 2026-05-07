@@ -1,0 +1,15 @@
+{
+  "id": "session-1777580920778",
+  "startedAt": "2026-04-30T20:28:40.778Z",
+  "platform": "darwin",
+  "cwd": "/Volumes/docker/dockge/stacks",
+  "context": {},
+  "metrics": {
+    "edits": 0,
+    "commands": 0,
+    "tasks": 0,
+    "errors": 0
+  },
+  "endedAt": "2026-04-30T21:33:46.315Z",
+  "duration": 3905537
+}

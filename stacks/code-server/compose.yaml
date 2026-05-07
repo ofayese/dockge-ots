@@ -16,7 +16,7 @@ services:
     ports:
       - 8377:8080
     volumes:
-      - ${STACK_ROOT}/code-server/config:/home/coder/.config:rw
+      - ${STACK_ROOT}/code-server/config:/home/coder/.config/code-server:rw
       - ${STACK_ROOT}/code-server/data:/home/coder/.local/share/code-server:rw
       - ${CODE_SERVER_HOST_DOCKER_BIND:?set CODE_SERVER_HOST_DOCKER_BIND in
         .env}:/home/coder/project/docker:rw # EXEMPT operator wide bind (see stack README)

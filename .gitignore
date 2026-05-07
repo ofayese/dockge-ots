@@ -49,3 +49,4 @@ stacks/ollama/webui/*.db-wal
 stacks/docker-model-runner/archives/*.zip
 stacks/portainer/.env
 stacks/code-server/.env
+stacks/code-server/config/code-server/

@@ -1,46 +1,3 @@
-# Local tool cache (repo root)
-.ruff_cache/
-
-# Synology / Windows / desktop artifacts (repo-wide)
-**/@eaDir/
-**/.DS_Store
-**/Thumbs.db
-**/.synology/
-
-.smbdelete*
-._DAV/
-**/._DAV/
-
-# Host-only (Synology / local Dockge runtime)
-data/
-logs/
-
-# Local AI/session policy and runtime (repo root; dirs live here but stay untracked)
-.claude/
-.claude-flow/
-.hive-mind/sessions/
-
-# Repo-root Cursor (optional local overrides)
-.cursor/hooks/state/
-
-# Repo-root local secrets (never commit)
-.env
-
-# init-nas.sh --if-changed skip marker (host-local)
-.manifest-hash
-
-# Stack secrets and local operator env (never commit)
-stacks/grafana-prom/.env
-stacks/codex-docs/.env
-stacks/searxng/config/settings.yml
-stacks/searxng/settings.yml
-stacks/databases/secrets/
-stacks/grafana-prom/secrets/watchtower_bearer_token.txt
-
-# Accidental local backups
-stacks/acme-sh/data.bak-*.zip
-
-# Runtime / cache (never commit)
 stacks/ollama/webui/cache/
 stacks/ollama/webui/vector_db/
 stacks/ollama/webui/*.db
@@ -50,3 +7,7 @@ stacks/docker-model-runner/archives/*.zip
 stacks/portainer/.env
 stacks/code-server/.env
 stacks/code-server/config/code-server/
+
+# Synology extended attributes metadata — never commit
+@eaDir/
+**/@eaDir/

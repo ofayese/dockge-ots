@@ -2,7 +2,7 @@ services:
   code-server:
     image: codercom/code-server:4.117.0-39
     container_name: CodeServer
-    user: "${PUID:-0}:${PGID:-0}"
+    user: ${PUID:-0}:${PGID:-0}
     mem_limit: 4g
     cpu_shares: 1024
     security_opt:
@@ -10,16 +10,18 @@ services:
     logging:
       driver: json-file
       options:
-        max-size: "10m"
+        max-size: 10m
         max-file: "3"
     restart: unless-stopped
     ports:
-      - "8377:8080"
+      - 8377:8080
     volumes:
       - ${STACK_ROOT}/code-server/config:/home/coder/.config:rw
       - ${STACK_ROOT}/code-server/data:/home/coder/.local/share/code-server:rw
-      - ${CODE_SERVER_HOST_DOCKER_BIND:?set CODE_SERVER_HOST_DOCKER_BIND in .env}:/home/coder/project/docker:rw # EXEMPT operator wide bind (see stack README)
-      - ${CODE_SERVER_HOST_HOME_BIND:?set CODE_SERVER_HOST_HOME_BIND in .env}:/home/coder/project/home:rw # EXEMPT operator home bind
+      - ${CODE_SERVER_HOST_DOCKER_BIND:?set CODE_SERVER_HOST_DOCKER_BIND in
+        .env}:/home/coder/project/docker:rw # EXEMPT operator wide bind (see stack README)
+      - ${CODE_SERVER_HOST_HOME_BIND:?set CODE_SERVER_HOST_HOME_BIND in
+        .env}:/home/coder/project/home:rw # EXEMPT operator home bind
       # SECURITY: rw docker.sock lets this container control the host Docker API (effectively host root). Required for in-IDE docker; restrict network exposure.
       - /var/run/docker.sock:/var/run/docker.sock:rw
     environment:
@@ -33,14 +35,17 @@ services:
     group_add:
       - "0"
     healthcheck:
-      test: ["CMD", "curl", "-fs", "http://localhost:8080/"]
+      test:
+        - CMD
+        - curl
+        - -fs
+        - http://localhost:8080/
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 30s
     labels:
       - com.centurylinklabs.watchtower.enable=true
-
   db:
     image: mysql:8.3
     container_name: CodeServerDB
@@ -51,11 +56,11 @@ services:
     logging:
       driver: json-file
       options:
-        max-size: "10m"
+        max-size: 10m
         max-file: "3"
     restart: unless-stopped
     ports:
-      - "3307:3306"
+      - 3307:3306
     volumes:
       - mysql_data:/var/lib/mysql
       - ${STACK_ROOT}/code-server/config/mysql-init:/docker-entrypoint-initdb.d:ro
@@ -69,16 +74,21 @@ services:
       - TZ=${TZ:-America/New_York}
     healthcheck:
       test:
-        ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "--silent"]
+        - CMD
+        - mysqladmin
+        - ping
+        - -h
+        - localhost
+        - -uroot
+        - --silent
       interval: 10s
       timeout: 5s
       retries: 10
       start_period: 30s
     labels:
       - com.centurylinklabs.watchtower.enable=true
-
   phpmyadmin:
-    image: phpmyadmin/phpmyadmin:5.2.3-apache
+    image: phpmyadmin:5.2.2-apache
     container_name: CodeServerPMA
     mem_limit: 512m
     cpu_shares: 256
@@ -87,11 +97,11 @@ services:
     logging:
       driver: json-file
       options:
-        max-size: "10m"
+        max-size: 10m
         max-file: "3"
     restart: unless-stopped
     ports:
-      - "8378:80"
+      - 8378:80
     volumes:
       - ${STACK_ROOT}/code-server/config/phpmyadmin:/etc/phpmyadmin:rw
       - ${STACK_ROOT}/code-server/data/phpmyadmin_sessions:/sessions:rw
@@ -107,7 +117,11 @@ services:
       - HIDE_PHP_VERSION=true
       - TZ=${TZ:-America/New_York}
     healthcheck:
-      test: ["CMD", "curl", "-fs", "http://localhost/"]
+      test:
+        - CMD
+        - curl
+        - -fs
+        - http://localhost/
       interval: 30s
       timeout: 5s
       retries: 3
@@ -116,7 +130,7 @@ services:
       - db
     labels:
       - com.centurylinklabs.watchtower.enable=true
-
 volumes:
   mysql_data:
     driver: local
+networks: {}

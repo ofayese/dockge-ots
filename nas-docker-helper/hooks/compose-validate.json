@@ -1,0 +1,13 @@
+{
+  "PostToolUse": [
+    {
+      "matcher": "Write",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "python3 -c \"\nimport os, json, subprocess, sys\ntry:\n    inp = json.loads(os.environ.get('CLAUDE_TOOL_INPUT', '{}'))\n    f = inp.get('file_path', '')\n    if f.endswith(('compose.yaml', 'compose.yml', 'docker-compose.yaml', 'docker-compose.yml')):\n        result = subprocess.run(['docker', 'compose', '-f', f, 'config', '--quiet'], capture_output=True, text=True)\n        if result.returncode != 0:\n            print(f'[nas-docker-helper] compose-validate WARNING: {f} failed validation:', file=sys.stderr)\n            print(result.stderr.strip(), file=sys.stderr)\n        else:\n            print(f'[nas-docker-helper] compose-validate OK: {f} is valid')\nexcept Exception as e:\n    print(f'[nas-docker-helper] compose-validate error: {e}', file=sys.stderr)\n\""
+        }
+      ]
+    }
+  ]
+}

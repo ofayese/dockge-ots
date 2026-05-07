@@ -1,0 +1,17 @@
+{
+  "name": "nas-docker-helper",
+  "version": "1.0.0",
+  "description": "Docker/Dockge stack management, NAS automation, and homelab ops",
+  "author": {
+    "name": "Laolu",
+    "url": "https://github.com/ofayese"
+  },
+  "homepage": "https://github.com/ofayese/nas-docker-helper",
+  "repository": "https://github.com/ofayese/nas-docker-helper",
+  "license": "MIT",
+  "keywords": ["docker", "dockge", "nas", "synology", "homelab", "compose"],
+  "commands": ["./commands/stack-audit.md"],
+  "agents": ["./agents/nas-auditor.md"],
+  "skills": ["./skills/nas-security.md"],
+  "hooks": "./hooks/compose-validate.json"
+}

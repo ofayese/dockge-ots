@@ -30,7 +30,7 @@ services:
       - TZ=${TZ:-America/New_York}
       - DOCKER_USER=${DOCKER_USER:-ofayese}
       - HOME=/home/coder
-      - HASHED_PASSWORD=${CODE_SERVER_HASHED_PASSWORD}
+      - PASSWORD=${CODE_SERVER_PASSWORD}
       - PROXY_DOMAIN=${PROXY_DOMAIN:-}
     group_add:
       - "0"

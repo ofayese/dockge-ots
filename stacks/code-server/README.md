@@ -10,7 +10,7 @@ Browser-based VS Code (`code-server`) with adjacent MySQL (`db`) and phpMyAdmin 
 
 ## Required env (`.env`)
 
-- `CODE_SERVER_HASHED_PASSWORD` — bcrypt hash; generate with `caddy hash-password` or `htpasswd -bnBC 12 "" "$pw" | tr -d ':\n'`
+- `CODE_SERVER_PASSWORD` — code-server login password (kept in local gitignored `.env`)
 - `MYSQL_ROOT_PASSWORD`
 - `PMA_CONTROLPASS` (also used as `MYSQL_PASSWORD` for the appuser)
 - `PMA_BLOWFISH_SECRET` — 32-char random; `openssl rand -hex 16`

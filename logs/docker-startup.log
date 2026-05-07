@@ -1,0 +1,150 @@
+[2026-04-26 18:05:42] === Docker Stack Startup ===
+[2026-04-26 18:05:42] Starting socket-proxy, portainer, and dockge...
+[2026-04-26 18:05:42] Starting socket-proxy stack...
+permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Get "http://%2Fvar%2Frun%2Fdocker.sock/v1.24/containers/json?all=1&filters=%7B%22label%22%3A%7B%22com.docker.compose.config-hash%22%3Atrue%2C%22com.docker.compose.project%3Ddocker-socket-proxy%22%3Atrue%7D%7D": dial unix /var/run/docker.sock: connect: permission denied
+[2026-04-26 18:05:43] ✗ ERROR: Failed to start socket-proxy stack
+[2026-04-26 18:08:10] === Docker Stack Startup ===
+[2026-04-26 18:08:10] Starting socket-proxy, portainer, and dockge...
+[2026-04-26 18:08:10] Starting socket-proxy stack...
+permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Get "http://%2Fvar%2Frun%2Fdocker.sock/v1.24/containers/json?all=1&filters=%7B%22label%22%3A%7B%22com.docker.compose.config-hash%22%3Atrue%2C%22com.docker.compose.project%3Ddocker-socket-proxy%22%3Atrue%7D%7D": dial unix /var/run/docker.sock: connect: permission denied
+[2026-04-26 18:08:10] ✗ ERROR: Failed to start socket-proxy stack
+[2026-04-26 18:09:35] === Docker Stack Startup ===
+[2026-04-26 18:09:35] Starting socket-proxy, portainer, and dockge...
+[2026-04-26 18:09:35] Starting socket-proxy stack...
+ socket-proxy Pulling 
+ 9824c27679d3 Pulling fs layer 
+ 123b92336b82 Pulling fs layer 
+ e7cee334a64b Pulling fs layer 
+ 536eff87c11a Pulling fs layer 
+ 0b2aa9ab96ae Pulling fs layer 
+ 4f4fb700ef54 Pulling fs layer 
+ 737997a74239 Pulling fs layer 
+ a6a05d67fdc8 Pulling fs layer 
+ 1de46bc47c88 Pulling fs layer 
+ 536eff87c11a Waiting 
+ 0b2aa9ab96ae Waiting 
+ 4f4fb700ef54 Waiting 
+ 737997a74239 Waiting 
+ a6a05d67fdc8 Waiting 
+ 1de46bc47c88 Waiting 
+ 9824c27679d3 Downloading  38.84kB/3.8MB
+ 123b92336b82 Downloading  3.087kB/282.4kB
+ 123b92336b82 Download complete 
+ 9824c27679d3 Downloading  1.013MB/3.8MB
+ e7cee334a64b Downloading     394B/964B
+ e7cee334a64b Downloading     964B/964B
+ e7cee334a64b Verifying Checksum 
+ e7cee334a64b Download complete 
+ 9824c27679d3 Downloading  2.094MB/3.8MB
+ 536eff87c11a Downloading  113.1kB/11.02MB
+ 0b2aa9ab96ae Downloading     373B/440B
+ 0b2aa9ab96ae Downloading     440B/440B
+ 0b2aa9ab96ae Verifying Checksum 
+ 9824c27679d3 Downloading  3.354MB/3.8MB
+ 9824c27679d3 Download complete 
+ 9824c27679d3 Extracting  65.54kB/3.8MB
+ 536eff87c11a Downloading  814.3kB/11.02MB
+ 9824c27679d3 Extracting  1.442MB/3.8MB
+ 536eff87c11a Downloading  2.417MB/11.02MB
+ 9824c27679d3 Extracting    3.8MB/3.8MB
+ 9824c27679d3 Extracting    3.8MB/3.8MB
+ 737997a74239 Downloading     758B/758B
+ 737997a74239 Verifying Checksum 
+ 737997a74239 Download complete 
+ 536eff87c11a Downloading   10.3MB/11.02MB
+ 536eff87c11a Verifying Checksum 
+ 536eff87c11a Download complete 
+ 9824c27679d3 Pull complete 
+ 123b92336b82 Extracting  32.77kB/282.4kB
+ a6a05d67fdc8 Downloading     393B/1.129kB
+ a6a05d67fdc8 Download complete 
+ 1de46bc47c88 Downloading     182B/182B
+ 1de46bc47c88 Verifying Checksum 
+ 1de46bc47c88 Download complete 
+ 123b92336b82 Extracting  196.6kB/282.4kB
+ 123b92336b82 Extracting  282.4kB/282.4kB
+ 123b92336b82 Extracting  282.4kB/282.4kB
+ 123b92336b82 Pull complete 
+ e7cee334a64b Extracting     964B/964B
+ e7cee334a64b Extracting     964B/964B
+ e7cee334a64b Pull complete 
+ 536eff87c11a Extracting  131.1kB/11.02MB
+ 536eff87c11a Extracting  2.097MB/11.02MB
+ 536eff87c11a Extracting  7.602MB/11.02MB
+ 4f4fb700ef54 Downloading      32B/32B
+ 4f4fb700ef54 Verifying Checksum 
+ 4f4fb700ef54 Download complete 
+ 536eff87c11a Extracting  11.02MB/11.02MB
+ 536eff87c11a Pull complete 
+ 0b2aa9ab96ae Extracting     440B/440B
+ 0b2aa9ab96ae Extracting     440B/440B
+ 0b2aa9ab96ae Pull complete 
+ 4f4fb700ef54 Extracting      32B/32B
+ 4f4fb700ef54 Extracting      32B/32B
+ 4f4fb700ef54 Pull complete 
+ 737997a74239 Extracting     758B/758B
+ 737997a74239 Extracting     758B/758B
+ 737997a74239 Pull complete 
+ a6a05d67fdc8 Extracting  1.129kB/1.129kB
+ a6a05d67fdc8 Extracting  1.129kB/1.129kB
+ a6a05d67fdc8 Pull complete 
+ 1de46bc47c88 Extracting     182B/182B
+ 1de46bc47c88 Extracting     182B/182B
+ 1de46bc47c88 Pull complete 
+ socket-proxy Pulled 
+ Network docker-socket-proxy_proxy-net  Creating
+ Network docker-socket-proxy_proxy-net  Created
+ Container socket-proxy  Creating
+ Container socket-proxy  Created
+ Container portainer  Creating
+ Container portainer  Created
+ Container socket-proxy  Starting
+ Container socket-proxy  Started
+ Container portainer  Starting
+Error response from daemon: Bind mount failed: '/volume1/docker/portainer/data' does not exist
+[2026-04-26 18:09:41] ✗ ERROR: Failed to start socket-proxy stack
+[2026-04-26 18:37:39] === Docker Stack Startup ===
+[2026-04-26 18:37:39] Starting socket-proxy, portainer, and dockge...
+[2026-04-26 18:37:39] Starting socket-proxy stack...
+ Container socket-proxy  Creating
+ Container socket-proxy  Created
+ Container portainer  Creating
+ Container portainer  Created
+ Container socket-proxy  Starting
+ Container socket-proxy  Started
+ Container portainer  Starting
+ Container portainer  Started
+[2026-04-26 18:37:41] ✓ socket-proxy stack started successfully
+[2026-04-26 18:37:41] Waiting for socket-proxy to be ready...
+[2026-04-26 18:37:46] Starting dockge stack...
+parsing /volume1/docker/dockge/docker-compose.yml: yaml: unmarshal errors:
+  line 23: mapping key "restart" already defined at line 7
+[2026-04-26 18:37:46] ✗ ERROR: Failed to start dockge stack
+[2026-04-26 18:50:50] === Docker Stack Startup ===
+[2026-04-26 18:50:50] Starting socket-proxy, portainer, and dockge...
+parsing /volume1/docker/docker-socket-proxy/compose.yml: yaml: unmarshal errors:
+  line 74: mapping key "restart" already defined at line 58
+[2026-04-26 18:50:50] ✗ ERROR: Failed to start services
+[2026-04-26 18:52:04] === Docker Stack Startup ===
+[2026-04-26 18:52:04] Starting socket-proxy, portainer, and dockge...
+parsing /volume1/docker/docker-socket-proxy/compose.yml: yaml: unmarshal errors:
+  line 74: mapping key "restart" already defined at line 58
+[2026-04-26 18:52:04] ✗ ERROR: Failed to start services
+[2026-04-26 18:56:46] === Docker Stack Startup ===
+[2026-04-26 18:56:46] Starting socket-proxy, portainer, and dockge...
+ Network docker-socket-proxy_proxy-net  Creating
+ Network docker-socket-proxy_proxy-net  Created
+ Container socket-proxy  Creating
+ Container socket-proxy  Created
+ Container dockge  Creating
+ Container portainer  Creating
+ Container dockge  Created
+ Container portainer  Created
+ Container socket-proxy  Starting
+ Container socket-proxy  Started
+ Container portainer  Starting
+ Container dockge  Starting
+ Container dockge  Started
+ Container portainer  Started
+[2026-04-26 18:56:51] ✓ All services started successfully (socket-proxy, portainer, dockge)
+[2026-04-26 18:56:51] Access: Dockge (5001) | Portainer (9000)

@@ -42,6 +42,9 @@ redis:
   url: redis://redis:6379/0
 
 engines:
+  # Disable flaky default engine that often returns 403/rate-limit during init.
+  - name: wikidata
+    disabled: true
   - name: google
     engine: google
     use_mobile_ui: false

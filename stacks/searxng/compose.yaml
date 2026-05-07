@@ -32,7 +32,7 @@ services:
     image: searxng/searxng:2026.4.29-cba0cffa8
     # NAS baseline: run as root so first-boot can create /etc/searxng/settings.yml
     # on the bind-mounted config directory.
-    user: "0:0"
+    user: 0:0
     mem_limit: 512m
     cpu_shares: 768
     security_opt:

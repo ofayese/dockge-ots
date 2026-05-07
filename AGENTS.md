@@ -66,6 +66,12 @@
 - [2026-04-30] Run `pre-commit autoupdate` in a dedicated maintenance PR on a regular cadence, then run `pre-commit run --all-files` before merge. Default to tag-based updates; use `--bleeding-edge` only when specifically needed.
 - [2026-04-30] Use `agents-memory-updater` as the preferred periodic consolidation path when refreshing repository memory entries.
 
+## Dockge UI compose editor
+
+- **Environment:** Prefer list syntax (`- KEY=value`) over map syntax (`KEY: value`) in `compose.yaml` so Dockge’s stack **form** view does not warn _Environment Variables — Long syntax is not supported here. Please use the YAML editor._
+- **Networks:** Do not add empty `networks: {}` (service or top level); omit `networks` when the default bridge is sufficient.
+- **Named networks:** Stacks that declare a top-level `networks:` block with options (`driver`, `name`, etc.) — e.g. **`traefik-ots`**, **`traefik-mft`**, **`zabbix`**, **`warp-main`** — may still show _Networks — Long syntax is not supported_ in the form view; that is expected — edit those stacks in Dockge’s **YAML** editor.
+
 ## Dockge Host Container (2026-04-30)
 
 ### Key facts

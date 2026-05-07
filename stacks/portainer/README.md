@@ -9,7 +9,7 @@ Container management UI (server) + agent for daemon access on the host.
 
 ## Bootstrap (bind mounts)
 
-`compose.yaml` uses a fixed host path for Portainer state (`/volume1/docker/portainer:/data`) and requires **`PORTAINER_CERT_ROOT`** for agent TLS. If either required host path is missing, the daemon returns **Bind mount failed: … does not exist**. Create dirs and install agent TLS material first — see **`stacks/portainer/.env.example`** comments.
+`compose.yaml` mounts **`${PORTAINER_DATA_ROOT}`** → `/data` and **`${PORTAINER_CERT_ROOT}`** → `/certs` (production NAS defaults are **`/volume1/docker/portainer`** and **`/volume1/docker/portainer/certs`** — see **`stacks/portainer/.env.example`**). If either host path is missing, the daemon returns **Bind mount failed: … does not exist**. Create dirs and install agent TLS material first.
 
 ## TLS certs (agent)
 

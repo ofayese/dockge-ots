@@ -63,12 +63,11 @@ services:
     cap_add:
       - NET_RAW
     environment:
-      PUID: ${PUID:-0}
-      PGID: ${PGID:-0}
-      AGENT_CLUSTER_ADDR: 0.0.0.0
-      AGENT_TLS_CERT: /certs/cert.pem
-      AGENT_TLS_KEY: /certs/key.pem
-      TZ: America/New_York
+      - PUID=${PUID:-0}
+      - PGID=${PGID:-0}
+      - AGENT_CLUSTER_ADDR=0.0.0.0
+      - AGENT_TLS_CERT=/certs/cert.pem
+      - AGENT_TLS_KEY=/certs/key.pem
+      - TZ=America/New_York
     labels:
       - com.centurylinklabs.watchtower.enable=true
-networks: {}

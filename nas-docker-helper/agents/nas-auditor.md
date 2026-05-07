@@ -34,6 +34,7 @@ Work through these domains in order. For each finding, record: **stack name**, *
 ### 2. Container privilege escalation risks
 
 For each service in every `compose.yaml`, check for:
+
 - `privileged: true` — flag as **Critical** unless justified (e.g., VPN containers).
 - `cap_add:` entries — flag any capability beyond the minimum needed (e.g., `NET_ADMIN` for non-network tools is suspicious).
 - `user: root` or absence of a `user:` directive for internet-facing services — flag as **High**.

@@ -19,15 +19,18 @@ For each subdirectory found, treat it as a stack. Record the stack name and path
 ### 2. Validate compose.yaml existence and syntax
 
 For each stack directory:
+
 - Check that `compose.yaml` (or `docker-compose.yaml`) exists. If missing → **Critical**.
 - Run `docker compose -f <path>/compose.yaml config --quiet` to validate syntax. Any error → **Critical**, include the error output.
 
 ### 3. Check bind-mount host paths exist
 
 Parse the `volumes:` sections of each `compose.yaml`. For every entry that uses a host path (not a named volume), verify the directory exists on the host:
+
 ```bash
 stat <host-path>
 ```
+
 Missing host paths → **Critical** (container will fail to start).
 
 ### 4. Check `.env` file presence and variable coverage
@@ -53,6 +56,7 @@ Check that bind-mount paths use `${STACK_ROOT}` variable substitution rather tha
 ```bash
 docker ps -a --format '{{.Names}}\t{{.Status}}' | grep -E 'Exit|unhealthy'
 ```
+
 Any unhealthy or exited containers → **Warning**, include container name and exit code.
 
 ### 9. Check image versions for pinning

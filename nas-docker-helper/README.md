@@ -31,6 +31,7 @@ Audits all Dockge-managed stacks under `/volume1/docker/dockge/stacks/` for:
 Outputs a prioritized **Critical / Warning / Info** fix list.
 
 **Usage:**
+
 ```
 /nas-docker-helper:stack-audit
 ```

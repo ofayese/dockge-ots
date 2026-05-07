@@ -37,10 +37,10 @@ For 4096-bit RSA, substitute `--keylength 4096` in every `--issue` block below
 
 Use these for firewall rules, HAProxy/Traefik backends, split-DNS, or `/etc/hosts` — **not** as Let’s Encrypt certificate names.
 
-| Role | Hostname (examples) | Typical LAN IP | Notes |
-| ---- | ------------------- | -------------- | ----- |
+| Role    | Hostname (examples)                             | Typical LAN IP  | Notes                                                                                           |
+| ------- | ----------------------------------------------- | --------------- | ----------------------------------------------------------------------------------------------- |
 | OTS NAS | `otsorundscore`, `otsorundscore.olutechsys.com` | **`10.0.1.15`** | Runs Dockge stacks; HAProxy examples bind backends here; Docker narrow-TCP examples use this IP |
-| MFT NAS | `misfitsds`, `misfitsds.olutechsys.com` | **`10.0.1.24`** | Separate Synology; same DNS-01 / pem layout under `${ACME_CERT_ROOT}` after issue |
+| MFT NAS | `misfitsds`, `misfitsds.olutechsys.com`         | **`10.0.1.24`** | Separate Synology; same DNS-01 / pem layout under `${ACME_CERT_ROOT}` after issue               |
 
 Adjust IPs if your VLAN differs. Optionally mirror them as comments in `acme-sh/.env` (see `.env.example` — compose does not consume those vars).
 

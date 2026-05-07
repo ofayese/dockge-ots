@@ -28,12 +28,12 @@ services:
     volumes:
       - ${STACK_ROOT}/github-desktop/config:/config:rw
     environment:
-      TZ: ${TZ:-Europe/London}
-      PUID: ${PUID:-0}
-      PGID: ${PGID:-0}
-      CUSTOM_USER: ${GITHUB_DESKTOP_USER:?set GITHUB_DESKTOP_USER in .env}
-      PASSWORD: ${GITHUB_DESKTOP_PASSWORD:?set GITHUB_DESKTOP_PASSWORD in .env}
-      TITLE: GitHub Desktop
+      - TZ=${TZ:-Europe/London}
+      - PUID=${PUID:-0}
+      - PGID=${PGID:-0}
+      - CUSTOM_USER=${GITHUB_DESKTOP_USER:?set GITHUB_DESKTOP_USER in .env}
+      - PASSWORD=${GITHUB_DESKTOP_PASSWORD:?set GITHUB_DESKTOP_PASSWORD in .env}
+      - TITLE=GitHub Desktop
     restart: unless-stopped
     logging:
       driver: json-file

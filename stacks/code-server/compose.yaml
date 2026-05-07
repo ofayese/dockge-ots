@@ -23,13 +23,13 @@ services:
       # SECURITY: rw docker.sock lets this container control the host Docker API (effectively host root). Required for in-IDE docker; restrict network exposure.
       - /var/run/docker.sock:/var/run/docker.sock:rw
     environment:
-      PUID: ${PUID:-0}
-      PGID: ${PGID:-0}
-      TZ: ${TZ:-America/New_York}
-      DOCKER_USER: ${DOCKER_USER:-ofayese}
-      HOME: /home/coder
-      HASHED_PASSWORD: ${CODE_SERVER_HASHED_PASSWORD}
-      PROXY_DOMAIN: ${PROXY_DOMAIN:-}
+      - PUID=${PUID:-0}
+      - PGID=${PGID:-0}
+      - TZ=${TZ:-America/New_York}
+      - DOCKER_USER=${DOCKER_USER:-ofayese}
+      - HOME=/home/coder
+      - HASHED_PASSWORD=${CODE_SERVER_HASHED_PASSWORD}
+      - PROXY_DOMAIN=${PROXY_DOMAIN:-}
     group_add:
       - "0"
     healthcheck:
@@ -60,15 +60,16 @@ services:
       - mysql_data:/var/lib/mysql
       - ${STACK_ROOT}/code-server/config/mysql-init:/docker-entrypoint-initdb.d:ro
     environment:
-      PUID: ${PUID:-0}
-      PGID: ${PGID:-0}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-development}
-      MYSQL_USER: ${MYSQL_USER:-developer}
-      MYSQL_PASSWORD: ${PMA_CONTROLPASS}
-      TZ: ${TZ:-America/New_York}
+      - PUID=${PUID:-0}
+      - PGID=${PGID:-0}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-development}
+      - MYSQL_USER=${MYSQL_USER:-developer}
+      - MYSQL_PASSWORD=${PMA_CONTROLPASS}
+      - TZ=${TZ:-America/New_York}
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "--silent"]
+      test:
+        ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "--silent"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -95,16 +96,16 @@ services:
       - ${STACK_ROOT}/code-server/config/phpmyadmin:/etc/phpmyadmin:rw
       - ${STACK_ROOT}/code-server/data/phpmyadmin_sessions:/sessions:rw
     environment:
-      PUID: ${PUID:-0}
-      PGID: ${PGID:-0}
-      PMA_HOST: db
-      PMA_PORT: 3306
-      PMA_CONTROLUSER: ${PMA_CONTROLUSER:-pma}
-      PMA_CONTROLPASS: ${PMA_CONTROLPASS}
-      PMA_BLOWFISH_SECRET: ${PMA_BLOWFISH_SECRET}
-      PMA_ABSOLUTE_URI: ${PMA_ABSOLUTE_URI:-}
-      HIDE_PHP_VERSION: "true"
-      TZ: ${TZ:-America/New_York}
+      - PUID=${PUID:-0}
+      - PGID=${PGID:-0}
+      - PMA_HOST=db
+      - PMA_PORT=3306
+      - PMA_CONTROLUSER=${PMA_CONTROLUSER:-pma}
+      - PMA_CONTROLPASS=${PMA_CONTROLPASS}
+      - PMA_BLOWFISH_SECRET=${PMA_BLOWFISH_SECRET}
+      - PMA_ABSOLUTE_URI=${PMA_ABSOLUTE_URI:-}
+      - HIDE_PHP_VERSION=true
+      - TZ=${TZ:-America/New_York}
     healthcheck:
       test: ["CMD", "curl", "-fs", "http://localhost/"]
       interval: 30s

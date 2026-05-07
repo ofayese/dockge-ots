@@ -71,7 +71,10 @@ if [[ -z "${_include_line}" ]]; then
 	exit 1
 fi
 _include_rel="$(echo "${_include_line}" | awk '{print $2}')"
-_resolved="$(cd "${_wrapper_dir}" && realpath "${_include_rel}" 2>/dev/null || true)"
+_resolved=""
+if cd "${_wrapper_dir}"; then
+	_resolved="$(realpath "${_include_rel}" 2>/dev/null || true)"
+fi
 _canonical="$(realpath "${cfg}" 2>/dev/null || echo "${cfg}")"
 if [[ "${_resolved}" != "${_canonical}" ]]; then
 	echo "validate-haproxy-proposal: FAIL (proposal include resolves to '${_resolved}', expected '${_canonical}')" >&2

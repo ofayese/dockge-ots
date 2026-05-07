@@ -61,7 +61,7 @@ STACK_MANIFEST=(
 	"rag-stack:data,config"
 
 	# ── data,config ───────────────────────────────────────────────────
-	"code-server:data,config"
+	"code-server:data,config,host-docker-bind,host-home-bind"
 	"github-desktop:config" # KasmVNC GUI — /config only, no data dir
 	"homepage:data,config"
 	"searxng:data,config"

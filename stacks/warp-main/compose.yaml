@@ -33,13 +33,13 @@ services:
     depends_on:
       - warp
     environment:
-      WARP_API_KEY: ${WARP_API_KEY:?Set WARP_API_KEY in a .env file or the environment}
-      WARP_APP_HOST: warp
-      WARP_APP_PORT: "9090"
-      CLAUDE_HOST: host.docker.internal
-      CLAUDE_PORT: "3000"
-      PUID: ${PUID:-0}
-      PGID: ${PGID:-0}
+      - WARP_API_KEY=${WARP_API_KEY:?Set WARP_API_KEY in a .env file or the environment}
+      - WARP_APP_HOST=warp
+      - WARP_APP_PORT=9090
+      - CLAUDE_HOST=host.docker.internal
+      - CLAUDE_PORT=3000
+      - PUID=${PUID:-0}
+      - PGID=${PGID:-0}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:

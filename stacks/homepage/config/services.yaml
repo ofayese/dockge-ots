@@ -177,16 +177,14 @@
 
     - Ollama:
         # Container name from: ollama/compose.yaml (service: ollama)
-        # Widget type: ollama (Homepage must support this plugin)
+        # Homepage v1.12 does not support an Ollama widget type.
+        # Keep this as a plain service card (status + link + site monitor).
         icon: ollama.png
         href: http://10.0.1.15:11434/
         description: Local LLM API server (inference engine)
         server: my-docker
         container: otsai-server
         siteMonitor: http://10.0.1.15:11434/
-        widget:
-          type: ollama
-          url: http://10.0.1.15:11434
 
 - Search & Tools:
     - SearXNG:

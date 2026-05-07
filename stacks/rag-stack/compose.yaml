@@ -24,11 +24,11 @@ services:
     logging:
       driver: json-file
       options:
-        max-size: "10m"
+        max-size: 10m
         max-file: "3"
     ports:
-      - "10.0.1.15:6333:6333" # REST + web UI
-      - "10.0.1.15:6334:6334" # gRPC
+      - 10.0.1.15:6333:6333 # REST + web UI
+      - 10.0.1.15:6334:6334 # gRPC
     volumes:
       - ${STACK_ROOT}/rag-stack/data/qdrant:/qdrant/storage:rw
     environment:
@@ -41,14 +41,17 @@ services:
       - QDRANT__SERVICE__API_KEY=${QDRANT_API_KEY:-}
     # Healthcheck type: A — HTTP probe on Qdrant readiness endpoint
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:6333/readyz"]
+      test:
+        - CMD
+        - wget
+        - -qO-
+        - http://127.0.0.1:6333/readyz
       interval: 30s
       timeout: 10s
       retries: 5
       start_period: 20s
     labels:
       - com.centurylinklabs.watchtower.enable=true
-
   anythingllm:
     container_name: rag-anythingllm
     image: mintplexlabs/anythingllm:1.7.6
@@ -61,10 +64,10 @@ services:
     logging:
       driver: json-file
       options:
-        max-size: "10m"
+        max-size: 10m
         max-file: "3"
     ports:
-      - "10.0.1.15:3001:3001"
+      - 10.0.1.15:3001:3001
     volumes:
       - ${STACK_ROOT}/rag-stack/data/anythingllm:/app/server/storage:rw
     environment:
@@ -96,17 +99,20 @@ services:
       qdrant:
         condition: service_healthy
     extra_hosts:
-      - "otsorundscore.olutechsys.com:10.0.1.15"
+      - otsorundscore.olutechsys.com:10.0.1.15
     # Healthcheck type: A — HTTP probe on AnythingLLM health endpoint
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3001/api/ping"]
+      test:
+        - CMD
+        - wget
+        - -qO-
+        - http://127.0.0.1:3001/api/ping
       interval: 30s
       timeout: 10s
       retries: 5
       start_period: 60s
     labels:
       - com.centurylinklabs.watchtower.enable=true
-
   pipelines:
     container_name: rag-pipelines
     image: ghcr.io/open-webui/pipelines:main
@@ -119,10 +125,10 @@ services:
     logging:
       driver: json-file
       options:
-        max-size: "10m"
+        max-size: 10m
         max-file: "3"
     ports:
-      - "10.0.1.15:9099:9099"
+      - 10.0.1.15:9099:9099
     volumes:
       - ${STACK_ROOT}/rag-stack/config/pipelines:/app/pipelines:rw
     environment:
@@ -142,13 +148,18 @@ services:
       qdrant:
         condition: service_healthy
     extra_hosts:
-      - "otsorundscore.olutechsys.com:10.0.1.15"
+      - otsorundscore.olutechsys.com:10.0.1.15
     # Healthcheck type: A — HTTP probe on pipelines root endpoint
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:9099/"]
+      test:
+        - CMD
+        - wget
+        - -qO-
+        - http://127.0.0.1:9099/
       interval: 30s
       timeout: 10s
       retries: 5
       start_period: 30s
     labels:
       - com.centurylinklabs.watchtower.enable=true
+networks: {}

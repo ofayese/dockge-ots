@@ -26,8 +26,12 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
     healthcheck:
-      test: ["CMD", "/dozzle", "--version"]
+      test:
+        - CMD
+        - /dozzle
+        - --version
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
+networks: {}

@@ -91,7 +91,28 @@ require_outside_repo_clones() {
 }
 
 [[ ${1:-} == "--help" || ${1:-} == "-h" ]] && { usage; exit 0; }
-[[ $# -eq 2 ]] || { usage; exit 1; }
+
+brief_usage() {
+  cat <<'BRIEF' >&2
+rewrite-history-redact: missing arguments — pass exactly two paths.
+
+  bash scripts/rewrite-history-redact.sh <absolute-redactions-file> <absolute-empty-work-dir>
+
+Both paths must be OUTSIDE this repo (not under /volume1/docker/dockge or /Volumes/docker/dockge).
+
+Example on DSM / Linux (creates /tmp redactions file with one literal substring to replace):
+
+  printf '%s\n' 'YOUR_SECRET_SUBSTRING==>REDACTED_PLACEHOLDER' >/tmp/dockge-redactions.txt
+  bash scripts/rewrite-history-redact.sh /tmp/dockge-redactions.txt /tmp/dockge-history-rewrite
+
+Use your real leaked substring on the left of ==> (never commit it). Prefer running as your normal
+user so SSH keys work for git@github.com; sudo runs as root and often breaks clone auth.
+
+Full manual: bash scripts/rewrite-history-redact.sh --help
+BRIEF
+}
+
+[[ $# -eq 2 ]] || { brief_usage; exit 1; }
 
 REDACTIONS_FILE=$1
 WORK_DIR=$2

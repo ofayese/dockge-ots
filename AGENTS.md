@@ -60,6 +60,7 @@
 
 - [2026-04-30] Teams often hit missing-tool errors in local hooks (`gofmt`, `rustfmt`, `dotnet`, `Invoke-Formatter`). Prevent this by embedding prerequisite checks and install hints directly in each hook `entry`.
 - [2026-04-30] Mixed understanding of pre-commit "languages" vs identify "types" causes misconfiguration. Treat runtime `language` (hook execution environment) and file `types` (selection filter) as separate concerns.
+- [2026-05-07] **`code-server` runtime config can leak secrets:** the image writes `/home/coder/.config/code-server/config.yaml` with a generated plaintext `password:` and `bind-addr: 127.0.0.1:8080` if no config exists. With `${STACK_ROOT}/code-server/config:/home/coder/.config/code-server`, that file lands in the repo. Commit `552cf44` shipped a plaintext password in that file (removed in `a8138f4`; literal value intentionally not reproduced here — recoverable via `git show 552cf44` for incident response only). **Mitigation in tree:** `.gitignore` covers `stacks/code-server/config/code-server/`, and the active `stacks/code-server/config/config.yaml` uses `bind-addr: 0.0.0.0:8080` with `auth: password` driven by `PASSWORD=${CODE_SERVER_PASSWORD}` from gitignored `stacks/code-server/.env`. **History not rewritten** — single-use credential, public from the moment of push, rotated on the NAS; `scripts/rewrite-history-redact.sh` is kept in the repo for the next incident. Pre-flight check before any code-server edit: `git ls-files stacks/code-server/config/code-server/ | wc -l` must be `0`.
 
 ## Update Workflow
 

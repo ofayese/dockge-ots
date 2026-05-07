@@ -11,3 +11,29 @@ stacks/code-server/config/code-server/
 # Synology extended attributes metadata — never commit
 @eaDir/
 **/@eaDir/
+
+# macOS metadata — never commit
+.DS_Store
+**/.DS_Store
+
+# Backup archives — never commit
+*.bak
+**/*.bak
+*data.bak*
+**/*.zip
+
+# Secrets and credentials — never commit
+**/secrets/*.txt
+**/secrets/*.key
+**/secrets/*.pem
+**/.env
+stacks/**/.env
+**/id_ed25519
+**/id_ed25519.pub
+**/id_rsa
+**/id_rsa.pub
+**/bearer_token*
+
+# Node / npm artifacts that should not be in stack dirs
+**/node_modules/
+**/package-lock.json

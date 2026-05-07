@@ -28,7 +28,8 @@ services:
     healthcheck:
       test:
         - CMD-SHELL
-        - wget -qO- http://127.0.0.1:11434/api/tags >/dev/null 2>&1 || curl -fsS http://127.0.0.1:11434/api/tags >/dev/null 2>&1 || exit 1
+        - wget -qO- http://127.0.0.1:11434/api/tags >/dev/null 2>&1 || curl -fsS
+          http://127.0.0.1:11434/api/tags >/dev/null 2>&1 || exit 1
       interval: 30s
       timeout: 10s
       retries: 3
@@ -66,7 +67,8 @@ services:
     healthcheck:
       test:
         - CMD-SHELL
-        - wget -qO- http://localhost:8080/health >/dev/null 2>&1 || curl -fsS http://localhost:8080/health >/dev/null 2>&1 || exit 1
+        - wget -qO- http://localhost:8080/health >/dev/null 2>&1 || curl -fsS
+          http://localhost:8080/health >/dev/null 2>&1 || exit 1
       interval: 30s
       timeout: 10s
       retries: 3

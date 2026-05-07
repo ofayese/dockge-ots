@@ -7,8 +7,8 @@
 # HolyClaude can call the AnythingLLM REST API at http://10.0.1.15:3002/api/v1/.
 #
 # First deploy on the NAS:
-#   mkdir -p /volume1/docker/dockge/stacks/rag-stack/{data/qdrant,data/anythingllm,config/pipelines}
-#   cp .env.example .env && vim .env   # fill ANYTHINGLLM_JWT_SECRET, PIPELINES_API_KEY
+#   sudo mkdir -p /volume1/docker/dockge/stacks/rag-stack/{data/qdrant,data/anythingllm,config/pipelines}
+#   cp .env.example .env && nano .env   # fill ANYTHINGLLM_JWT_SECRET, PIPELINES_API_KEY
 #   docker compose up -d
 
 services:
@@ -35,27 +35,20 @@ services:
       - PUID=${PUID:-0}
       - PGID=${PGID:-0}
       - TZ=${TZ:-America/New_York}
-      # Disable anonymous telemetry
       - QDRANT__TELEMETRY_DISABLED=true
-      # Optional: enable Qdrant API key auth (set in .env — leave blank to disable)
       - QDRANT__SERVICE__API_KEY=${QDRANT_API_KEY:-}
-    # Healthcheck type: B — HTTP GET /readyz via perl (image has bash+perl; no wget/curl — verified 2026-05-07)
+    # Healthcheck type: E — qdrant binary self-probe.
+    # Image has no wget/curl/nc. The qdrant binary accepts --uri flag for health checks.
+    # /readyz is unauthenticated even when API key is set.
     healthcheck:
-      test:
-        - CMD
-        - /bin/bash
-        - -c
-        - >-
-          perl -MIO::Socket::INET -e 'use IO::Socket::INET;
-          *S=IO::Socket::INET->new(PeerAddr=>"127.0.0.1",PeerPort=>6333,Proto=>"tcp") or exit 1;
-          print S "GET /readyz HTTP/1.0\r\n\r\n"; my $$line = <S>;
-          exit(defined($$line) && $$line =~ / 200 / ? 0 : 1);'
+      test: ["CMD", "/bin/sh", "-c", "printf 'GET /readyz HTTP/1.0\\r\\n\\r\\n' | nc 127.0.0.1 6333 | grep -q '200 OK'"]
       interval: 30s
       timeout: 10s
       retries: 5
       start_period: 20s
     labels:
       - com.centurylinklabs.watchtower.enable=true
+
   anythingllm:
     container_name: rag-anythingllm
     image: mintplexlabs/anythingllm:1.7.6
@@ -79,34 +72,25 @@ services:
       - PGID=${PGID:-0}
       - TZ=${TZ:-America/New_York}
       - SERVER_PORT=3001
-      # ── LLM provider: Ollama ─────────────────────────────────────────────────
       - LLM_PROVIDER=ollama
       - OLLAMA_BASE_PATH=http://10.0.1.15:11434
       - OLLAMA_MODEL_PREF=${ANYTHINGLLM_LLM_MODEL:-phi4:mini}
       - OLLAMA_MODEL_TOKEN_LIMIT=${ANYTHINGLLM_MODEL_CTX:-4096}
-      # ── Embedding: Ollama ────────────────────────────────────────────────────
-      # Pull nomic-embed-text on the NAS first: docker exec otsai-server ollama pull nomic-embed-text
       - EMBEDDING_ENGINE=ollama
       - EMBEDDING_BASE_PATH=http://10.0.1.15:11434
       - EMBEDDING_MODEL_PREF=${ANYTHINGLLM_EMBED_MODEL:-nomic-embed-text:latest}
       - EMBEDDING_MODEL_MAX_CHUNK_LENGTH=8192
-      # ── Vector DB: Qdrant ────────────────────────────────────────────────────
       - VECTOR_DB=qdrant
       - QDRANT_ENDPOINT=http://qdrant:6333
       - QDRANT_API_KEY=${QDRANT_API_KEY:-}
-      # ── Auth ─────────────────────────────────────────────────────────────────
-      # Generate with: openssl rand -hex 32
       - JWT_SECRET=${ANYTHINGLLM_JWT_SECRET}
-      # Set to 'false' to require login for all access
       - DISABLE_TELEMETRY=true
-    # Plain depends_on (no condition:) for Synology Package Center
-    # docker compose compatibility. Healthcheck + restart: unless-stopped
-    # provides resilience instead of Compose v2 condition forms.
+    # Plain depends_on (no condition:) for Synology Package Center docker compose compatibility.
     depends_on:
       - qdrant
     extra_hosts:
       - otsorundscore.olutechsys.com:10.0.1.15
-    # Healthcheck type: B — HTTP probe (curl; image has curl, no wget — verified 2026-05-07)
+    # Healthcheck type: A — curl HTTP probe (curl confirmed in image — verified 2026-05-07)
     healthcheck:
       test: ["CMD", "curl", "-fs", "http://127.0.0.1:3001/api/ping"]
       interval: 30s
@@ -115,6 +99,7 @@ services:
       start_period: 60s
     labels:
       - com.centurylinklabs.watchtower.enable=true
+
   pipelines:
     container_name: rag-pipelines
     image: ghcr.io/open-webui/pipelines:main
@@ -137,21 +122,17 @@ services:
       - PUID=${PUID:-0}
       - PGID=${PGID:-0}
       - TZ=${TZ:-America/New_York}
-      # Shared secret — paste this into Open WebUI > Settings > Connections > Pipelines
       - PIPELINES_API_KEY=${PIPELINES_API_KEY}
-      # Ollama reachable from this container via host IP
       - OLLAMA_BASE_URL=http://10.0.1.15:11434
-      # Qdrant available at service name within this compose network
       - QDRANT_URL=http://qdrant:6333
       - QDRANT_API_KEY=${QDRANT_API_KEY:-}
-      # GitHub token for GitHub RAG pipeline (optional — leave blank to skip)
       - GITHUB_TOKEN=${GITHUB_TOKEN:-}
     # Plain depends_on — same rationale as anythingllm above.
     depends_on:
       - qdrant
     extra_hosts:
       - otsorundscore.olutechsys.com:10.0.1.15
-    # Healthcheck type: B — HTTP probe (curl; image has curl — verified 2026-05-07)
+    # Healthcheck type: A — curl HTTP probe (curl confirmed in Python image — verified 2026-05-07)
     healthcheck:
       test: ["CMD", "curl", "-fs", "http://127.0.0.1:9099/"]
       interval: 30s

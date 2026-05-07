@@ -39,7 +39,9 @@
           type: portainer
           url: https://10.0.1.15:9443
           env: 1 # Portainer environment ID (verify in Portainer → Endpoints)
-          key: REPLACE_WITH_PORTAINER_API_KEY
+          # Set PORTAINER_API_KEY in stacks/homepage/.env (gitignored)
+          # Generate: Portainer → Account Settings → Access Tokens → Add
+          key: ${PORTAINER_API_KEY}
 
     - Portainer Agent:
         # Container name from: portainer/compose.yaml (service: portainer_agent)
@@ -48,7 +50,8 @@
         description: Edge agent for remote orchestration
         server: my-docker
         container: portainer_agent
-        siteMonitor: http://10.0.1.15:9001/
+        # siteMonitor omitted: agent uses mTLS — HTTP probe returns
+        # HTTP/1.0 400 → HPE_CLOSED_CONNECTION in Homepage logs.
 
     - Dockge:
         # Container name: "Dockge" — set by Synology startup script (docker run --name="Dockge")
@@ -107,7 +110,7 @@
         icon: synology.png
         href: https://10.0.1.15:5001/
         description: DS723+ control panel
-        siteMonitor: http://10.0.1.15:5000/
+        siteMonitor: https://10.0.1.15:5001/
 
 - Development:
     - Code-Server:

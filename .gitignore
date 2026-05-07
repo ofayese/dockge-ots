@@ -37,3 +37,12 @@ stacks/**/.env
 # Node / npm artifacts that should not be in stack dirs
 **/node_modules/
 **/package-lock.json
+
+# NAS runtime dirs — local only, never commit
+data/
+logs/
+.claude-flow/
+.claude/
+.cursor/
+stacks/**/data/
+stacks/**/config/logs/

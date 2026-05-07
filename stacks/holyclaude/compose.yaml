@@ -13,19 +13,19 @@ services:
     mem_limit: 4g # Dev workstation container with browser/tooling overhead.
     cpu_shares: 768 # Interactive IDE + agent workloads need higher relative priority.
     restart: unless-stopped
-    # Healthcheck type B: own binary probe (image ships CLI tool for this)
+    # Healthcheck type B: own binary probe (image ships curl)
+    # Port 3001 is the CloudCLI web UI (upstream default). 3059 = dev/HMR port.
     healthcheck:
       test:
         - CMD-SHELL
-        - curl -fs http://127.0.0.1:3000/ >/dev/null 2>&1 || wget -qO-
-          http://127.0.0.1:3000/ >/dev/null 2>&1 || exit 1
+        - curl -fs http://127.0.0.1:3001/ >/dev/null 2>&1 || exit 1
       interval: 30s
       timeout: 10s
       retries: 5
       start_period: 90s
     ports:
       - "3059:3059"
-      - "3000:3000"
+      - "3001:3001" # CloudCLI web UI — upstream default port
     env_file:
       - .env
     environment:

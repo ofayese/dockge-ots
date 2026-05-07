@@ -4,7 +4,7 @@
 #
 # Ollama (otsai-server) is consumed via the NAS LAN IP — no shared Docker network required.
 # Open WebUI (otsai-webui) connects to this stack's pipelines service at http://10.0.1.15:9099.
-# HolyClaude can call the AnythingLLM REST API at http://10.0.1.15:3001/api/v1/.
+# HolyClaude can call the AnythingLLM REST API at http://10.0.1.15:3002/api/v1/.
 #
 # First deploy on the NAS:
 #   mkdir -p /volume1/docker/dockge/stacks/rag-stack/{data/qdrant,data/anythingllm,config/pipelines}
@@ -39,13 +39,17 @@ services:
       - QDRANT__TELEMETRY_DISABLED=true
       # Optional: enable Qdrant API key auth (set in .env — leave blank to disable)
       - QDRANT__SERVICE__API_KEY=${QDRANT_API_KEY:-}
-    # Healthcheck type: A — HTTP probe on Qdrant readiness endpoint
+    # Healthcheck type: B — HTTP GET /readyz via perl (image has bash+perl; no wget/curl — verified 2026-05-07)
     healthcheck:
       test:
         - CMD
-        - wget
-        - -qO-
-        - http://127.0.0.1:6333/readyz
+        - /bin/bash
+        - -c
+        - >-
+          perl -MIO::Socket::INET -e 'use IO::Socket::INET;
+          *S=IO::Socket::INET->new(PeerAddr=>"127.0.0.1",PeerPort=>6333,Proto=>"tcp") or exit 1;
+          print S "GET /readyz HTTP/1.0\r\n\r\n"; my $$line = <S>;
+          exit(defined($$line) && $$line =~ / 200 / ? 0 : 1);'
       interval: 30s
       timeout: 10s
       retries: 5
@@ -67,7 +71,7 @@ services:
         max-size: 10m
         max-file: "3"
     ports:
-      - 10.0.1.15:3001:3001
+      - 10.0.1.15:3002:3001
     volumes:
       - ${STACK_ROOT}/rag-stack/data/anythingllm:/app/server/storage:rw
     environment:
@@ -95,18 +99,16 @@ services:
       - JWT_SECRET=${ANYTHINGLLM_JWT_SECRET}
       # Set to 'false' to require login for all access
       - DISABLE_TELEMETRY=true
+    # Plain depends_on (no condition:) for Synology Package Center
+    # docker compose compatibility. Healthcheck + restart: unless-stopped
+    # provides resilience instead of Compose v2 condition forms.
     depends_on:
-      qdrant:
-        condition: service_healthy
+      - qdrant
     extra_hosts:
       - otsorundscore.olutechsys.com:10.0.1.15
-    # Healthcheck type: A — HTTP probe on AnythingLLM health endpoint
+    # Healthcheck type: B — HTTP probe (curl; image has curl, no wget — verified 2026-05-07)
     healthcheck:
-      test:
-        - CMD
-        - wget
-        - -qO-
-        - http://127.0.0.1:3001/api/ping
+      test: ["CMD", "curl", "-fs", "http://127.0.0.1:3001/api/ping"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -144,22 +146,17 @@ services:
       - QDRANT_API_KEY=${QDRANT_API_KEY:-}
       # GitHub token for GitHub RAG pipeline (optional — leave blank to skip)
       - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+    # Plain depends_on — same rationale as anythingllm above.
     depends_on:
-      qdrant:
-        condition: service_healthy
+      - qdrant
     extra_hosts:
       - otsorundscore.olutechsys.com:10.0.1.15
-    # Healthcheck type: A — HTTP probe on pipelines root endpoint
+    # Healthcheck type: B — HTTP probe (curl; image has curl — verified 2026-05-07)
     healthcheck:
-      test:
-        - CMD
-        - wget
-        - -qO-
-        - http://127.0.0.1:9099/
+      test: ["CMD", "curl", "-fs", "http://127.0.0.1:9099/"]
       interval: 30s
       timeout: 10s
       retries: 5
       start_period: 30s
     labels:
       - com.centurylinklabs.watchtower.enable=true
-networks: {}

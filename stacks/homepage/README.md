@@ -98,11 +98,7 @@ If you see warnings, see [Troubleshooting](#troubleshooting) below.
 2. Click your profile icon → **My Account**
 3. Scroll to **Access Tokens** → **Create token**
 4. Copy the token
-5. In `config/services.yaml`, find the Portainer section and replace:
-   ```yaml
-   key: REPLACE_WITH_PORTAINER_API_KEY
-   ```
-   with your token
+5. In `stacks/homepage/.env` (not committed), set `PORTAINER_API_KEY=<token>` — the Portainer widget reads `key: ${PORTAINER_API_KEY}` from `config/services.yaml`.
 6. Confirm `env: 1` matches your environment ID (Portainer → Endpoints → note the ID next to your edge agent)
 7. Restart Homepage:
    ```bash

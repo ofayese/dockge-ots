@@ -19,6 +19,7 @@ services:
     networks:
       - warp-network
     restart: unless-stopped
+    # Healthcheck type: A — HTTP probe (wget — verified 2026-05-07)
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:9090/"]
       interval: 30s
@@ -45,8 +46,9 @@ services:
     networks:
       - warp-network
     restart: unless-stopped
+    # Healthcheck type: B — HTTP probe (curl; image has curl — verified 2026-05-07)
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/"]
+      test: ["CMD", "curl", "-fs", "http://127.0.0.1:8080/"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -71,8 +73,13 @@ services:
     networks:
       - warp-network
     restart: unless-stopped
+    # Healthcheck type: D — HTTP probe (node http; image has node, no wget/curl — verified 2026-05-07)
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/"]
+      test:
+        - CMD
+        - node
+        - -e
+        - "require('http').get('http://127.0.0.1:8080/',(r)=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"
       interval: 30s
       timeout: 10s
       retries: 3

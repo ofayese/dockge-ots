@@ -19,7 +19,7 @@ services:
     volumes:
       # SECURITY: docker.sock grants Docker API access (host-level). Required for MCP gateway image.
       - /var/run/docker.sock:/var/run/docker.sock
-    # Healthcheck type: A — HTTP /health probe
+    # Healthcheck type: A — HTTP /health probe (wget — verified 2026-05-07)
     # Port 8811 per published port mapping; upstream example uses /health
     # Source: https://raw.githubusercontent.com/docker/mcp-gateway/main/examples/health/compose.yaml
     healthcheck:

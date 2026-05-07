@@ -81,6 +81,59 @@ rsync -av --delete --exclude='.git' --exclude='.env' \
 
 Then: `sudo bash scripts/init-nas.sh`
 
+## Git safety on the NAS
+
+### Never use `git add -A` or `git add .` on the NAS
+
+The NAS working tree always contains untracked runtime dirs (`.env` files, `data/`, `logs/`, `secrets/`, `.claude-flow/`, `.cursor/`) that must never enter the repo. Always use:
+
+```bash
+git status --short          # review before any add
+git add <specific-file>    # stage only what you intend
+```
+
+If you accidentally stage a secrets file:
+
+```bash
+git rm --cached <file>
+echo "<file-pattern>" >> .gitignore
+git add .gitignore
+git commit -m "chore: untrack <file>"
+```
+
+### `@eaDir` git ref corruption
+
+Symptom: `fatal: bad object refs/heads/@eaDir/main@SynoEAStream`.
+
+Cause: DSM file indexer enters `.git/refs/heads/` and creates `@eaDir/` subdirectory which git reads as a branch.
+
+Immediate fix:
+
+```bash
+find /volume1/docker/dockge/.git/refs -name "*eaDir*" | xargs rm -f
+git pull --no-rebase
+```
+
+Permanent fix: DSM → Control Panel → Search → Indexed Locations → remove `/volume1/docker` from the list.
+
+### Recommended alias (~/.bashrc on NAS)
+
+```bash
+git-pull-nas() {
+  find /volume1/docker/dockge/.git/refs -name "*eaDir*" \
+    | xargs rm -f 2>/dev/null
+  git -C /volume1/docker/dockge pull --no-rebase
+}
+```
+
+### Ownership fix before git operations
+
+After any `sudo docker compose` operation, files in the repo dir may be owned by root. Fix before `git pull`:
+
+```bash
+sudo chown -R laolufayese:users /volume1/docker/dockge
+```
+
 ## Git workflow options
 
 ### Option A — GitHub as remote (default, no extra packages needed)

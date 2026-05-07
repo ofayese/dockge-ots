@@ -13,18 +13,20 @@ services:
       - PGID=${PGID:-0}
       - TZ=America/New_York
     healthcheck:
-      test: ["CMD", "valkey-cli", "ping"]
+      test:
+        - CMD
+        - valkey-cli
+        - ping
       interval: 30s
       timeout: 5s
       retries: 3
     logging:
       driver: json-file
       options:
-        max-size: "10m"
+        max-size: 10m
         max-file: "3"
     labels:
       - com.centurylinklabs.watchtower.enable=true
-
   searxng:
     container_name: SearXNG
     image: searxng/searxng:2026.4.29-cba0cffa8
@@ -57,7 +59,8 @@ services:
     logging:
       driver: json-file
       options:
-        max-size: "10m"
+        max-size: 10m
         max-file: "3"
     labels:
       - com.centurylinklabs.watchtower.enable=true
+networks: {}

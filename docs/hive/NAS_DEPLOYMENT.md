@@ -118,12 +118,31 @@ Permanent fix: DSM → Control Panel → Search → Indexed Locations → remove
 
 ### Recommended alias (~/.bashrc on NAS)
 
+DSM symlinks `/bin/sh -> /usr/bin/bash`, and bash invoked as `sh` enters
+POSIX mode automatically — POSIX mode **rejects hyphens in function names**.
+Define the function with an underscore name and keep the hyphenated form as
+an alias. Use `find -delete` instead of piping to `xargs rm -f` (atomic, no
+empty-`xargs` edge case, requires GNU findutils which DSM ships):
+
 ```bash
-git-pull-nas() {
-  find /volume1/docker/dockge/.git/refs -name "*eaDir*" \
-    | xargs rm -f 2>/dev/null
-  git -C /volume1/docker/dockge pull --no-rebase
+git_pull_nas() {
+    find /volume1/docker/dockge/.git/refs \( -name "*eaDir*" -o -name "*SynoEAStream*" \) -delete 2>/dev/null
+    git -C /volume1/docker/dockge pull --no-rebase
 }
+
+# Hyphenated alias for backward compatibility (interactive shells).
+alias git-pull-nas='git_pull_nas'
+```
+
+Also keep `~/.profile` minimal — DSM already sources `~/.bashrc` via
+`/etc/profile` → `/etc.defaults/.bashrc_profile`, so a second
+`. ~/.bashrc` line in `~/.profile` causes `.bashrc` to be parsed twice
+on every login (visible as duplicate error messages on syntax errors).
+
+```bash
+# ~/.profile
+# DSM sources ~/.bashrc via /etc.defaults/.bashrc_profile.
+# Do not source ~/.bashrc again here.
 ```
 
 ### Ownership fix before git operations

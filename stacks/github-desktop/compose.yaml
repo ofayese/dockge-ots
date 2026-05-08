@@ -4,6 +4,8 @@ services:
     container_name: github-desktop
     hostname: github-desktop
     shm_size: 1g
+    mem_limit: 2g
+    cpu_shares: 512
     # security_opt and cap_add are required for GitHub Desktop (Electron)
     # to render inside a KasmVNC container. Standard for LinuxServer.io
     # GUI images. Security Advisor will flag these — intentional.
@@ -42,3 +44,13 @@ services:
         max-file: "3"
     labels:
       - com.centurylinklabs.watchtower.enable=true
+    networks:
+      - github-desktop-net
+
+networks:
+  github-desktop-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
+          gateway: 172.20.0.1

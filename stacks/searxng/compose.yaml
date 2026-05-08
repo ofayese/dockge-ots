@@ -8,12 +8,13 @@ services:
       - no-new-privileges:true
     restart: unless-stopped
     command: valkey-server --save "" --appendonly no
-    # Fix: vm.overcommit_memory warning — Valkey/Redis requires memory overcommit
-    # for background saves. sysctls sets this inside the container namespace.
-    # IPC_LOCK is not required here; privileged is not required either.
-    sysctls:
-      - net.core.somaxconn=511
-      - vm.overcommit_memory=1
+    # NOTE: vm.overcommit_memory and net.core.somaxconn cannot be set via
+    # compose sysctls on Synology DSM — the kernel does not namespace these.
+    # Set them at the host level via DSM Task Scheduler (run as root at boot):
+    #   sysctl vm.overcommit_memory=1
+    #   sysctl net.core.somaxconn=512
+    # See stacks/searxng/README.md for Task Scheduler setup instructions.
+    # The warnings are cosmetic — Valkey starts successfully without these.
     environment:
       - PUID=${PUID:-0}
       - PGID=${PGID:-0}

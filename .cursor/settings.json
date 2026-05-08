@@ -1,5 +1,46 @@
 {
   "files.exclude": {
     "**/.*": false
+  },
+  "plugins": {
+    "auth0": {
+      "enabled": true
+    },
+    "continual-learning": {
+      "enabled": true
+    },
+    "sourcegraph-cursor-plugin": {
+      "enabled": true
+    },
+    "superpowers": {
+      "enabled": true
+    },
+    "compound-engineering": {
+      "enabled": true
+    },
+    "context7-plugin": {
+      "enabled": true
+    },
+    "functions": {
+      "enabled": true
+    },
+    "docs-canvas": {
+      "enabled": true
+    },
+    "pr-review-canvas": {
+      "enabled": true
+    },
+    "create-plugin": {
+      "enabled": true
+    },
+    "cursor-sdk": {
+      "enabled": true
+    },
+    "cursor-team-kit": {
+      "enabled": true
+    },
+    "cli-for-agent": {
+      "enabled": true
+    }
   }
 }

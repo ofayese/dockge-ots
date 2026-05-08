@@ -60,3 +60,6 @@ stacks/searxng/config/settings.yml
 stacks/traefik-ots/data/
 stacks/traefik-mft/data/
 stacks/homepage/config/logs/
+
+# Cursor remote server downloads — large binary archives, never commit
+scripts/cursor_downloads/

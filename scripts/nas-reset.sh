@@ -26,6 +26,8 @@ set -eu
 DOCKGE_DIR="/volume1/docker/dockge"
 BACKUP_ROOT="/volume1/docker/archive"
 REPO_URL="git@github.com:ofayese/dockge-ots.git"
+# Use the operator's SSH key even when running as root
+export GIT_SSH_COMMAND="ssh -i /var/services/homes/laolufayese/.ssh/id_ed25519 -o StrictHostKeyChecking=no"
 OWNER="laolufayese"
 GROUP="administrators"
 YES=0
@@ -69,11 +71,11 @@ ok "$DOCKGE_DIR exists"
 
 [ -d "$BACKUP_ROOT" ] || warn "$BACKUP_ROOT does not exist — will create it"
 
-ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 -T git@github.com 2>&1 \
-    | grep -q "successfully authenticated" \
+SSH_TEST=$(ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 -T git@github.com 2>&1 || true)
+echo "$SSH_TEST" | grep -qi "successfully authenticated" \
     && ok "GitHub SSH auth confirmed" \
-    || warn "GitHub SSH test inconclusive — clone may fail if key is not configured"
-
+    || warn "GitHub SSH auth not confirmed — output: $SSH_TEST"
+    
 if [ "$DRY_RUN" -eq 1 ]; then
     echo ""
     echo "==> Dry run complete — no changes made"

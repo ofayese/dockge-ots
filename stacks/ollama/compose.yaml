@@ -25,10 +25,15 @@ services:
       - TZ=America/New_York
     labels:
       - com.centurylinklabs.watchtower.enable=true
+    # Healthcheck type E: ollama binary self-probe via CMD (not CMD-SHELL).
+    # curl is not in the ollama image. CMD-SHELL loses the binary PATH context —
+    # use CMD with the full binary path to bypass PATH resolution issues.
+    # ollama list exits 0 even with no models loaded when daemon is healthy.
     healthcheck:
       test:
-        - CMD-SHELL
-        - ollama list >/dev/null 2>&1 || exit 1
+        - CMD
+        - /usr/bin/ollama
+        - list
       interval: 30s
       timeout: 10s
       retries: 3
@@ -63,7 +68,7 @@ services:
       - TZ=America/New_York
     depends_on:
       - ollama
-    # Healthcheck type B: own binary probe (image ships CLI tool for this)
+    # Healthcheck type A: curl HTTP probe (curl confirmed in Python image)
     healthcheck:
       test:
         - CMD-SHELL

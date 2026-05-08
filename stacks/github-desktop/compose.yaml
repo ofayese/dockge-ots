@@ -33,6 +33,9 @@ services:
       - TZ=${TZ:-America/New_York}
       - PUID=${PUID:-0}
       - PGID=${PGID:-0}
+      # Wayland + selkies-desktop can SIGSEGV on software renderer (e.g. DSM / no DRI).
+      # LSIO documents PIXELFLUX_WAYLAND=false as the stable default for this class of host.
+      - PIXELFLUX_WAYLAND=false
       - CUSTOM_USER=${GITHUB_DESKTOP_USER:?set GITHUB_DESKTOP_USER in .env}
       - PASSWORD=${GITHUB_DESKTOP_PASSWORD:?set GITHUB_DESKTOP_PASSWORD in .env}
       - TITLE=GitHub Desktop

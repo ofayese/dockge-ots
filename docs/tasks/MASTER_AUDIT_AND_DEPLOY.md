@@ -802,6 +802,33 @@ Full NAS rollback (if nas-reset.sh ran):
   sudo mv /volume1/docker/archive/dockge-backup-<ts> /volume1/docker/dockge
 
 ======================================================================
+EXECUTION LOG (2026-05-08)
+======================================================================
+
+Phase 1 audit gates recorded before any Phase 5 fixes:
+
+- Gate 1: stack count = 24, manifest parity failed (`remotely` missing in `STACK_MANIFEST`)
+- Gate 2: repo layout guard passed
+- Gate 3: key artifacts passed (README + rag-stack + remotely files present)
+- Gate 4: Dockge 5571->5001 references passed
+- Gate 5: NAS git safety refs passed
+- Gate 6: tracked runtime/secrets failed (legacy tracked noise present; remediation required separately)
+- Gate 7: stack-level `.gitignore` files passed
+- Gate 8: compose filename rule passed (`warp-main` exception)
+- Gate 9: no `Europe/London` in stacks passed
+- Gate 10: subnet registry check found `172.29.0.0/24` in addition to `172.22.x`
+- Gate 11: router cert expiry docs passed
+- Gate 12: `scripts/restore-env.sh` exists
+- Gate 13: remotely WebSocket README note passed
+- Gate 14: boolean env scan includes many intentional `=true` style values; normalize in future hardening pass
+
+Phase 2-4 audits recorded:
+
+- Per-stack readiness matrix generated (`24` stack folders + `_haproxy`)
+- Cross-stack checks executed (`3001` reservation, `depends_on condition`, floating tags, empty `networks: {}`)
+- Healthcheck pattern scan executed; notable anti-pattern retained for follow-up: `dozzle` using `--version`
+
+======================================================================
 FINAL PRINT
 ======================================================================
 

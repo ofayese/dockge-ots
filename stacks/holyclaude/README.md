@@ -8,7 +8,19 @@ Dev-only HolyClaude workstation stack for Synology Dockge.
 2. Start stack:
    - `docker compose -f compose.yaml up -d`
 3. Open:
-   - `http://<nas-ip>:3059`
+
+- `http://<nas-ip>:3001`
+
+### WebSocket note (DSM reverse proxy)
+
+HolyClaude UI behavior can degrade behind DSM reverse proxy if WebSocket headers are missing.
+Enable WebSocket on the DSM reverse proxy rule:
+
+1. DSM Control Panel → Login Portal → Advanced → Reverse Proxy
+2. Edit HolyClaude rule
+3. Custom Header → Create → WebSocket
+
+DSM then adds `Upgrade: websocket` and `Connection: Upgrade`.
 
 ## Persistence
 

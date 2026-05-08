@@ -74,6 +74,7 @@ sudo sh -c 'cat /volume1/certs/acme/ots-sub/fullchain.pem /volume1/certs/acme/ot
 ## 7. Day-to-day
 
 - **Sync:** on NAS `cd /volume1/docker/dockge && git pull`; after new stack folders, `sudo bash scripts/init-nas.sh` or `bash scripts/init-nas.sh --if-changed` — see [`docs/hive/NAS_DEPLOYMENT.md`](docs/hive/NAS_DEPLOYMENT.md) **Keeping the NAS in sync**.
+- **Reset / rebuild:** run [`scripts/nas-reset.sh`](scripts/nas-reset.sh) from `/volume1/docker` to automate archive/clone/restore/bootstrap after DSM resets.
 - **New stack:** add `stacks/<name>/`, extend **`STACK_MANIFEST`** in [`scripts/init-nas.sh`](scripts/init-nas.sh), run init, deploy in Dockge.
 - **Layout guard:** `bash scripts/verify-repo-layout.sh` (CI). Hive docs live under **`docs/hive/`**, not under **`stacks/docs/`**.
 - **Permissions:** `sudo bash scripts/fix-permissions.sh` on the NAS when bind mounts need **`root:root`**.
@@ -88,6 +89,7 @@ sudo sh -c 'cat /volume1/certs/acme/ots-sub/fullchain.pem /volume1/certs/acme/ot
 | Portainer     | **9443**      | HTTPS                                                                             |
 | DSM           | **5000/5001** | Synology — do not confuse with Dockge                                             |
 | Traefik ping  | **8080**      | In-container; lock down for prod                                                  |
+| Remotely UI   | **5371**      | Host `10.0.1.15:5371 -> container 5000`; SignalR/WebSocket app                    |
 | HAProxy HTTPS | **443**       | Package listener                                                                  |
 | HAProxy HTTP  | **8080**      | Redirect to HTTPS in [`stacks/_haproxy/haproxy.cfg`](stacks/_haproxy/haproxy.cfg) |
 
@@ -131,7 +133,7 @@ Keep NFS off on the router USB app if unused; block **rpcbind** on WAN where app
 
 ## Repository layout
 
-- **`stacks/`** — **23** Dockge stack folders (see [`HIVE_OBJECTIVE.md`](HIVE_OBJECTIVE.md)) plus **`_haproxy/`** (HAProxy config, **`certs/`**, **`maps/`**).
+- **`stacks/`** — **24** Dockge stack folders (see [`HIVE_OBJECTIVE.md`](HIVE_OBJECTIVE.md)) plus **`_haproxy/`** (HAProxy config, **`certs/`**, **`maps/`**).
 - **`docs/hive/`** — Operator docs (**`NAS_DEPLOYMENT.md`**, **`SERVICE_MAP.md`**, proposals).
 - **`scripts/`** — Bootstrap, Dockge, validation, permissions.
 - **`AGENTS.md`** / **`HIVE_OBJECTIVE.md`** — Agent context and architecture brief.

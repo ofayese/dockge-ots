@@ -59,6 +59,8 @@ STACK_MANIFEST=(
 	"ollama:data"
 	# rag-stack: qdrant vector storage + anythingllm workspaces + pipelines pipeline definitions
 	"rag-stack:data,config"
+	# remotely: SQLite DB + generated agent installers/download payloads
+	"remotely:data"
 
 	# ── data,config ───────────────────────────────────────────────────
 	"code-server:data,config,host-docker-bind,host-home-bind"

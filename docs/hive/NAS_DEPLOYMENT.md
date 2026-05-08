@@ -7,7 +7,7 @@ The repo lives on a Mac (or other dev machine). The NAS receives it via `git clo
 ## Initial NAS deployment
 
 1. On Mac: push latest changes.
-2. SSH into the NAS.
+2. SSH into the NAS as an operator account in the `administrators` group.
 3. `git clone <repo-url> /dockge` (or wherever Dockge reads stacks from).
 4. `cd /dockge`
 5. `sudo bash scripts/init-nas.sh`
@@ -42,6 +42,47 @@ STACK_ROOT_OVERRIDE=/volume1/docker/dockge/stacks \
 
 The GT-AXE16000 router admin certificate (Let's Encrypt on the ASUS DDNS hostname) **expired 2025-06-06**. The UI remains reachable at **`https://10.0.1.1:8443`** but browsers show an expired cert. Renew from the router: **Administration → System** and use the control next to the certificate (“click here to manage” / ASUS certificate UI), or trigger renewal from the DDNS / certificate page. The DDNS hostname must resolve to the current WAN IP for validation to succeed.
 
+## DSM reverse proxy + platform hardening checklist
+
+Apply once per NAS (or re-validate after DSM upgrades):
+
+- **HTTP/2:** Control Panel → Network → Connectivity → Enable HTTP/2
+- **HTTP compression:** Control Panel → Security → Advanced → Enable HTTP Compression
+- **Reuseport:** Control Panel → Network → Connectivity → Enable Reuseport
+- **Access Control Profiles:** restrict source IPs per reverse proxy rule
+- **DDNS indexing hygiene:** set server header to `noindex` where applicable
+- **HSTS:** enable per reverse proxy rule where the upstream is HTTPS-only
+
+### WebSocket requirement (reverse proxy)
+
+Some stacks require WebSocket for core features (`remotely`, and similar interactive apps):
+
+1. Control Panel → Login Portal → Advanced → Reverse Proxy
+2. Edit target rule
+3. Custom Header → Create → **WebSocket**
+
+DSM auto-adds:
+
+- `Upgrade: websocket`
+- `Connection: Upgrade`
+
+Without this, SignalR/WebSocket sessions fail behind HTTPS even when regular page loads work.
+
+### Reverse proxy timeout for slow stacks
+
+For database-heavy or slow initialization paths, increase reverse proxy advanced timeouts:
+
+- Proxy connection timeout: **600s**
+- Proxy send timeout: **600s**
+- Proxy read timeout: **600s**
+
+Path: Control Panel → Login Portal → Advanced → Reverse Proxy → Advanced Settings.
+
+### Reverse proxy 400 Bad Request HTTPS fix
+
+If a container serves HTTPS internally, configure HTTPS consistently in the reverse proxy rule.
+Using HTTP to an HTTPS backend can cause immediate `400 Bad Request` responses.
+
 ## Keeping the NAS in sync
 
 Preferred: SSH into NAS → `cd /dockge` → `git pull`.
@@ -56,6 +97,13 @@ git config --global --add safe.directory /volume1/docker/dockge
 
 If **`git pull`** fails with **`Permission denied (publickey)`** against **`git@github.com`**, you are running **git** as a user whose **`~/.ssh`** has no key **GitHub** accepts (common when using **`sudo su`** / **root**: root’s **`~/.ssh`** is not the same as your DSM user’s). Prefer **`git pull`** as the **same DSM account** that owns the deploy SSH key, or add a **read-only deploy key** for this repo (GitHub → **Settings → Deploy keys**) and install its private key only for the user that runs **`git pull`**. Alternatively switch **`origin`** to **HTTPS** and use a **fine-grained PAT** with **`repo`** scope (store via DSM / `git credential` — never commit tokens).
 
+When root execution is unavoidable and keys only exist in the operator home, preserve SSH identity:
+
+```bash
+export GIT_SSH_COMMAND="ssh -i /var/services/homes/laolufayese/.ssh/id_ed25519"
+sudo -E git -C /volume1/docker/dockge pull --no-rebase
+```
+
 If new stacks were added: re-run `sudo bash scripts/init-nas.sh` so new volume directories exist.
 
 For scheduled or post-receive runs (safe to call repeatedly):
@@ -65,6 +113,15 @@ bash scripts/init-nas.sh --if-changed
 ```
 
 Hashes **`init-nas.sh` itself** (via `$0`). Skips `.env` writes, `mkdir`, and `fix-permissions.sh` when the script file has not changed since the last **successful** run. The hash is written **only** after a successful full init — a failed run never poisons the stored marker, so the next `--if-changed` retries.
+
+### Full reset helper
+
+For post-reset recovery, prefer `scripts/nas-reset.sh` from `/volume1/docker` to automate:
+
+- archive old clone
+- fresh clone
+- `.env` restoration (`scripts/restore-env.sh`)
+- `init-nas.sh` + permissions normalization
 
 For forced full re-init (after adding new stacks or changing `STACK_MANIFEST` in `init-nas.sh`):
 
@@ -202,6 +259,23 @@ Options B and C enable full git operations on the NAS. The Mac remains the prima
 ## Volume paths
 
 All writable data lives under `${STACK_ROOT}/<stack>/<sub-folder>`. The resolved absolute path is written to repo-root `.env` by `init-nas.sh`. Do not edit `.env` manually — re-run `init-nas.sh` to align `STACK_ROOT` and defaults.
+
+Stack-level `.gitignore` files are required for data-heavy stacks (`databases`, `zabbix`, `ollama`, `rag-stack`, `remotely`) so generated runtime/db artifacts never enter git.
+
+## Docker network subnet registry
+
+Reserve and track custom bridge subnets to avoid Docker/LAN overlap:
+
+| Stack/network | Subnet |
+| --- | --- |
+| `github-desktop-net` | `172.29.0.0/24` |
+| `grafana-net` | `172.22.0.0/24` |
+| `prometheus-net` | `172.22.1.0/24` |
+
+Notes:
+
+- Avoid overlaps with Docker defaults (`172.17.0.0/16`) and existing custom ranges.
+- Allocate new custom subnets from `172.22.2.0/24+` unless a stack-specific reason requires otherwise.
 
 ### Restart policy
 

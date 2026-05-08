@@ -8,6 +8,12 @@ services:
       - no-new-privileges:true
     restart: unless-stopped
     command: valkey-server --save "" --appendonly no
+    # Fix: vm.overcommit_memory warning — Valkey/Redis requires memory overcommit
+    # for background saves. sysctls sets this inside the container namespace.
+    # IPC_LOCK is not required here; privileged is not required either.
+    sysctls:
+      - net.core.somaxconn=511
+      - vm.overcommit_memory=1
     environment:
       - PUID=${PUID:-0}
       - PGID=${PGID:-0}

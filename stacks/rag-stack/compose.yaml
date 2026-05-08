@@ -43,7 +43,7 @@ services:
       - QDRANT__TELEMETRY_DISABLED=true
       - QDRANT__SERVICE__API_KEY=${QDRANT_API_KEY:-}
     # Healthcheck type E: nc TCP probe. /readyz is unauthenticated even when API key is set.
-    # qdrant image has no wget/curl — nc available via busybox sh.
+    # qdrant image has no wget/curl - nc available via busybox sh.
     healthcheck:
       test:
         - CMD
@@ -91,7 +91,7 @@ services:
       # Primary model: qwen2.5-coder:7b is the best coding/research 7B model in 2026
       - OLLAMA_MODEL_PREF=${ANYTHINGLLM_LLM_MODEL:-qwen2.5-coder:7b}
       - OLLAMA_MODEL_TOKEN_LIMIT=${ANYTHINGLLM_MODEL_CTX:-8192}
-      # Embeddings: nomic-embed-text (REQUIRED — must be pulled on otsai-server first)
+      # Embeddings: nomic-embed-text (REQUIRED - must be pulled on otsai-server first)
       - EMBEDDING_ENGINE=ollama
       - EMBEDDING_BASE_PATH=http://10.0.1.15:11434
       - EMBEDDING_MODEL_PREF=${ANYTHINGLLM_EMBED_MODEL:-nomic-embed-text:latest}
@@ -101,7 +101,7 @@ services:
       - QDRANT_ENDPOINT=http://qdrant:6333
       - QDRANT_API_KEY=${QDRANT_API_KEY:-}
       # Auth
-      - "JWT_SECRET=${ANYTHINGLLM_JWT_SECRET:?ANYTHINGLLM_JWT_SECRET must be set in .env — run: openssl rand -hex 32}"
+      - "JWT_SECRET=${ANYTHINGLLM_JWT_SECRET:?ANYTHINGLLM_JWT_SECRET must be set in .env - run: openssl rand -hex 32}"
       - DISABLE_TELEMETRY=true
     # Plain depends_on (no condition:) for Synology Package Center compatibility.
     depends_on:
@@ -146,7 +146,7 @@ services:
       - PUID=${PUID:-0}
       - PGID=${PGID:-0}
       - TZ=${TZ:-America/New_York}
-      - "PIPELINES_API_KEY=${PIPELINES_API_KEY:?PIPELINES_API_KEY must be set in .env — run: openssl rand -hex 24}"
+      - "PIPELINES_API_KEY=${PIPELINES_API_KEY:?PIPELINES_API_KEY must be set in .env - run: openssl rand -hex 24}"
       - OLLAMA_BASE_URL=http://10.0.1.15:11434
       - QDRANT_URL=http://qdrant:6333
       - QDRANT_API_KEY=${QDRANT_API_KEY:-}

@@ -45,4 +45,18 @@ logs/
 .claude/
 .cursor/
 stacks/**/data/
+stacks/**/db/
 stacks/**/config/logs/
+
+# Database data directories — NEVER commit live database files
+stacks/databases/db/
+stacks/databases/db/**
+stacks/zabbix/db/
+stacks/zabbix/db/**
+stacks/code-server/data/
+stacks/ollama/data/
+stacks/rag-stack/data/
+stacks/searxng/config/settings.yml
+stacks/traefik-ots/data/
+stacks/traefik-mft/data/
+stacks/homepage/config/logs/

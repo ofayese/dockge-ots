@@ -33,8 +33,6 @@ services:
       - TZ=${TZ:-America/New_York}
       - PUID=${PUID:-0}
       - PGID=${PGID:-0}
-      # Wayland + selkies-desktop can SIGSEGV on software renderer (e.g. DSM / no DRI).
-      # LSIO documents PIXELFLUX_WAYLAND=false as the stable default for this class of host.
       - PIXELFLUX_WAYLAND=false
       - CUSTOM_USER=${GITHUB_DESKTOP_USER:?set GITHUB_DESKTOP_USER in .env}
       - PASSWORD=${GITHUB_DESKTOP_PASSWORD:?set GITHUB_DESKTOP_PASSWORD in .env}
@@ -52,8 +50,14 @@ services:
 
 networks:
   github-desktop-net:
+    # name: override prevents Docker from prepending the project name,
+    # which would create "github-desktop_github-desktop-net" (double-name).
+    # With name: set, the Docker network is always "github-desktop-net".
+    name: github-desktop-net
     driver: bridge
     ipam:
       config:
-        - subnet: 172.29.0.0/24
-          gateway: 172.29.0.1
+        # Subnet registry: 172.20.0.0/24 allocated to github-desktop-net
+        # See docs/hive/NAS_DEPLOYMENT.md for full subnet registry.
+        - subnet: 172.20.0.0/24
+          gateway: 172.20.0.1

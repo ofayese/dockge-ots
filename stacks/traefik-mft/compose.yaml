@@ -10,20 +10,17 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-    # docker.sock required: Traefik reads Docker labels to auto-discover
-    # services. Grant read-only access only.
-    # Security Advisor will flag this — intentional. See NAS_DEPLOYMENT.md.
     ports:
-      # Same pattern as traefik-ots — override host binds when 80/443 are taken (HAProxy, DSM, etc.).
-      - ${TRAEFIK_HTTP_PUBLISH:-80}:80
-      - ${TRAEFIK_HTTPS_PUBLISH:-443}:443
+      # CRITICAL: host port maps to INTERNAL entrypoint port.
+      # Traefik listens on :80 (web) and :443 (websecure) INSIDE the container.
+      # Publishing host:8880 → container:80 (NOT :8880 which has no listener).
+      - ${TRAEFIK_HTTP_PUBLISH:-8880}:80
+      - ${TRAEFIK_HTTPS_PUBLISH:-6443}:443
       - ${TRAEFIK_DASHBOARD_PORT:-8080}:8080
     volumes:
       # docker.sock grants Traefik read access to container labels.
       # Read-only (:ro) — Traefik does not need write access.
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      # Pre-issued wildcard cert from acme-sh — Traefik reads PEMs directly.
-      # acme-sh auto-renews; Traefik picks up the new PEM on next reload.
       - ${ACME_CERT_ROOT:-/volume1/certs/acme}/mft-sub:/certs/mft-sub:ro
       - ${STACK_ROOT}/traefik-mft/data:/data:rw
       - ${STACK_ROOT}/traefik-mft/config:/etc/traefik:rw
@@ -33,29 +30,24 @@ services:
       - PGID=${PGID:-0}
       - CF_DNS_API_TOKEN=${CF_Token}
     command:
-      # ── Providers ────────────────────────────────────────────────────
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--providers.file.filename=/etc/traefik/tls.yaml"
-      # ── Entrypoints ──────────────────────────────────────────────────
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
-      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
-      - "--entrypoints.websecure.address=:443"
-      - "--entrypoints.traefik.address=:8080"
-      - "--ping=true"
-      - "--certificatesResolvers.cloudflare.acme.email=${ACME_EMAIL:-hostmaster@example.com}"
-      - "--certificatesResolvers.cloudflare.acme.storage=/data/acme.json"
-      - "--certificatesResolvers.cloudflare.acme.dnsChallenge.provider=cloudflare"
-      - "--certificatesResolvers.cloudflare.acme.dnsChallenge.delaybeforecheck=10s"
-      # ── TLS — default wildcard from acme-sh (file provider) ─────────
-      # ── Dashboard (disable in production) ────────────────────────────
-      - "--api.dashboard=${TRAEFIK_DASHBOARD:-false}"
-      - "--api.insecure=${TRAEFIK_DASHBOARD:-false}"
-      # ── Logging ──────────────────────────────────────────────────────
-      - "--log.level=${TRAEFIK_LOG_LEVEL:-WARN}"
-      - "--accesslog=true"
-    # Healthcheck type E: built-in binary healthcheck (traefik, watchtower)
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.file.filename=/etc/traefik/tls.yaml
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --entrypoints.websecure.address=:443
+      - --entrypoints.traefik.address=:8080
+      - --ping=true
+      - --certificatesResolvers.cloudflare.acme.email=${ACME_EMAIL:-hostmaster@example.com}
+      - --certificatesResolvers.cloudflare.acme.storage=/data/acme.json
+      - --certificatesResolvers.cloudflare.acme.dnsChallenge.provider=cloudflare
+      - --certificatesResolvers.cloudflare.acme.dnsChallenge.delaybeforecheck=10s
+      - --api.dashboard=${TRAEFIK_DASHBOARD:-false}
+      - --api.insecure=${TRAEFIK_DASHBOARD:-false}
+      - --log.level=${TRAEFIK_LOG_LEVEL:-WARN}
+      - --accesslog=true
+    # Healthcheck type E: built-in binary healthcheck.
     healthcheck:
       test: ["CMD", "traefik", "healthcheck", "--ping"]
       interval: 30s
@@ -67,5 +59,11 @@ services:
 
 networks:
   traefik-mft:
+    # name: override prevents Docker double-name artefact.
     name: traefik-mft
     driver: bridge
+    ipam:
+      config:
+        # Subnet registry: 172.23.1.0/24 allocated to traefik-mft
+        - subnet: 172.23.1.0/24
+          gateway: 172.23.1.1

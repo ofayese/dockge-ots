@@ -1,8 +1,13 @@
 services:
   ollama:
     container_name: otsai-server
-    image: ollama/ollama:0.22.0
-    mem_limit: 8g
+    # DS723+: AMD Ryzen R1600 (2 cores / 4 threads), 32 GB RAM, CPU-only.
+    # Update tag when model format support requires it:
+    # Check https://hub.docker.com/r/ollama/ollama/tags
+    image: ollama/ollama:latest
+    # 16g allows 14B Q4_K_M models (8.5 GB) with KV cache headroom.
+    # NAS has 32 GB; DSM + other stacks consume ~6-8 GB.
+    mem_limit: 16g
     cpu_shares: 1024
     security_opt:
       - no-new-privileges:true
@@ -20,15 +25,19 @@ services:
       - PUID=${PUID:-0}
       - PGID=${PGID:-0}
       - OLLAMA_HOST=0.0.0.0
-      - OLLAMA_NUM_PARALLEL=1
-      - OLLAMA_MAX_LOADED_MODELS=1
+      # CPU-only: keep at 1 — parallelism halves per-request throughput on R1600
+      - OLLAMA_NUM_PARALLEL=${OLLAMA_NUM_PARALLEL:-1}
+      # CPU-only: single model in RAM at a time prevents swapping
+      - OLLAMA_MAX_LOADED_MODELS=${OLLAMA_MAX_LOADED_MODELS:-1}
+      # Keep model in RAM 30 min after last request (CPU reload takes 15-60s)
+      - OLLAMA_KEEP_ALIVE=${OLLAMA_KEEP_ALIVE:-30m}
+      # Reduces KV cache memory for long contexts — always enable on CPU
+      - OLLAMA_FLASH_ATTENTION=1
       - TZ=America/New_York
     labels:
       - com.centurylinklabs.watchtower.enable=true
-    # Healthcheck type E: ollama binary self-probe via CMD (not CMD-SHELL).
-    # curl is not in the ollama image. CMD-SHELL loses the binary PATH context —
-    # use CMD with the full binary path to bypass PATH resolution issues.
-    # ollama list exits 0 even with no models loaded when daemon is healthy.
+    # Healthcheck type E: ollama binary self-probe (no curl in ollama image).
+    # CMD path required — CMD-SHELL loses PATH on this image.
     healthcheck:
       test:
         - CMD
@@ -40,6 +49,55 @@ services:
       start_period: 30s
     extra_hosts:
       - otsorundscore.olutechsys.com:10.0.1.15
+    networks:
+      - ollama-net
+
+  ollama-model-init:
+    # One-shot init container: pulls all required models when stack first comes online.
+    # Uses the same ollama image (has the CLI) and sets OLLAMA_HOST to call the server API.
+    # Models download to otsai-server's volume — this container needs no volume.
+    # Normal to see "Exited (0)" in Dockge — this is correct behaviour for a one-shot init.
+    # Re-running the stack will re-execute pulls but ollama pull is idempotent (skips
+    # already-present models, re-verifies checksums — fast if models exist).
+    image: ollama/ollama:latest
+    container_name: ollama-model-init
+    restart: "no"  # intentional: one-shot init — not a long-running service
+    # Plain depends_on (no condition:) for Synology Package Center docker compose compatibility.
+    # The wait loop in command handles the startup race condition.
+    depends_on:
+      - ollama
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+      - TZ=America/New_York
+    # $$model: double $ prevents Compose from interpolating $model as a Compose variable.
+    # Pull order: smallest/most-used first so interactive use is unblocked early.
+    command: >
+      sh -c "
+        echo '[model-init] Waiting for ollama API at http://ollama:11434...';
+        until /usr/bin/ollama list > /dev/null 2>&1; do
+          echo '[model-init] Not ready, retrying in 5s...';
+          sleep 5;
+        done;
+        echo '[model-init] Ollama API ready. Starting model pulls...';
+        for model in phi4:mini nomic-embed-text llama3.2:3b qwen2.5-coder:7b llama3.1:8b mistral:7b deepseek-r1:7b qwen2.5:7b; do
+          echo \"[model-init] Pulling $$model...\";
+          /usr/bin/ollama pull $$model \
+            && echo \"[model-init] $$model OK\" \
+            || echo \"[model-init] WARNING: $$model failed, continuing...\";
+        done;
+        echo '[model-init] Model init complete. Container will exit (expected).';
+      "
+    logging:
+      driver: json-file
+      options:
+        max-size: 5m
+        max-file: "2"
+    # Do not auto-update or restart the init container
+    labels:
+      - com.centurylinklabs.watchtower.enable=false
+    networks:
+      - ollama-net
+
   open-webui:
     container_name: otsai-webui
     image: ghcr.io/open-webui/open-webui:v0.9.2
@@ -63,8 +121,9 @@ services:
       - OLLAMA_BASE_URL=http://10.0.1.15:11434
       - WEBUI_AUTH=true
       - WEBUI_NAME=olutechsys AI
-      - WEBUI_URL=https://ai.otsorundscore.olutechsys.com
-      - DEFAULT_MODELS=phi4:mini
+      - WEBUI_URL=${WEBUI_URL:-https://ai.otsorundscore.olutechsys.com}
+      # Dropdown list in Open WebUI (does NOT auto-pull — ollama-model-init handles that)
+      - DEFAULT_MODELS=${DEFAULT_MODELS:-phi4:mini,qwen2.5-coder:7b,nomic-embed-text}
       - TZ=America/New_York
     depends_on:
       - ollama
@@ -81,4 +140,17 @@ services:
       - com.centurylinklabs.watchtower.enable=true
     extra_hosts:
       - otsorundscore.olutechsys.com:10.0.1.15
-networks: {}
+    networks:
+      - ollama-net
+
+networks:
+  ollama-net:
+    # name: override prevents Docker from prepending the project name.
+    name: ollama-net
+    driver: bridge
+    ipam:
+      config:
+        # Subnet registry: 172.27.0.0/24 allocated to ollama-net
+        # See docs/hive/NAS_DEPLOYMENT.md for full subnet registry.
+        - subnet: 172.27.0.0/24
+          gateway: 172.27.0.1

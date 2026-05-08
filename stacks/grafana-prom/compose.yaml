@@ -190,12 +190,11 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-    # cAdvisor requires host rootfs/sysfs for container metrics (read-only). Documented NAS exception; do not replicate for unrelated stacks.
+    # cAdvisor requires host rootfs/sysfs for container metrics (read-only). Documented NAS exception.
     volumes:
       - /:/rootfs:ro # EXEMPT cAdvisor host metrics
       - /var/run:/var/run:ro # EXEMPT cAdvisor host metrics
       - /sys:/sys:ro # EXEMPT cAdvisor host metrics
-      # Docker socket (ro): cAdvisor reads container stats via the daemon API.
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
       - PUID=${PUID:-0}
@@ -208,17 +207,19 @@ services:
       start_period: 30s
     restart: unless-stopped
 
-  # Watchtower is owned by the fleet stack at ../../watchtower/compose.yaml — do not
-  # run a second instance here (avoids duplicate upgrades and conflicting schedules).
-
 networks:
   grafana-net:
     name: grafana-net
     ipam:
       config:
-        - subnet: 192.168.50.0/24
+        # Subnet allocation on this NAS:
+        # 172.17.0.0/16 = Docker default bridge (reserved)
+        # 172.20.0.0/24 = github-desktop
+        # 172.22.0.0/24 = grafana-net (this stack)
+        # 172.22.1.0/24 = prometheus-net (this stack)
+        - subnet: 172.22.0.0/24
   prometheus-net:
     name: prometheus-net
     ipam:
       config:
-        - subnet: 192.168.51.0/24
+        - subnet: 172.22.1.0/24

@@ -45,16 +45,26 @@ services:
     # Healthcheck type E: nc TCP probe. /readyz is unauthenticated even when API key is set.
     # qdrant image has no wget/curl — nc available via busybox sh.
     healthcheck:
-      test: ["CMD", "/bin/sh", "-c", "printf 'GET /readyz HTTP/1.0\\r\\n\\r\\n' | nc 127.0.0.1 6333 | grep -q '200 OK'"]
+      test:
+        - CMD
+        - /bin/sh
+        - -c
+        - printf 'GET /readyz HTTP/1.0\r\n\r\n' | nc 127.0.0.1 6333 | grep -q
+          '200 OK'
       interval: 30s
       timeout: 10s
       retries: 5
       start_period: 20s
     labels:
       - com.centurylinklabs.watchtower.enable=true
+<<<<<<< HEAD
     networks:
       - rag-net
 
+||||||| parent of 77f17c0 (refactor(compose): improve healthcheck syntax and formatting across services)
+
+=======
+>>>>>>> 77f17c0 (refactor(compose): improve healthcheck syntax and formatting across services)
   anythingllm:
     container_name: rag-anythingllm
     image: mintplexlabs/anythingllm:1.7.6
@@ -105,16 +115,25 @@ services:
       - otsorundscore.olutechsys.com:10.0.1.15
     # Healthcheck type A: curl HTTP probe (curl confirmed in image)
     healthcheck:
-      test: ["CMD", "curl", "-fs", "http://127.0.0.1:3001/api/ping"]
+      test:
+        - CMD
+        - curl
+        - -fs
+        - http://127.0.0.1:3001/api/ping
       interval: 30s
       timeout: 10s
       retries: 5
       start_period: 60s
     labels:
       - com.centurylinklabs.watchtower.enable=true
+<<<<<<< HEAD
     networks:
       - rag-net
 
+||||||| parent of 77f17c0 (refactor(compose): improve healthcheck syntax and formatting across services)
+
+=======
+>>>>>>> 77f17c0 (refactor(compose): improve healthcheck syntax and formatting across services)
   pipelines:
     container_name: rag-pipelines
     image: ghcr.io/open-webui/pipelines:main
@@ -148,13 +167,18 @@ services:
       - otsorundscore.olutechsys.com:10.0.1.15
     # Healthcheck type A: curl HTTP probe (curl confirmed in Python image)
     healthcheck:
-      test: ["CMD", "curl", "-fs", "http://127.0.0.1:9099/"]
+      test:
+        - CMD
+        - curl
+        - -fs
+        - http://127.0.0.1:9099/
       interval: 30s
       timeout: 10s
       retries: 5
       start_period: 30s
     labels:
       - com.centurylinklabs.watchtower.enable=true
+<<<<<<< HEAD
     networks:
       - rag-net
 
@@ -169,3 +193,7 @@ networks:
         # See docs/hive/NAS_DEPLOYMENT.md for full subnet registry.
         - subnet: 172.27.1.0/24
           gateway: 172.27.1.1
+||||||| parent of 77f17c0 (refactor(compose): improve healthcheck syntax and formatting across services)
+=======
+networks: {}
+>>>>>>> 77f17c0 (refactor(compose): improve healthcheck syntax and formatting across services)

@@ -36,8 +36,16 @@ services:
       - TZ=America/New_York
     labels:
       - com.centurylinklabs.watchtower.enable=true
+<<<<<<< HEAD
     # Healthcheck type E: ollama binary self-probe (no curl in ollama image).
     # CMD path required — CMD-SHELL loses PATH on this image.
+||||||| parent of 77f17c0 (refactor(compose): improve healthcheck syntax and formatting across services)
+    # Healthcheck type E: ollama binary self-probe via CMD (not CMD-SHELL).
+    # curl is not in the ollama image. CMD-SHELL loses the binary PATH context —
+    # use CMD with the full binary path to bypass PATH resolution issues.
+    # ollama list exits 0 even with no models loaded when daemon is healthy.
+=======
+>>>>>>> 77f17c0 (refactor(compose): improve healthcheck syntax and formatting across services)
     healthcheck:
       test:
         - CMD
@@ -120,14 +128,23 @@ services:
       - PGID=${PGID:-0}
       - OLLAMA_BASE_URL=http://10.0.1.15:11434
       - WEBUI_AUTH=true
+<<<<<<< HEAD
       - WEBUI_NAME=olutechsys AI
       - WEBUI_URL=${WEBUI_URL:-https://ai.otsorundscore.olutechsys.com}
       # Dropdown list in Open WebUI (does NOT auto-pull — ollama-model-init handles that)
       - DEFAULT_MODELS=${DEFAULT_MODELS:-phi4:mini,qwen2.5-coder:7b,nomic-embed-text}
+||||||| parent of 77f17c0 (refactor(compose): improve healthcheck syntax and formatting across services)
+      - WEBUI_NAME=olutechsys AI
+      - WEBUI_URL=https://ai.otsorundscore.olutechsys.com
+      - DEFAULT_MODELS=phi4:mini
+=======
+      - WEBUI_NAME=OluTech.Systems.OAI
+      - WEBUI_URL=https://oai.otsorundscore.olutechsys.com
+      - DEFAULT_MODELS=phi4:mini
+>>>>>>> 77f17c0 (refactor(compose): improve healthcheck syntax and formatting across services)
       - TZ=America/New_York
     depends_on:
       - ollama
-    # Healthcheck type A: curl HTTP probe (curl confirmed in Python image)
     healthcheck:
       test:
         - CMD-SHELL

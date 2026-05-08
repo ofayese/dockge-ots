@@ -57,14 +57,9 @@ services:
       start_period: 20s
     labels:
       - com.centurylinklabs.watchtower.enable=true
-<<<<<<< HEAD
     networks:
       - rag-net
 
-||||||| parent of 77f17c0 (refactor(compose): improve healthcheck syntax and formatting across services)
-
-=======
->>>>>>> 77f17c0 (refactor(compose): improve healthcheck syntax and formatting across services)
   anythingllm:
     container_name: rag-anythingllm
     image: mintplexlabs/anythingllm:1.7.6
@@ -106,7 +101,7 @@ services:
       - QDRANT_ENDPOINT=http://qdrant:6333
       - QDRANT_API_KEY=${QDRANT_API_KEY:-}
       # Auth
-      - JWT_SECRET=${ANYTHINGLLM_JWT_SECRET:?ANYTHINGLLM_JWT_SECRET must be set in .env — run: openssl rand -hex 32}
+      - "JWT_SECRET=${ANYTHINGLLM_JWT_SECRET:?ANYTHINGLLM_JWT_SECRET must be set in .env — run: openssl rand -hex 32}"
       - DISABLE_TELEMETRY=true
     # Plain depends_on (no condition:) for Synology Package Center compatibility.
     depends_on:
@@ -126,14 +121,9 @@ services:
       start_period: 60s
     labels:
       - com.centurylinklabs.watchtower.enable=true
-<<<<<<< HEAD
     networks:
       - rag-net
 
-||||||| parent of 77f17c0 (refactor(compose): improve healthcheck syntax and formatting across services)
-
-=======
->>>>>>> 77f17c0 (refactor(compose): improve healthcheck syntax and formatting across services)
   pipelines:
     container_name: rag-pipelines
     image: ghcr.io/open-webui/pipelines:main
@@ -156,7 +146,7 @@ services:
       - PUID=${PUID:-0}
       - PGID=${PGID:-0}
       - TZ=${TZ:-America/New_York}
-      - PIPELINES_API_KEY=${PIPELINES_API_KEY:?PIPELINES_API_KEY must be set in .env — run: openssl rand -hex 24}
+      - "PIPELINES_API_KEY=${PIPELINES_API_KEY:?PIPELINES_API_KEY must be set in .env — run: openssl rand -hex 24}"
       - OLLAMA_BASE_URL=http://10.0.1.15:11434
       - QDRANT_URL=http://qdrant:6333
       - QDRANT_API_KEY=${QDRANT_API_KEY:-}
@@ -178,7 +168,6 @@ services:
       start_period: 30s
     labels:
       - com.centurylinklabs.watchtower.enable=true
-<<<<<<< HEAD
     networks:
       - rag-net
 
@@ -193,7 +182,3 @@ networks:
         # See docs/hive/NAS_DEPLOYMENT.md for full subnet registry.
         - subnet: 172.27.1.0/24
           gateway: 172.27.1.1
-||||||| parent of 77f17c0 (refactor(compose): improve healthcheck syntax and formatting across services)
-=======
-networks: {}
->>>>>>> 77f17c0 (refactor(compose): improve healthcheck syntax and formatting across services)

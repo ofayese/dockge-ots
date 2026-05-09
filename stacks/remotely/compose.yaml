@@ -14,14 +14,14 @@
 #   docker compose up -d
 #
 # First use: navigate to http://10.0.1.15:5371
-#   Register the first account — it is automatically granted admin privileges.
+#   Register the first account - it is automatically granted admin privileges.
 #   Set your server URL to the public HTTPS address used by the reverse proxy.
 
 services:
   remotely:
     container_name: remotely
     image: immybot/remotely:latest
-    # :latest — upstream does not publish semver tags; pin to digest after first pull:
+    # :latest - upstream does not publish semver tags; pin to digest after first pull:
     #   docker inspect immybot/remotely:latest --format '{{index .RepoDigests 0}}'
     # OPERATOR PIN NEEDED before production use.
     mem_limit: 1g
@@ -49,7 +49,7 @@ services:
       # Public-facing URL used to generate agent download links.
       # Change to your actual HTTPS hostname served by the reverse proxy.
       - Remotely_ApplicationOptions__ServerUrl=${REMOTELY_SERVER_URL:-https://remotely.ots.olutechsys.com}
-    # Healthcheck type A: HTTP probe — ASP.NET Core Debian image ships curl.
+    # Healthcheck type A: HTTP probe - ASP.NET Core Debian image ships curl.
     healthcheck:
       test: ["CMD", "curl", "-fs", "http://localhost:5000/"]
       interval: 30s

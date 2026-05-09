@@ -9,12 +9,12 @@ services:
     restart: unless-stopped
     command: valkey-server --save "" --appendonly no
     # NOTE: vm.overcommit_memory and net.core.somaxconn cannot be set via
-    # compose sysctls on Synology DSM — the kernel does not namespace these.
+    # compose sysctls on Synology DSM - the kernel does not namespace these.
     # Set them at the host level via DSM Task Scheduler (run as root at boot):
     #   sysctl vm.overcommit_memory=1
     #   sysctl net.core.somaxconn=512
     # See stacks/searxng/README.md for Task Scheduler setup instructions.
-    # The warnings are cosmetic — Valkey starts successfully without these.
+    # The warnings are cosmetic - Valkey starts successfully without these.
     environment:
       - PUID=${PUID:-0}
       - PGID=${PGID:-0}

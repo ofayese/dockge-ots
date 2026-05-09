@@ -113,7 +113,7 @@ services:
       - com.centurylinklabs.watchtower.enable=true
 
   # ──────────────────────────────────────────────────────────────────
-  # ZABBIX AGENT OPTIONS — read before uncommenting
+  # ZABBIX AGENT OPTIONS - read before uncommenting
   # ──────────────────────────────────────────────────────────────────
   # The NAS is monitored via SNMPv3 (see README.md → SNMPv3 / Agent options).
   # SNMPv3 covers: disks, RAID, temperature, fans, UPS, network,
@@ -129,7 +129,7 @@ services:
   #
   # The container below is for Docker container monitoring ONLY.
   # It requires privileged mode and host-side bind mounts to see
-  # NAS host metrics — avoid this unless you specifically need
+  # NAS host metrics - avoid this unless you specifically need
   # Docker container metrics in Zabbix. Security Advisor will flag
   # privileged mode. See docs/hive/NAS_DEPLOYMENT.md.
   #

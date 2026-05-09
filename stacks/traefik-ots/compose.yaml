@@ -26,7 +26,7 @@ services:
       - ${TRAEFIK_DASHBOARD_PORT:-8080}:8080
     volumes:
       # docker.sock required: Traefik reads Docker labels to auto-discover
-      # and route to containers. Read-only (:ro) — Traefik does not need write access.
+      # and route to containers. Read-only (:ro) - Traefik does not need write access.
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ${ACME_CERT_ROOT:-/volume1/certs/acme}/ots-sub:/certs/ots-sub:ro
       - ${STACK_ROOT}/traefik-ots/data:/data:rw
@@ -55,13 +55,13 @@ services:
       - --certificatesResolvers.cloudflare.acme.dnsChallenge.provider=cloudflare
       - --certificatesResolvers.cloudflare.acme.dnsChallenge.delaybeforecheck=10s
       # When TRAEFIK_DASHBOARD=true: dashboard served at :8080/dashboard/ (trailing slash)
-      # When false (production): :8080 serves only /ping — accessing / returns 404 (correct)
+      # When false (production): :8080 serves only /ping - accessing / returns 404 (correct)
       - --api.dashboard=${TRAEFIK_DASHBOARD:-false}
       - --api.insecure=${TRAEFIK_DASHBOARD:-false}
       - --log.level=${TRAEFIK_LOG_LEVEL:-WARN}
       - --accesslog=true
     # Healthcheck type E: built-in binary healthcheck.
-    # Probes /ping on the traefik entrypoint — works regardless of dashboard state.
+    # Probes /ping on the traefik entrypoint - works regardless of dashboard state.
     healthcheck:
       test:
         - CMD

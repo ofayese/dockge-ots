@@ -1,5 +1,5 @@
 # stacks/zabbix/.gitignore
-# Database and runtime data — never commit
+# Database and runtime data - never commit
 db/
 db/**
 data/

@@ -1,5 +1,5 @@
 # stacks/ollama/.gitignore
-# Model weights, vector DB, and runtime data — never commit
+# Model weights, vector DB, and runtime data - never commit
 data/
 data/**
 .env

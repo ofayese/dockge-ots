@@ -25,19 +25,17 @@ services:
       - PUID=${PUID:-0}
       - PGID=${PGID:-0}
       - OLLAMA_HOST=0.0.0.0
-      # CPU-only: keep at 1 — parallelism halves per-request throughput on R1600
+      # CPU-only: keep at 1 - parallelism halves per-request throughput on R1600
       - OLLAMA_NUM_PARALLEL=${OLLAMA_NUM_PARALLEL:-1}
       # CPU-only: single model in RAM at a time prevents swapping
       - OLLAMA_MAX_LOADED_MODELS=${OLLAMA_MAX_LOADED_MODELS:-1}
       # Keep model in RAM 30 min after last request (CPU reload takes 15-60s)
       - OLLAMA_KEEP_ALIVE=${OLLAMA_KEEP_ALIVE:-30m}
-      # Reduces KV cache memory for long contexts — always enable on CPU
+      # Reduces KV cache memory for long contexts - always enable on CPU
       - OLLAMA_FLASH_ATTENTION=1
       - TZ=America/New_York
     labels:
       - com.centurylinklabs.watchtower.enable=true
-    # Healthcheck type E: ollama binary self-probe (no curl in ollama image).
-    # CMD path required — CMD-SHELL loses PATH on this image.
     healthcheck:
       test:
         - CMD
@@ -53,15 +51,9 @@ services:
       - ollama-net
 
   ollama-model-init:
-    # One-shot init container: pulls all required models when stack first comes online.
-    # Uses the same ollama image (has the CLI) and sets OLLAMA_HOST to call the server API.
-    # Models download to otsai-server's volume — this container needs no volume.
-    # Normal to see "Exited (0)" in Dockge — this is correct behaviour for a one-shot init.
-    # Re-running the stack will re-execute pulls but ollama pull is idempotent (skips
-    # already-present models, re-verifies checksums — fast if models exist).
     image: ollama/ollama:latest
     container_name: ollama-model-init
-    restart: "no"  # intentional: one-shot init — not a long-running service
+    restart: "no"  # intentional: one-shot init - not a long-running service
     # Plain depends_on (no condition:) for Synology Package Center docker compose compatibility.
     # The wait loop in command handles the startup race condition.
     depends_on:
@@ -122,7 +114,7 @@ services:
       - WEBUI_AUTH=true
       - WEBUI_NAME=olutechsys AI
       - WEBUI_URL=${WEBUI_URL:-https://ai.otsorundscore.olutechsys.com}
-      # Dropdown list in Open WebUI (does NOT auto-pull — ollama-model-init handles that)
+      # Dropdown list in Open WebUI (does NOT auto-pull - ollama-model-init handles that)
       - DEFAULT_MODELS=${DEFAULT_MODELS:-phi4:mini,qwen2.5-coder:7b,nomic-embed-text}
       - TZ=America/New_York
     depends_on:

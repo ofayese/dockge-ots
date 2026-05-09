@@ -55,7 +55,7 @@ cat "${TMP}/c.pem" "${TMP}/k.pem" >"${TMP}/certs/_syntax-check.pem"
 sed "s|/volume1/docker/dockge/stacks/_haproxy|${TMP}|g" "${cfg}" |
 	sed -e '/^[[:space:]]*user sc-haproxy[[:space:]]*$/d' -e '/^[[:space:]]*daemon[[:space:]]*$/d' \
 		-e 's|^[[:space:]]*log ring@httplog local0 info|    log stdout format raw local0|' |
-	perl -0777 -pe 's/\nring httplog\n(?:[ \t].*\n)+/\n/s' >"${TMP}/haproxy.cfg"
+	perl -0777 -pe 's/\nring httplog\n(?:[ \t].*\n)+/\n/gs' >"${TMP}/haproxy.cfg"
 
 echo "validate-haproxy-proposal: haproxy -c -f ${TMP}/haproxy.cfg (DSM globals sanitized off-NAS; paths rewritten to temp)"
 if ! run_haproxy_check "${TMP}/haproxy.cfg"; then

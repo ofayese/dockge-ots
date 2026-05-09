@@ -38,7 +38,7 @@ services:
       - no-new-privileges:true
     restart: unless-stopped
     ports:
-      - 10.0.1.15:8896:3000
+      - "8896:3000"
     volumes:
       - ${STACK_ROOT}/codex-docs/data:/usr/src/app/uploads:rw
     env_file:

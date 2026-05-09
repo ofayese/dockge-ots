@@ -197,7 +197,6 @@ services:
       - /sys:/sys:ro # EXEMPT cAdvisor host metrics
 
       # /var/run socket context
-      # /var/run socket mount
       # docker.sock :ro — cAdvisor reads Docker engine metrics only.
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:

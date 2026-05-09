@@ -12,7 +12,6 @@ services:
       - 10.0.1.15:18787:8080
     volumes:
       # /var/run socket context
-      # /var/run socket mount
       # docker.sock :ro — Watchtower reads container and image metadata only.
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:

@@ -59,7 +59,8 @@ echo ""
 
 # ── Temp dir for fixed copies ─────────────────────────────────────────────────
 TMPDIR_FIXED=$(mktemp -d)
-trap 'rm -rf "$TMPDIR_FIXED"' EXIT
+ENV_LIST=$(mktemp)
+trap 'rm -rf "$TMPDIR_FIXED"; rm -f "$ENV_LIST"' EXIT
 
 # ── Validate and optionally fix a single .env file ────────────────────────────
 # Returns 0 if clean (or fixable), 1 if has unfixable errors
@@ -184,14 +185,14 @@ process_env() {
 
 # ── Main loop ─────────────────────────────────────────────────────────────────
 TOTAL_ERRORS=0
-ENV_FILES=$(find "$BACKUP_DIR" -name ".env")
+find "$BACKUP_DIR" -name ".env" >"$ENV_LIST"
 
-if [ -z "$ENV_FILES" ]; then
+if [ ! -s "$ENV_LIST" ]; then
 	echo "No .env files found in $BACKUP_DIR"
 	exit 0
 fi
 
-for src in $ENV_FILES; do
+while IFS= read -r src; do
 	label="${src#"$BACKUP_DIR"/}"
 	echo "── $label"
 
@@ -202,7 +203,7 @@ for src in $ENV_FILES; do
 		TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
 	fi
 	echo ""
-done
+done <"$ENV_LIST"
 
 # ── Abort if unfixable errors ─────────────────────────────────────────────────
 if [ "$TOTAL_ERRORS" -gt 0 ]; then
@@ -221,7 +222,7 @@ fi
 echo "==> All .env files valid — restoring to $NEW_REPO"
 echo ""
 
-for src in $ENV_FILES; do
+while IFS= read -r src; do
 	label="${src#"$BACKUP_DIR"/}"
 	dest="$NEW_REPO/$label"
 	fixed_copy="${TMPDIR_FIXED}/${label}"
@@ -235,7 +236,7 @@ for src in $ENV_FILES; do
 	else
 		cp "$src" "$dest"
 	fi
-done
+done <"$ENV_LIST"
 
 echo ""
 echo "==> Fixing permissions"
@@ -245,4 +246,4 @@ chmod -R u+rwX "$NEW_REPO"
 echo ""
 echo "==> Done!"
 echo "    Backup used: $BACKUP_DIR"
-echo "    Files restored: $(printf '%s\n' "$ENV_FILES" | wc -l | tr -d ' ')"
+echo "    Files restored: $(wc -l <"$ENV_LIST" | tr -d ' ')"

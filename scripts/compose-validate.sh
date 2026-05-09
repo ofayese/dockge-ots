@@ -35,11 +35,13 @@ mkdir -p "${STACKS}/code-server/host-docker-bind" "${STACKS}/code-server/host-ho
 
 created_env_files=()
 cleanup() {
+	local status=$?
 	if [[ -n "${GITHUB_ACTIONS:-}" ]]; then
-		for p in "${created_env_files[@]+"${created_env_files[@]}"}"; do
-			rm -f "${p}"
+		for p in "${created_env_files[@]}"; do
+			[[ -f "${p}" ]] && rm -f "${p}"
 		done
 	fi
+	return "${status}"
 }
 trap cleanup EXIT
 

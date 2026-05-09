@@ -19,7 +19,6 @@ services:
       - ${STACK_ROOT}/homepage/data:/app/public/icons:rw
 
       # /var/run socket context
-      # /var/run socket mount
       # docker.sock :ro — Homepage reads container metadata only.
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
@@ -43,4 +42,3 @@ services:
       - com.centurylinklabs.watchtower.enable=true
     extra_hosts:
       - otsorundscore.olutechsys.com:10.0.1.15
-networks: {}

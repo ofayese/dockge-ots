@@ -18,7 +18,6 @@ services:
       - 8811:8811
     volumes:
       # /var/run socket context
-      # /var/run socket mount
       # SECURITY: docker.sock :rw — MCP gateway needs full API access for tool container integrations.
       - /var/run/docker.sock:/var/run/docker.sock
     # Healthcheck type: A — HTTP /health probe (same as root compose.yaml)

@@ -24,6 +24,8 @@
 
 set -e
 
+LOCK_FILE="/tmp/dockge-start.lock"
+
 DOCKER="/usr/local/bin/docker"
 NAME="Dockge"
 IMAGE="louislam/dockge:1"
@@ -81,7 +83,16 @@ create_container() {
 		"$IMAGE"
 }
 
-$DOCKER pull "$IMAGE"
+$DOCKER pull "$IMAGE" || {
+	echo "ERROR: Failed to pull $IMAGE" >&2
+	exit 1
+}
+
+if ! mkdir "${LOCK_FILE}" 2>/dev/null; then
+	echo "dockge-start: locked by another instance; aborting" >&2
+	exit 0
+fi
+trap 'rmdir "${LOCK_FILE}" 2>/dev/null' EXIT
 
 if exists; then
 	CURR="$(current_image)"

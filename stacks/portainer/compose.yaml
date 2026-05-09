@@ -9,7 +9,6 @@ services:
       - 9443:9443
     volumes:
       # /var/run socket context
-      # /var/run socket mount
       # SECURITY: docker.sock :rw — Portainer CE needs full API access for stack and container management.
       - /var/run/docker.sock:/var/run/docker.sock
       - ${PORTAINER_DATA_ROOT:-/volume1/docker/portainer}:/data:rw # EXEMPT operator legacy Portainer state (outside STACK_ROOT)
@@ -48,7 +47,6 @@ services:
       - 10.0.1.15:9001:9001
     volumes:
       # /var/run socket context
-      # /var/run socket mount
       # SECURITY: docker.sock :rw — Edge agent needs full API access for endpoint management and host volume browsing.
       - /var/run/docker.sock:/var/run/docker.sock
       - /volume1/@docker/volumes:/var/lib/docker/volumes # EXEMPT Portainer agent Docker volumes
@@ -75,4 +73,3 @@ services:
       - TZ=America/New_York
     labels:
       - com.centurylinklabs.watchtower.enable=true
-networks: {}

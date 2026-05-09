@@ -26,7 +26,6 @@ services:
       - ${TRAEFIK_DASHBOARD_PORT:-8080}:8080
     volumes:
       # /var/run socket context
-      # /var/run socket mount
       # docker.sock :ro — Traefik reads Docker labels only.
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ${ACME_CERT_ROOT:-/volume1/certs/acme}/ots-sub:/certs/ots-sub:ro

@@ -24,7 +24,6 @@ services:
         .env}:/home/coder/project/home:rw # EXEMPT operator home bind
 
       # /var/run socket context
-      # /var/run socket mount
       # SECURITY: docker.sock :rw — In-IDE Docker needs full API access for build, run, and compose operations.
       - /var/run/docker.sock:/var/run/docker.sock:rw
     environment:

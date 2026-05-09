@@ -27,7 +27,7 @@ DOCKGE_DIR="/volume1/docker/dockge"
 BACKUP_ROOT="/volume1/docker/archive"
 REPO_URL="git@github.com:ofayese/dockge-ots.git"
 # Use the operator's SSH key even when running as root
-export GIT_SSH_COMMAND="ssh -i /var/services/homes/laolufayese/.ssh/id_ed25519 -o StrictHostKeyChecking=no"
+export GIT_SSH_COMMAND='ssh -i /var/services/homes/laolufayese/.ssh/id_ed25519 -o StrictHostKeyChecking=no'
 OWNER="laolufayese"
 GROUP="administrators"
 YES=0
@@ -73,19 +73,19 @@ ok "git: $(git --version)"
 command -v bash >/dev/null 2>&1 || fail "bash not found — required for fix-permissions.sh"
 ok "bash: $(bash --version | head -1)"
 
-[ -d "$DOCKGE_DIR" ] || fail "$DOCKGE_DIR does not exist — nothing to back up"
-ok "$DOCKGE_DIR exists"
+[ -d "${DOCKGE_DIR}" ] || fail "${DOCKGE_DIR} does not exist — nothing to back up"
+ok "${DOCKGE_DIR} exists"
 
-[ -d "$BACKUP_ROOT" ] || warn "$BACKUP_ROOT does not exist — will create it"
+[ -d "${BACKUP_ROOT}" ] || warn "${BACKUP_ROOT} does not exist — will create it"
 
 SSH_TEST=$(ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 -T git@github.com 2>&1 || true)
-if echo "$SSH_TEST" | grep -qi "successfully authenticated"; then
+if echo "${SSH_TEST}" | grep -qi "successfully authenticated"; then
 	ok "GitHub SSH auth confirmed"
 else
-	warn "GitHub SSH auth not confirmed — output: $SSH_TEST"
+	warn "GitHub SSH auth not confirmed — output: ${SSH_TEST}"
 fi
 
-if [ "$DRY_RUN" -eq 1 ]; then
+if [ "${DRY_RUN}" -eq 1 ]; then
 	echo ""
 	echo "==> Dry run complete — no changes made"
 	echo "    Run without --dry-run to proceed"
@@ -95,8 +95,8 @@ fi
 echo ""
 
 # ── Confirmation ──────────────────────────────────────────────────────────────
-if [ "$YES" -eq 0 ]; then
-	echo "  This will MOVE $DOCKGE_DIR to a timestamped backup"
+if [ "${YES}" -eq 0 ]; then
+	echo "  This will MOVE ${DOCKGE_DIR} to a timestamped backup"
 	echo "  and clone a fresh copy from GitHub."
 	echo ""
 	printf "  Continue? [y/N] "
@@ -112,55 +112,55 @@ fi
 
 # ── Timestamp ─────────────────────────────────────────────────────────────────
 TS=$(date +"%Y%m%d-%H%M%S")
-BACKUP_DIR="$BACKUP_ROOT/dockge-backup-$TS"
+BACKUP_DIR="${BACKUP_ROOT}/dockge-backup-${TS}"
 
 # ── Create archive root ───────────────────────────────────────────────────────
-if [ ! -d "$BACKUP_ROOT" ]; then
-	info "Creating backup root: $BACKUP_ROOT"
-	mkdir -p "$BACKUP_ROOT" || fail "Cannot create $BACKUP_ROOT"
+if [ ! -d "${BACKUP_ROOT}" ]; then
+	info "Creating backup root: ${BACKUP_ROOT}"
+	mkdir -p "${BACKUP_ROOT}" || fail "Cannot create ${BACKUP_ROOT}"
 fi
 
 # ── Backup ────────────────────────────────────────────────────────────────────
-info "Backing up $DOCKGE_DIR → $BACKUP_DIR"
-mv "$DOCKGE_DIR" "$BACKUP_DIR" || fail "mv failed — aborting before clone"
-ok "Backup complete: $BACKUP_DIR"
+info "Backing up ${DOCKGE_DIR} → ${BACKUP_DIR}"
+mv "${DOCKGE_DIR}" "${BACKUP_DIR}" || fail "mv failed — aborting before clone"
+ok "Backup complete: ${BACKUP_DIR}"
 
 # ── Clone (with rollback on failure) ─────────────────────────────────────────
-info "Cloning $REPO_URL → $DOCKGE_DIR"
-git clone "$REPO_URL" "$DOCKGE_DIR" || {
+info "Cloning ${REPO_URL} → ${DOCKGE_DIR}"
+git clone "${REPO_URL}" "${DOCKGE_DIR}" || {
 	echo ""
 	echo "ERROR: git clone failed — rolling back"
-	mv "$BACKUP_DIR" "$DOCKGE_DIR"
-	fail "Clone failed. Backup restored to $DOCKGE_DIR"
+	mv "${BACKUP_DIR}" "${DOCKGE_DIR}"
+	fail "Clone failed. Backup restored to ${DOCKGE_DIR}"
 }
 ok "Clone complete"
 
 # ── git safe.directory ────────────────────────────────────────────────────────
-git config --global --add safe.directory "$DOCKGE_DIR" 2>/dev/null || true
+git config --global --add safe.directory "${DOCKGE_DIR}" 2>/dev/null || true
 
 # ── restore-env.sh ───────────────────────────────────────────────────────────
-# Auto-detects most recent backup under BACKUP_ROOT — picks up $BACKUP_DIR correctly.
-RESTORE_SCRIPT="$DOCKGE_DIR/scripts/restore-env.sh"
+# Auto-detects most recent backup under BACKUP_ROOT — picks up ${BACKUP_DIR} correctly.
+RESTORE_SCRIPT="${DOCKGE_DIR}/scripts/restore-env.sh"
 info "Restoring .env files (scripts/restore-env.sh)"
 
-if [ ! -f "$RESTORE_SCRIPT" ]; then
-	warn "$RESTORE_SCRIPT not found — skipping .env restore"
-	warn "Copy .env files manually from: $BACKUP_DIR"
+if [ ! -f "${RESTORE_SCRIPT}" ]; then
+	warn "${RESTORE_SCRIPT} not found — skipping .env restore"
+	warn "Copy .env files manually from: ${BACKUP_DIR}"
 else
-	if [ "$FIX_ENV" -eq 1 ]; then
+	if [ "${FIX_ENV}" -eq 1 ]; then
 		RESTORE_ARGS="--fix"
 	else
 		RESTORE_ARGS=""
 	fi
 
-	if [ -n "$RESTORE_ARGS" ]; then
-		if sh "$RESTORE_SCRIPT" "$RESTORE_ARGS"; then
+	if [ -n "${RESTORE_ARGS}" ]; then
+		if sh "${RESTORE_SCRIPT}" "${RESTORE_ARGS}"; then
 			ok "restore-env.sh complete"
 		else
 			warn "restore-env.sh exited non-zero — check output above"
 		fi
 	else
-		if sh "$RESTORE_SCRIPT"; then
+		if sh "${RESTORE_SCRIPT}"; then
 			ok "restore-env.sh complete"
 		else
 			warn "restore-env.sh exited non-zero — check output above"
@@ -169,41 +169,41 @@ else
 fi
 
 # ── init-nas.sh ───────────────────────────────────────────────────────────────
-INIT_SCRIPT="$DOCKGE_DIR/scripts/init-nas.sh"
+INIT_SCRIPT="${DOCKGE_DIR}/scripts/init-nas.sh"
 info "Creating STACK_ROOT directories (scripts/init-nas.sh)"
 
-if [ -f "$INIT_SCRIPT" ]; then
-	if bash "$INIT_SCRIPT"; then
+if [ -f "${INIT_SCRIPT}" ]; then
+	if bash "${INIT_SCRIPT}"; then
 		ok "init-nas.sh complete"
 	else
 		warn "init-nas.sh exited non-zero — check output above"
 	fi
 else
-	warn "$INIT_SCRIPT not found — run manually after this script"
+	warn "${INIT_SCRIPT} not found — run manually after this script"
 fi
 
 # ── fix-permissions.sh ────────────────────────────────────────────────────────
 # Normalises ownership of stack data dirs. Must be called with bash (uses BASH_SOURCE).
-FIX_PERMS_SCRIPT="$DOCKGE_DIR/scripts/fix-permissions.sh"
+FIX_PERMS_SCRIPT="${DOCKGE_DIR}/scripts/fix-permissions.sh"
 info "Normalising stack data dir permissions (scripts/fix-permissions.sh)"
 
-if [ -f "$FIX_PERMS_SCRIPT" ]; then
-	if bash "$FIX_PERMS_SCRIPT"; then
+if [ -f "${FIX_PERMS_SCRIPT}" ]; then
+	if bash "${FIX_PERMS_SCRIPT}"; then
 		ok "fix-permissions.sh complete"
 	else
 		warn "fix-permissions.sh exited non-zero — check output above"
 	fi
 else
-	warn "$FIX_PERMS_SCRIPT not found — skipping"
+	warn "${FIX_PERMS_SCRIPT} not found — skipping"
 fi
 
 # ── Repo-level ownership ──────────────────────────────────────────────────────
 # fix-permissions.sh handles stacks/data dirs only.
 # This covers the repo root so the operator can run git pull without sudo.
 info "Fixing repo ownership: ${OWNER}:${GROUP}"
-chown -R "${OWNER}:${GROUP}" "$DOCKGE_DIR" ||
-	warn "chown failed — run: sudo chown -R ${OWNER}:${GROUP} $DOCKGE_DIR"
-chmod -R u+rwX "$DOCKGE_DIR"
+chown -R "${OWNER}:${GROUP}" "${DOCKGE_DIR}" ||
+	warn "chown failed — run: sudo chown -R ${OWNER}:${GROUP} ${DOCKGE_DIR}"
+chmod -R u+rwX "${DOCKGE_DIR}"
 ok "Repo ownership set to ${OWNER}:${GROUP}"
 
 # ── Summary ───────────────────────────────────────────────────────────────────
@@ -211,11 +211,11 @@ echo ""
 echo "============================================"
 echo " nas-reset.sh complete"
 echo "============================================"
-echo " Backup:  $BACKUP_DIR"
-echo " Repo:    $DOCKGE_DIR"
+echo " Backup:  ${BACKUP_DIR}"
+echo " Repo:    ${DOCKGE_DIR}"
 echo ""
 echo " Next steps:"
-echo "   1. sudo cp $DOCKGE_DIR/scripts/dockge-start.sh \\"
+echo "   1. sudo cp ${DOCKGE_DIR}/scripts/dockge-start.sh \\"
 echo "         /usr/local/etc/rc.d/dockge.sh"
 echo "   2. sudo chmod +x /usr/local/etc/rc.d/dockge.sh"
 echo "   3. sudo sh /usr/local/etc/rc.d/dockge.sh"

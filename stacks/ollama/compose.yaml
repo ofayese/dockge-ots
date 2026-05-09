@@ -53,6 +53,8 @@ services:
   ollama-model-init:
     # One-shot service: pulls all required models after Ollama comes online.
     # Uses same image as otsai-server — no additional pull needed.
+    # Docker / DSM UI may show this container as Exited — that is SUCCESS (exit 0), not a fault.
+    # Do not set restart: unless-stopped here; a long-running init would fight the main ollama service.
     # restart: "no" — intentional: runs once per `docker compose up` cycle.
     # Re-runs on: docker compose up --force-recreate ollama-model-init
     # Models persist in STACK_ROOT/ollama/data/ollama — skips already-pulled models.

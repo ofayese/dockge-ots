@@ -11,37 +11,37 @@ permission denied while trying to connect to the Docker daemon socket at unix://
 [2026-04-26 18:09:35] === Docker Stack Startup ===
 [2026-04-26 18:09:35] Starting socket-proxy, portainer, and dockge...
 [2026-04-26 18:09:35] Starting socket-proxy stack...
- socket-proxy Pulling 
- 9824c27679d3 Pulling fs layer 
- 123b92336b82 Pulling fs layer 
- e7cee334a64b Pulling fs layer 
- 536eff87c11a Pulling fs layer 
- 0b2aa9ab96ae Pulling fs layer 
- 4f4fb700ef54 Pulling fs layer 
- 737997a74239 Pulling fs layer 
- a6a05d67fdc8 Pulling fs layer 
- 1de46bc47c88 Pulling fs layer 
- 536eff87c11a Waiting 
- 0b2aa9ab96ae Waiting 
- 4f4fb700ef54 Waiting 
- 737997a74239 Waiting 
- a6a05d67fdc8 Waiting 
- 1de46bc47c88 Waiting 
+ socket-proxy Pulling
+ 9824c27679d3 Pulling fs layer
+ 123b92336b82 Pulling fs layer
+ e7cee334a64b Pulling fs layer
+ 536eff87c11a Pulling fs layer
+ 0b2aa9ab96ae Pulling fs layer
+ 4f4fb700ef54 Pulling fs layer
+ 737997a74239 Pulling fs layer
+ a6a05d67fdc8 Pulling fs layer
+ 1de46bc47c88 Pulling fs layer
+ 536eff87c11a Waiting
+ 0b2aa9ab96ae Waiting
+ 4f4fb700ef54 Waiting
+ 737997a74239 Waiting
+ a6a05d67fdc8 Waiting
+ 1de46bc47c88 Waiting
  9824c27679d3 Downloading  38.84kB/3.8MB
  123b92336b82 Downloading  3.087kB/282.4kB
- 123b92336b82 Download complete 
+ 123b92336b82 Download complete
  9824c27679d3 Downloading  1.013MB/3.8MB
  e7cee334a64b Downloading     394B/964B
  e7cee334a64b Downloading     964B/964B
- e7cee334a64b Verifying Checksum 
- e7cee334a64b Download complete 
+ e7cee334a64b Verifying Checksum
+ e7cee334a64b Download complete
  9824c27679d3 Downloading  2.094MB/3.8MB
  536eff87c11a Downloading  113.1kB/11.02MB
  0b2aa9ab96ae Downloading     373B/440B
  0b2aa9ab96ae Downloading     440B/440B
- 0b2aa9ab96ae Verifying Checksum 
+ 0b2aa9ab96ae Verifying Checksum
  9824c27679d3 Downloading  3.354MB/3.8MB
- 9824c27679d3 Download complete 
+ 9824c27679d3 Download complete
  9824c27679d3 Extracting  65.54kB/3.8MB
  536eff87c11a Downloading  814.3kB/11.02MB
  9824c27679d3 Extracting  1.442MB/3.8MB
@@ -49,49 +49,49 @@ permission denied while trying to connect to the Docker daemon socket at unix://
  9824c27679d3 Extracting    3.8MB/3.8MB
  9824c27679d3 Extracting    3.8MB/3.8MB
  737997a74239 Downloading     758B/758B
- 737997a74239 Verifying Checksum 
- 737997a74239 Download complete 
+ 737997a74239 Verifying Checksum
+ 737997a74239 Download complete
  536eff87c11a Downloading   10.3MB/11.02MB
- 536eff87c11a Verifying Checksum 
- 536eff87c11a Download complete 
- 9824c27679d3 Pull complete 
+ 536eff87c11a Verifying Checksum
+ 536eff87c11a Download complete
+ 9824c27679d3 Pull complete
  123b92336b82 Extracting  32.77kB/282.4kB
  a6a05d67fdc8 Downloading     393B/1.129kB
- a6a05d67fdc8 Download complete 
+ a6a05d67fdc8 Download complete
  1de46bc47c88 Downloading     182B/182B
- 1de46bc47c88 Verifying Checksum 
- 1de46bc47c88 Download complete 
+ 1de46bc47c88 Verifying Checksum
+ 1de46bc47c88 Download complete
  123b92336b82 Extracting  196.6kB/282.4kB
  123b92336b82 Extracting  282.4kB/282.4kB
  123b92336b82 Extracting  282.4kB/282.4kB
- 123b92336b82 Pull complete 
+ 123b92336b82 Pull complete
  e7cee334a64b Extracting     964B/964B
  e7cee334a64b Extracting     964B/964B
- e7cee334a64b Pull complete 
+ e7cee334a64b Pull complete
  536eff87c11a Extracting  131.1kB/11.02MB
  536eff87c11a Extracting  2.097MB/11.02MB
  536eff87c11a Extracting  7.602MB/11.02MB
  4f4fb700ef54 Downloading      32B/32B
- 4f4fb700ef54 Verifying Checksum 
- 4f4fb700ef54 Download complete 
+ 4f4fb700ef54 Verifying Checksum
+ 4f4fb700ef54 Download complete
  536eff87c11a Extracting  11.02MB/11.02MB
- 536eff87c11a Pull complete 
+ 536eff87c11a Pull complete
  0b2aa9ab96ae Extracting     440B/440B
  0b2aa9ab96ae Extracting     440B/440B
- 0b2aa9ab96ae Pull complete 
+ 0b2aa9ab96ae Pull complete
  4f4fb700ef54 Extracting      32B/32B
  4f4fb700ef54 Extracting      32B/32B
- 4f4fb700ef54 Pull complete 
+ 4f4fb700ef54 Pull complete
  737997a74239 Extracting     758B/758B
  737997a74239 Extracting     758B/758B
- 737997a74239 Pull complete 
+ 737997a74239 Pull complete
  a6a05d67fdc8 Extracting  1.129kB/1.129kB
  a6a05d67fdc8 Extracting  1.129kB/1.129kB
- a6a05d67fdc8 Pull complete 
+ a6a05d67fdc8 Pull complete
  1de46bc47c88 Extracting     182B/182B
  1de46bc47c88 Extracting     182B/182B
- 1de46bc47c88 Pull complete 
- socket-proxy Pulled 
+ 1de46bc47c88 Pull complete
+ socket-proxy Pulled
  Network docker-socket-proxy_proxy-net  Creating
  Network docker-socket-proxy_proxy-net  Created
  Container socket-proxy  Creating

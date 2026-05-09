@@ -29,11 +29,13 @@ Do NOT attempt to call APIs directly, use other tools, or guess endpoints.
 ### Workflow
 
 **Step 1 — Find ALL tools you need in one batch.** In your first response, run parallel searches for every tool you'll need:
+
 ```
 merge search-tools "create task" --connector asana    # main action
 merge search-tools "list workspaces" --connector asana # lookup tool
 merge search-tools "list users" --connector asana      # another lookup
 ```
+
 Run ALL searches in parallel in one response.
 
 **Step 2 — Execute lookups in parallel**, then execute the main tool.

@@ -57,6 +57,10 @@ Reference formats:
 
 This stack must pass baseline verification first (including `.claude-flow` read/write and persistence tests) before any HAProxy/TLS integration is proposed or applied.
 
+## Further tuning
+
+See [`docs/hive/STACK_OPTIMIZATION_CUSTOMIZATION.md`](../../docs/hive/STACK_OPTIMIZATION_CUSTOMIZATION.md) for WebSocket-aware hardening context, API usage notes, and resource tuning alongside this README.
+
 ## Verification checklist
 
 - `docker compose -f compose.yaml config` succeeds.

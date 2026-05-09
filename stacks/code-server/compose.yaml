@@ -46,6 +46,8 @@ services:
       start_period: 30s
     labels:
       - com.centurylinklabs.watchtower.enable=true
+    networks:
+      - code-server-net
   db:
     image: mysql:8.3
     container_name: CodeServerDB
@@ -87,6 +89,8 @@ services:
       start_period: 30s
     labels:
       - com.centurylinklabs.watchtower.enable=true
+    networks:
+      - code-server-net
   phpmyadmin:
     image: phpmyadmin:5.2.2-apache
     container_name: CodeServerPMA
@@ -130,7 +134,16 @@ services:
       - db
     labels:
       - com.centurylinklabs.watchtower.enable=true
+    networks:
+      - code-server-net
 volumes:
   mysql_data:
     driver: local
-networks: {}
+networks:
+  code-server-net:
+    name: code-server-net
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.2.0/24
+          gateway: 172.28.2.1

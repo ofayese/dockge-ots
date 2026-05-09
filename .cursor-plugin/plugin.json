@@ -1,0 +1,12 @@
+{
+  "name": "dockge-homelab",
+  "version": "1.0.0",
+  "description": "Homelab infrastructure skills for the OTS/MFT NAS dockge repo",
+  "skills": [
+    "skills/nas-reset-recovery.md",
+    "skills/synology-git-safety.md",
+    "skills/docker-healthcheck-patterns.md",
+    "skills/traefik-port-mapping.md",
+    "skills/subnet-registry.md"
+  ]
+}

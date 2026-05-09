@@ -58,7 +58,7 @@ services:
     # Models persist in STACK_ROOT/ollama/data/ollama — skips already-pulled models.
     image: ollama/ollama:latest
     container_name: ollama-model-init
-    restart: "no" # intentional: one-shot init — not a long-running service
+    restart: no # intentional: one-shot init — not a long-running service
     mem_limit: 256m
     cpu_shares: 128
     security_opt:
@@ -77,18 +77,24 @@ services:
       - OLLAMA_HOST=http://ollama:11434
       # Tier 1 — Baseline models (always pull, small/fast)
       # nomic-embed-text: REQUIRED for AnythingLLM RAG embeddings
-      - TIER1_MODELS=${OLLAMA_TIER1_MODELS:-phi4:mini nomic-embed-text llama3.2:3b}
+      - TIER1_MODELS=${OLLAMA_TIER1_MODELS:-phi4:mini nomic-embed-text
+        llama3.2:3b}
       # Tier 2 — Primary models (pull on first boot, ~15-25 min total)
       - TIER2_MODELS=${OLLAMA_TIER2_MODELS:-qwen2.5-coder:7b llama3.1:8b}
       # Tier 3 — Secondary models (optional; set to "" to skip)
       - TIER3_MODELS=${OLLAMA_TIER3_MODELS:-deepseek-r1:7b mistral:7b qwen2.5:7b}
       - TZ=America/New_York
-    entrypoint: ["/bin/sh", "-c"]
+    entrypoint:
+      - /bin/sh
+      - -c
     command:
-      - |
+      - >
         set -e
+
         echo "[model-init] Waiting for Ollama to accept connections..."
+
         ATTEMPTS=0
+
         until /usr/bin/ollama list >/dev/null 2>&1; do
           ATTEMPTS=$$((ATTEMPTS + 1))
           if [ "$$ATTEMPTS" -gt 60 ]; then
@@ -97,7 +103,9 @@ services:
           fi
           sleep 5
         done
+
         echo "[model-init] Ollama is ready. Starting model pulls..."
+
 
         pull_if_missing() {
           MODEL="$$1"
@@ -113,23 +121,32 @@ services:
           fi
         }
 
+
         echo "[model-init] === Tier 1: baseline models ==="
+
         for MODEL in $$TIER1_MODELS; do
           pull_if_missing "$$MODEL"
         done
 
+
         echo "[model-init] === Tier 2: primary models ==="
+
         for MODEL in $$TIER2_MODELS; do
           pull_if_missing "$$MODEL"
         done
 
+
         echo "[model-init] === Tier 3: secondary models ==="
+
         for MODEL in $$TIER3_MODELS; do
           pull_if_missing "$$MODEL"
         done
 
+
         echo "[model-init] === Complete ==="
+
         /usr/bin/ollama list
+
         echo "[model-init] Done. Container will exit (restart: no)."
     networks:
       - ollama-net

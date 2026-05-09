@@ -17,8 +17,7 @@ services:
     volumes:
       - ${STACK_ROOT}/homepage/config:/app/config:rw
       - ${STACK_ROOT}/homepage/data:/app/public/icons:rw
-      # Docker socket (ro): exposes container/meta to Homepage; read-only avoids mutating containers via the API.
-      # Required for the docker.yaml `my-docker` socket integration.
+      # docker.sock :ro — Homepage reads container metadata for the `my-docker` integration; read-only avoids mutating the daemon API.
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
       - PUID=${PUID:-0}

@@ -180,7 +180,7 @@ services:
       - PUID=${PUID:-0}
       - PGID=${PGID:-0}
       - OLLAMA_BASE_URL=http://10.0.1.15:11434
-      - WEBUI_AUTH=true
+      - WEBUI_AUTH=1
       - WEBUI_NAME=olutechsys AI
       - WEBUI_URL=${WEBUI_URL:-https://ai.otsorundscore.olutechsys.com}
       # Comma-separated model names shown in dropdown (does NOT auto-pull).

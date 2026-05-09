@@ -40,7 +40,7 @@ services:
       - PUID=${PUID:-0}
       - PGID=${PGID:-0}
       - TZ=${TZ:-America/New_York}
-      - QDRANT__TELEMETRY_DISABLED=true
+      - QDRANT__TELEMETRY_DISABLED=1
       - QDRANT__SERVICE__API_KEY=${QDRANT_API_KEY:-}
     # Healthcheck type E: nc TCP probe. /readyz is unauthenticated even when API key is set.
     # qdrant image has no wget/curl - nc available via busybox sh.
@@ -59,6 +59,7 @@ services:
       - com.centurylinklabs.watchtower.enable=true
     networks:
       - rag-net
+
   anythingllm:
     container_name: rag-anythingllm
     image: mintplexlabs/anythingllm:1.7.6
@@ -100,9 +101,8 @@ services:
       - QDRANT_ENDPOINT=http://qdrant:6333
       - QDRANT_API_KEY=${QDRANT_API_KEY:-}
       # Auth
-      - "JWT_SECRET=${ANYTHINGLLM_JWT_SECRET:?ANYTHINGLLM_JWT_SECRET must be set
-        in .env - run: openssl rand -hex 32}"
-      - DISABLE_TELEMETRY=true
+      - "JWT_SECRET=${ANYTHINGLLM_JWT_SECRET:?ANYTHINGLLM_JWT_SECRET must be set in .env - run: openssl rand -hex 32}"
+      - DISABLE_TELEMETRY=1
     # Plain depends_on (no condition:) for Synology Package Center compatibility.
     depends_on:
       - qdrant
@@ -123,6 +123,7 @@ services:
       - com.centurylinklabs.watchtower.enable=true
     networks:
       - rag-net
+
   pipelines:
     container_name: rag-pipelines
     image: ghcr.io/open-webui/pipelines:main
@@ -145,8 +146,7 @@ services:
       - PUID=${PUID:-0}
       - PGID=${PGID:-0}
       - TZ=${TZ:-America/New_York}
-      - "PIPELINES_API_KEY=${PIPELINES_API_KEY:?PIPELINES_API_KEY must be set in
-        .env - run: openssl rand -hex 24}"
+      - "PIPELINES_API_KEY=${PIPELINES_API_KEY:?PIPELINES_API_KEY must be set in .env - run: openssl rand -hex 24}"
       - OLLAMA_BASE_URL=http://10.0.1.15:11434
       - QDRANT_URL=http://qdrant:6333
       - QDRANT_API_KEY=${QDRANT_API_KEY:-}
@@ -170,6 +170,7 @@ services:
       - com.centurylinklabs.watchtower.enable=true
     networks:
       - rag-net
+
 networks:
   rag-net:
     # name: override prevents Docker from prepending the project name.

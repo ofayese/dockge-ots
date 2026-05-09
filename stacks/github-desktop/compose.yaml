@@ -38,7 +38,7 @@ services:
       - TZ=${TZ:-America/New_York}
       - PUID=${PUID:-0}
       - PGID=${PGID:-0}
-      - PIXELFLUX_WAYLAND=false
+      - PIXELFLUX_WAYLAND=0
       - CUSTOM_USER=${GITHUB_DESKTOP_USER:?set GITHUB_DESKTOP_USER in .env}
       - PASSWORD=${GITHUB_DESKTOP_PASSWORD:?set GITHUB_DESKTOP_PASSWORD in .env}
       - TITLE=GitHub Desktop

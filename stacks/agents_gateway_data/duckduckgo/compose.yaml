@@ -17,7 +17,7 @@ services:
     ports:
       - 8811:8811
     volumes:
-      # SECURITY: docker.sock grants Docker API access (host-level). Required for MCP gateway image.
+      # SECURITY: docker.sock :rw — MCP gateway image requires Docker API access for tool integrations.
       - /var/run/docker.sock:/var/run/docker.sock
     # Healthcheck type: A — HTTP /health probe (same as root compose.yaml)
     healthcheck:

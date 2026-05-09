@@ -8,20 +8,31 @@ MariaDB + PostgreSQL + Adminer for any service that needs a shared DB. Distinct 
 - **postgres** — file-based secret at `/run/secrets/postgres_pw`
 - **adminer** (8895) — UI; depends on both DBs being healthy
 
+## Volumes
+
+| Host path                             | Container path             | Purpose                |
+| ------------------------------------- | -------------------------- | ---------------------- |
+| `${STACK_ROOT}/databases/db/mariadb`  | `/var/lib/mysql`           | MariaDB engine data    |
+| `${STACK_ROOT}/databases/db/postgres` | `/var/lib/postgresql/data` | PostgreSQL engine data |
+
+> `STACK_ROOT` is resolved by `scripts/init-nas.sh` after `git clone`. On Synology use **`/volume1/docker/dockge/stacks`** (see `.env.example` and repo `CLAUDE.md`).
+
 ## Secrets (file-based, outside `.env`)
 
-- `/volume1/​docker/dockge​/stacks/databases/secrets/mariadb_root_pw.txt` (mode `0600`)
-- `/volume1/​docker/dockge​/stacks/databases/secrets/mariadb_app_pw.txt` (mode `0600`)
-- `/volume1/​docker/dockge​/stacks/databases/secrets/postgres_pw.txt` (mode `0600`)
+Create **gitignored** files under `${STACK_ROOT}/databases/secrets/` (mode `0600`):
+
+- `${STACK_ROOT}/databases/secrets/mariadb_root_pw.txt`
+- `${STACK_ROOT}/databases/secrets/mariadb_app_pw.txt`
+- `${STACK_ROOT}/databases/secrets/postgres_pw.txt`
 
 Verify with:
 
 ```bash
-ls -la /volume1/​docker/dockge​/stacks/databases/secrets/
-git check-ignore databases/secrets/mariadb_root_pw.txt   # expect: prints path = ignored
+ls -la "${STACK_ROOT}/databases/secrets/"
+git check-ignore "${STACK_ROOT}/databases/secrets/mariadb_root_pw.txt"   # expect: prints path = ignored
 ```
 
-If any file is mode `0644` or worse: `chmod 0600 /volume1/​docker/dockge​/stacks/databases/secrets/*.txt`.
+If any file is mode `0644` or worse: `chmod 0600 "${STACK_ROOT}/databases/secrets/"*.txt`.
 
 ## Health
 
@@ -32,11 +43,11 @@ If any file is mode `0644` or worse: `chmod 0600 /volume1/​docker/dockge​/st
 ## Rollback
 
 ```bash
-git checkout -- databases/compose.yaml
-docker compose -f databases/compose.yaml up -d
+git checkout -- compose.yaml
+docker compose up -d
 ```
 
-Data persists at `/volume1/​docker/dockge​/stacks/databases/{mariadb,postgres}`. Back up before any major-version bump.
+Data persists under `${STACK_ROOT}/databases/db/`. Back up before any major-version bump.
 
 ## Backup
 

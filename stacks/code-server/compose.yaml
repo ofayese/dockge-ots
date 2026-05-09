@@ -22,7 +22,7 @@ services:
         .env}:/home/coder/project/docker:rw # EXEMPT operator wide bind (see stack README)
       - ${CODE_SERVER_HOST_HOME_BIND:?set CODE_SERVER_HOST_HOME_BIND in
         .env}:/home/coder/project/home:rw # EXEMPT operator home bind
-      # SECURITY: rw docker.sock lets this container control the host Docker API (effectively host root). Required for in-IDE docker; restrict network exposure.
+      # SECURITY: docker.sock :rw — In-IDE Docker needs host Docker API write access (effectively host root); restrict network exposure.
       - /var/run/docker.sock:/var/run/docker.sock:rw
     environment:
       - PUID=${PUID:-0}
@@ -118,7 +118,7 @@ services:
       - PMA_CONTROLPASS=${PMA_CONTROLPASS}
       - PMA_BLOWFISH_SECRET=${PMA_BLOWFISH_SECRET}
       - PMA_ABSOLUTE_URI=${PMA_ABSOLUTE_URI:-}
-      - HIDE_PHP_VERSION=true
+      - HIDE_PHP_VERSION=1
       - TZ=${TZ:-America/New_York}
     healthcheck:
       test:

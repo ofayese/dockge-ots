@@ -25,8 +25,7 @@ services:
       # "404 page not found" on /: correct when dashboard is disabled.
       - ${TRAEFIK_DASHBOARD_PORT:-8080}:8080
     volumes:
-      # docker.sock required: Traefik reads Docker labels to auto-discover
-      # and route to containers. Read-only (:ro) - Traefik does not need write access.
+      # docker.sock :ro — Traefik discovers backends from Docker labels; read-only is sufficient.
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ${ACME_CERT_ROOT:-/volume1/certs/acme}/ots-sub:/certs/ots-sub:ro
       - ${STACK_ROOT}/traefik-ots/data:/data:rw

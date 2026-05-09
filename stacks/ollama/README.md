@@ -4,8 +4,17 @@ Local LLM runtime (`ollama`) + open-webui front-end. CPU-only on this NAS — no
 
 ## Services
 
-- **otsai-server** (11434) — Ollama REST API; models persist at `/volume1/​docker/dockge​/stacks/ollama/data`
-- **otsai-webui** (8893) — open-webui chat UI; depends on `ollama` healthcheck; auth state in `/volume1/​docker/dockge​/stacks/ollama/webui`
+- **otsai-server** (11434) — Ollama REST API; models persist at `${STACK_ROOT}/ollama/data`
+- **otsai-webui** (8893) — open-webui chat UI; depends on `ollama` healthcheck; app data under `${STACK_ROOT}/ollama/data/open-webui`
+
+## Volumes
+
+| Host path                              | Container path      | Purpose                                |
+| -------------------------------------- | ------------------- | -------------------------------------- |
+| `${STACK_ROOT}/ollama/data/ollama`     | `/root/.ollama`     | Ollama model blobs and engine state    |
+| `${STACK_ROOT}/ollama/data/open-webui` | `/app/backend/data` | Open WebUI DB, uploads, and auth state |
+
+> `STACK_ROOT` is resolved by `scripts/init-nas.sh` after `git clone`. On Synology use **`/volume1/docker/dockge/stacks`** (see `.env.example` and repo `CLAUDE.md`).
 
 ## Public hostname
 
@@ -38,9 +47,8 @@ If you regularly run larger models (e.g. `llama3.1:70b`), bump `ollama` mem_limi
 ## Rollback
 
 ```bash
-git checkout -- ollama/compose.yaml
-docker compose -f ollama/compose.yaml up -d
+git checkout -- compose.yaml
+docker compose up -d
 ```
 
-Models survive: `/volume1/​docker/dockge​/stacks/ollama/data` not touched.
-User accounts (open-webui) survive: `/volume1/​docker/dockge​/stacks/ollama/webui` not touched.
+Models survive under `${STACK_ROOT}/ollama/data/ollama` when you do not delete the bind. Open Webui state survives under `${STACK_ROOT}/ollama/data/open-webui` when you do not delete the bind.

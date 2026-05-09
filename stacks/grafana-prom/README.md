@@ -1,6 +1,6 @@
 # grafana-prom — Grafana + Prometheus stack
 
-Synology-oriented **Grafana** + **Prometheus** + exporters (`node-exporter`, `snmp-exporter`, **cAdvisor**). Compose file: [`docker-compose.yml`](./docker-compose.yml).
+Synology-oriented **Grafana** + **Prometheus** + exporters (`node-exporter`, `snmp-exporter`, **cAdvisor**). Compose file: [`compose.yaml`](./compose.yaml).
 
 ## Ports (defaults)
 
@@ -12,15 +12,26 @@ Synology-oriented **Grafana** + **Prometheus** + exporters (`node-exporter`, `sn
 | Node exporter | `9100`          |                                       |
 | cAdvisor      | `8080`          | Container metrics UI                  |
 
-## Paths (NAS)
+## Volumes
 
-All bind mounts in `docker-compose.yml` use **absolute** paths under `/volume1/​docker/dockge​/stacks/grafana-prom/` (data dirs, `prom.yml`, `snmp.yml`, `secrets/`). Create data dirs before first start:
+| Host path                                                        | Container path                            | Purpose                                                                   |
+| ---------------------------------------------------------------- | ----------------------------------------- | ------------------------------------------------------------------------- |
+| `${STACK_ROOT}/grafana-prom/data/grafana`                        | `/var/lib/grafana`                        | Grafana UI state, dashboards, plugins                                     |
+| `${STACK_ROOT}/grafana-prom/data/prometheus`                     | `/prometheus`                             | Prometheus TSDB                                                           |
+| `${STACK_ROOT}/grafana-prom/prom.yml`                            | `/etc/prometheus/prometheus.yml`          | Prometheus scrape config                                                  |
+| `${STACK_ROOT}/grafana-prom/snmp.yml`                            | `/etc/snmp_exporter/snmp.yml`             | SNMP exporter config                                                      |
+| `${STACK_ROOT}/grafana-prom/secrets/watchtower_bearer_token.txt` | `/etc/prometheus/watchtower_bearer_token` | Bearer token file for Watchtower metrics scrape (read-only in Prometheus) |
+
+> `STACK_ROOT` is written by `scripts/init-nas.sh` after `git clone`. On Synology use **`/volume1/docker/dockge/stacks`** (see each stack’s `.env.example` and repo `CLAUDE.md`).
+
+## Bootstrap (first deploy)
 
 ```bash
-mkdir -p /volume1/​docker/dockge​/stacks/grafana-prom/data/grafana \
-  /volume1/​docker/dockge​/stacks/grafana-prom/data/prometheus
-sudo bash /volume1/​docker/dockge/scripts/fix-permissions.sh
+mkdir -p "${STACK_ROOT}/grafana-prom/data/grafana" "${STACK_ROOT}/grafana-prom/data/prometheus"
+sudo bash scripts/fix-permissions.sh
 ```
+
+Run `fix-permissions.sh` from the **git repo root** (the directory that contains `HIVE_OBJECTIVE.md`).
 
 ## Environment
 

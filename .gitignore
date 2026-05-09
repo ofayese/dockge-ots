@@ -42,6 +42,8 @@ stacks/**/.env
 data/
 logs/
 .claude-flow/
+# Nested stack copies of agent tooling state (must not re-enter the index)
+**/.claude-flow/
 .claude/
 .cursor/
 stacks/**/data/

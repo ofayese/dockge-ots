@@ -1,10 +1,20 @@
 # Homepage — DS723+ Docker Dashboard
 
-A customizable, real-time dashboard for the olutechsys homelab infrastructure. Automatically mirrors every container running across your 12 stacks in `/volume1/​docker/dockge​/stacks/`.
+A customizable, real-time dashboard for the olutechsys homelab infrastructure. Automatically mirrors container status for stacks deployed under `${STACK_ROOT}`.
 
 **Status:** Fully functional with Synology DS723+ socket integration
 **Last Updated:** April 2025
 **Reference:** https://mariushosting.com/how-to-install-homepage-on-your-synology-nas/
+
+## Volumes
+
+| Host path                       | Container path         | Purpose                                                               |
+| ------------------------------- | ---------------------- | --------------------------------------------------------------------- |
+| `${STACK_ROOT}/homepage/config` | `/app/config`          | Homepage YAML (`services.yaml`, `docker.yaml`, widgets, bookmarks, …) |
+| `${STACK_ROOT}/homepage/data`   | `/app/public/icons`    | Custom icons and generated assets                                     |
+| `/var/run/docker.sock`          | `/var/run/docker.sock` | Read-only Docker API socket for live container status (`my-docker`)   |
+
+> `STACK_ROOT` is resolved by `scripts/init-nas.sh` after `git clone`. On Synology use **`/volume1/docker/dockge/stacks`** (see `.env.example` and repo `CLAUDE.md`).
 
 ---
 
@@ -16,12 +26,12 @@ A customizable, real-time dashboard for the olutechsys homelab infrastructure. A
 
    - Open Dockge at http://10.0.1.15:5571
    - Create a new stack named `homepage`
-   - Point it to `/volume1/​docker/dockge​/stacks/homepage/compose.yaml`
+   - Point it to `${STACK_ROOT}/homepage/compose.yaml`
    - Click "Deploy"
 
 2. **Via command line:**
    ```bash
-   cd /volume1/​docker/dockge​/stacks/homepage
+   cd "${STACK_ROOT}/homepage"
    docker compose up -d
    ```
 
@@ -77,7 +87,7 @@ homepage/
 Run the validation script to confirm everything is connected:
 
 ```bash
-cd /volume1/​docker/dockge​/stacks/homepage
+cd "${STACK_ROOT}/homepage"
 bash verify-integration.sh
 ```
 
@@ -178,7 +188,7 @@ Homepage displays **live container status** (green = running, red = stopped) by 
 ### Synology-Specific Notes
 
 - **Read-only mount** (`:ro`): Homepage only reads container info; it cannot modify containers. Essential for security.
-- **PUID/PGID:** Homepage image does not use linuxserver-style PUID; bind mounts rely on host ownership. Use **`scripts/fix-permissions.sh`** on the NAS so paths under `/volume1/​docker/dockge​/stacks/homepage/` are `root:root` per `HIVE_OBJECTIVE.md`.
+- **PUID/PGID:** Homepage image does not use linuxserver-style PUID; bind mounts rely on host ownership. Use **`scripts/fix-permissions.sh`** on the NAS so paths under `${STACK_ROOT}/homepage/` are `root:root` per `HIVE_OBJECTIVE.md`.
 - **Watchtower labels:** All services include `com.centurylinklabs.watchtower.enable=true` for automatic updates.
 - **External bridge network:** All stacks use a pre-created Docker network called `bridge` (defined at the NAS level).
 
@@ -318,7 +328,7 @@ docker exec Homepage test -r /var/run/docker.sock && echo "Readable" || echo "No
 Watchtower automatically pulls the latest image daily (scheduled for 4 AM). To update manually:
 
 ```bash
-cd /volume1/​docker/dockge​/stacks/homepage
+cd "${STACK_ROOT}/homepage"
 docker compose pull
 docker compose up -d
 ```

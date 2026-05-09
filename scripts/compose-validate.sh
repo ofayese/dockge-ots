@@ -92,12 +92,12 @@ while IFS= read -r f; do
 	# docker-mcp.yaml is Docker Desktop MCP catalog YAML only — never validate as Compose.
 	# Prune runtime bind-mount trees so NAS validate does not spam "Permission denied"
 	# when Docker-owned dirs are unreadable to the invoking user (db/, data/, GUI config).
-	done < <(
-		find "${STACKS}" -maxdepth 4 \
-			\( -type d \( -name db -o -name data \) \) -prune -o \
-			\( -type d -path '*/github-desktop/config' \) -prune -o \
-			\( \( -name compose.yaml -o -name docker-compose.yml -o -name docker-compose.yaml \) \
-				! -name docker-mcp.yaml ! -path '*/.git/*' \) -print | sort
-	)
+done < <(
+	find "${STACKS}" -maxdepth 4 \
+		\( -type d \( -name db -o -name data \) \) -prune -o \
+		\( -type d -path '*/github-desktop/config' \) -prune -o \
+		\( \( -name compose.yaml -o -name docker-compose.yml -o -name docker-compose.yaml \) \
+		! -name docker-mcp.yaml ! -path '*/.git/*' \) -print | sort
+)
 
 echo "All compose files validated OK."

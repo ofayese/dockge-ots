@@ -8,13 +8,14 @@ A customizable, real-time dashboard for the olutechsys homelab infrastructure. A
 
 ## Volumes
 
-| Host path                       | Container path         | Purpose                                                               |
-| ------------------------------- | ---------------------- | --------------------------------------------------------------------- |
-| `${STACK_ROOT}/homepage/config` | `/app/config`          | Homepage YAML (`services.yaml`, `docker.yaml`, widgets, bookmarks, …) |
-| `${STACK_ROOT}/homepage/data`   | `/app/public/icons`    | Custom icons and generated assets                                     |
-| `/var/run/docker.sock`          | `/var/run/docker.sock` | Read-only Docker API socket for live container status (`my-docker`)   |
+| Host path                       | Container path         | Mode | Created by    |
+| ------------------------------- | ---------------------- | ---- | ------------- |
+| `${STACK_ROOT}/homepage/config` | `/app/config`          | rw   | `init-nas.sh` |
+| `${STACK_ROOT}/homepage/data`   | `/app/public/icons`    | rw   | `init-nas.sh` |
+| `/var/run/docker.sock`          | `/var/run/docker.sock` | ro   | operator      |
 
-> `STACK_ROOT` is resolved by `scripts/init-nas.sh` after `git clone`. On Synology use **`/volume1/docker/dockge/stacks`** (see `.env.example` and repo `CLAUDE.md`).
+> Run `sudo bash scripts/init-nas.sh` after cloning to create these
+> directories. Without them, the container will fail to start.
 
 ---
 

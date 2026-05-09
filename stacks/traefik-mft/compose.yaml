@@ -18,7 +18,9 @@ services:
       - ${TRAEFIK_HTTPS_PUBLISH:-6443}:443
       - ${TRAEFIK_DASHBOARD_PORT:-8080}:8080
     volumes:
-      # docker.sock :ro — Traefik discovers backends from Docker labels; read-only is sufficient.
+      # /var/run socket context
+      # /var/run socket mount
+      # docker.sock :ro — Traefik reads Docker labels only.
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ${ACME_CERT_ROOT:-/volume1/certs/acme}/mft-sub:/certs/mft-sub:ro
       - ${STACK_ROOT}/traefik-mft/data:/data:rw

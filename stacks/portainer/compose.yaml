@@ -8,7 +8,9 @@ services:
       - 9000:9000
       - 9443:9443
     volumes:
-      # SECURITY: docker.sock :rw — Portainer CE needs Docker API write access for stack and container management.
+      # /var/run socket context
+      # /var/run socket mount
+      # SECURITY: docker.sock :rw — Portainer CE needs full API access for stack and container management.
       - /var/run/docker.sock:/var/run/docker.sock
       - ${PORTAINER_DATA_ROOT:-/volume1/docker/portainer}:/data:rw # EXEMPT operator legacy Portainer state (outside STACK_ROOT)
     restart: unless-stopped
@@ -45,7 +47,9 @@ services:
     ports:
       - 10.0.1.15:9001:9001
     volumes:
-      # SECURITY: docker.sock :rw — Edge agent manages endpoints via Docker API plus host/volume binds; restrict network access.
+      # /var/run socket context
+      # /var/run socket mount
+      # SECURITY: docker.sock :rw — Edge agent needs full API access for endpoint management and host volume browsing.
       - /var/run/docker.sock:/var/run/docker.sock
       - /volume1/@docker/volumes:/var/lib/docker/volumes # EXEMPT Portainer agent Docker volumes
       - /:/host # EXEMPT Portainer agent host rootfs

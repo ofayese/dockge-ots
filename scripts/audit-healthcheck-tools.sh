@@ -12,44 +12,44 @@
 set -euo pipefail
 
 DOCKER="${DOCKER:-docker}"
-SUDO=""
+DOCKER_CMD=("$DOCKER")
 # On Synology NAS the user may not be in the docker group
-if ! $DOCKER info >/dev/null 2>&1; then
-    SUDO="sudo"
+if ! "$DOCKER" info >/dev/null 2>&1; then
+	DOCKER_CMD=(sudo "$DOCKER")
 fi
 
 probe() {
-    local image="$1"
-    local tool="$2"
-    $SUDO $DOCKER run --rm --pull=missing \
-        --entrypoint="" \
-        "$image" \
-        sh -c "which $tool 2>/dev/null && echo YES || echo NO" 2>/dev/null \
-        | tail -1
+	local image="$1"
+	local tool="$2"
+	"${DOCKER_CMD[@]}" run --rm --pull=missing \
+		--entrypoint="" \
+		"$image" \
+		sh -c "which $tool 2>/dev/null && echo YES || echo NO" 2>/dev/null |
+		tail -1
 }
 
 probe_sh() {
-    local image="$1"
-    $SUDO $DOCKER run --rm --pull=missing \
-        --entrypoint="" \
-        "$image" \
-        sh -c "echo YES" 2>/dev/null | tail -1 || echo NO
+	local image="$1"
+	"${DOCKER_CMD[@]}" run --rm --pull=missing \
+		--entrypoint="" \
+		"$image" \
+		sh -c "echo YES" 2>/dev/null | tail -1 || echo NO
 }
 
 check_image() {
-    local label="$1"
-    local image="$2"
-    printf "  Pulling %-55s ... " "$image"
-    $SUDO $DOCKER pull --quiet "$image" >/dev/null 2>&1 && echo "done" || echo "PULL FAILED"
+	local label="$1"
+	local image="$2"
+	printf "  Pulling %-55s ... " "$image"
+	"${DOCKER_CMD[@]}" pull --quiet "$image" >/dev/null 2>&1 && echo "done" || echo "PULL FAILED"
 
-    local has_sh has_wget has_curl has_nc
-    has_sh=$(probe_sh "$image")
-    has_wget=$(probe "$image" wget)
-    has_curl=$(probe "$image" curl)
-    has_nc=$(probe "$image" nc)
+	local has_sh has_wget has_curl has_nc
+	has_sh=$(probe_sh "$image")
+	has_wget=$(probe "$image" wget)
+	has_curl=$(probe "$image" curl)
+	has_nc=$(probe "$image" nc)
 
-    printf "  %-30s | SH:%-3s | WGET:%-3s | CURL:%-3s | NC:%-3s | %s\n" \
-        "$label" "$has_sh" "$has_wget" "$has_curl" "$has_nc" "$image"
+	printf "  %-30s | SH:%-3s | WGET:%-3s | CURL:%-3s | NC:%-3s | %s\n" \
+		"$label" "$has_sh" "$has_wget" "$has_curl" "$has_nc" "$image"
 }
 
 echo ""
@@ -72,26 +72,26 @@ echo "  containrrr/watchtower:latest  SCRATCH — fix: CMD /watchtower --health-
 echo ""
 
 echo "--- ALPINE (busybox wget expected) ---"
-check_image "portainer-ce"        "portainer/portainer-ce:2.41.0-alpine"
-check_image "portainer-agent"     "portainer/agent:2.39.1"
+check_image "portainer-ce" "portainer/portainer-ce:2.41.0-alpine"
+check_image "portainer-agent" "portainer/agent:2.39.1"
 check_image "valkey/SearXNG-Redis" "valkey/valkey:8-alpine"
-check_image "postgres/databases"  "postgres:16-alpine"
+check_image "postgres/databases" "postgres:16-alpine"
 echo ""
 
 echo "--- SUSPECT — verify wget/curl ---"
-check_image "homepage"            "ghcr.io/gethomepage/homepage:v1.12"
-check_image "adminer/databases"   "adminer:5.4.2-standalone"
-check_image "otsai-webui"         "ghcr.io/open-webui/open-webui:v0.9.2"
-check_image "holyclaude"          "coderluii/holyclaude:latest"
-check_image "it-tools"            "corentinth/it-tools:2024.10.22-7ca5933"
+check_image "homepage" "ghcr.io/gethomepage/homepage:v1.12"
+check_image "adminer/databases" "adminer:5.4.2-standalone"
+check_image "otsai-webui" "ghcr.io/open-webui/open-webui:v0.9.2"
+check_image "holyclaude" "coderluii/holyclaude:latest"
+check_image "it-tools" "corentinth/it-tools:2024.10.22-7ca5933"
 echo ""
 
 echo "--- OWN BINARY / SHELL PROBE ---"
 check_image "otsai-server/ollama" "ollama/ollama:0.22.0"
-check_image "dozzle"              "amir20/dozzle:v10.5.1"
-check_image "mariadb/databases"   "mariadb:11.4.10"
-check_image "code-server"         "codercom/code-server:4.117.0-39"
-check_image "phpmyadmin"          "phpmyadmin:5.2.2-apache"
+check_image "dozzle" "amir20/dozzle:v10.5.1"
+check_image "mariadb/databases" "mariadb:11.4.10"
+check_image "code-server" "codercom/code-server:4.117.0-39"
+check_image "phpmyadmin" "phpmyadmin:5.2.2-apache"
 echo ""
 
 echo "============================================================"

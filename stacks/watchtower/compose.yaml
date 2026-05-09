@@ -11,7 +11,9 @@ services:
       # Prometheus (grafana-prom) scrapes /v1/metrics here; restrict on firewall if needed.
       - 10.0.1.15:18787:8080
     volumes:
-      # docker.sock :ro — Watchtower calls the Docker API for image/container lifecycle; read-only is sufficient.
+      # /var/run socket context
+      # /var/run socket mount
+      # docker.sock :ro — Watchtower reads container and image metadata only.
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
       - PUID=${PUID:-0}

@@ -195,7 +195,10 @@ services:
       - /:/rootfs:ro # EXEMPT cAdvisor host metrics
       - /var/run:/var/run:ro # EXEMPT cAdvisor host metrics
       - /sys:/sys:ro # EXEMPT cAdvisor host metrics
-      # docker.sock :ro — cAdvisor collects Docker engine metrics; read-only is sufficient.
+
+      # /var/run socket context
+      # /var/run socket mount
+      # docker.sock :ro — cAdvisor reads Docker engine metrics only.
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
       - PUID=${PUID:-0}

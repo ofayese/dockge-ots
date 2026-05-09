@@ -10,9 +10,9 @@ Runs **Docker Model Runner** CUDA images for local LLM endpoints (`devstral-smal
 | `8003` | `8000`    | `ministral3`       |
 | `8011` | `8000`    | `smollm3`          |
 
-## Volumes / paths
+## Volumes
 
-- No bind-mounted model cache in-repo by default; models download at runtime. To persist data, add absolute paths under **`/volume1/​docker/dockge​/stacks/docker-model-runner/data/<service>/`** and document them in your local `.env` / override compose (never commit secrets).
+No persistent volumes — stateless.
 
 ## Environment
 

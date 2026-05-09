@@ -17,6 +17,16 @@ See `.env.example` for the full set.
 
 `otsorundscore.olutechsys.com` (resolved via `extra_hosts` to `10.0.1.15`).
 
+## Volumes
+
+| Host path                       | Container path         | Mode | Created by    |
+| ------------------------------- | ---------------------- | ---- | ------------- |
+| `${STACK_ROOT}/codex-docs/db`   | `/data/db`             | rw   | `init-nas.sh` |
+| `${STACK_ROOT}/codex-docs/data` | `/usr/src/app/uploads` | rw   | `init-nas.sh` |
+
+> Run `sudo bash scripts/init-nas.sh` after cloning to create these
+> directories. Without them, the container will fail to start.
+
 ## Health
 
 - mongodb: `mongosh` admin ping
@@ -29,7 +39,7 @@ git checkout -- codex-docs/compose.yaml
 docker compose -f codex-docs/compose.yaml up -d
 ```
 
-Mongo data persists at `/volume1/​docker/dockge​/stacks/codex-docs/mongodb`. Never `rm -rf` without a snapshot.
+Mongo data persists at `${STACK_ROOT}/codex-docs/db`. Never `rm -rf` without a snapshot.
 
 ## Backup
 

@@ -1,3 +1,9 @@
+<!--
+SUPERSEDED — archived 2026-05-09
+All phases verified complete. See AGENTS.md ## What Works for outcomes.
+This file is retained for historical reference only.
+-->
+
 # Task: Cursor Skills Integration + Acme-sh/DNS/HAProxy/Dockge Fixes
 # Version: 2026-05-08
 # Sources:

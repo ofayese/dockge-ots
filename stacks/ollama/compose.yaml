@@ -58,31 +58,7 @@ services:
     # Models persist in STACK_ROOT/ollama/data/ollama — skips already-pulled models.
     image: ollama/ollama:latest
     container_name: ollama-model-init
-    restart: no # intentional: one-shot init - not a long-running service
-    # Plain depends_on (no condition:) for Synology Package Center docker compose compatibility.
-    # The wait loop in command handles the startup race condition.
-    depends_on:
-      - ollama
-    environment:
-      - OLLAMA_HOST=http://ollama:11434
-      - TZ=America/New_York
-    # $$model: double $ prevents Compose from interpolating $model as a Compose variable.
-    # Pull order: smallest/most-used first so interactive use is unblocked early.
-    command: >
-      sh -c "
-        echo '[model-init] Waiting for ollama API at http://ollama:11434...';
-        until /usr/bin/ollama list > /dev/null 2>&1; do
-          echo '[model-init] Not ready, retrying in 5s...';
-          sleep 5;
-        done;
-        echo '[model-init] Ollama API ready. Starting model pulls...';
-        for model in phi4:mini nomic-embed-text llama3.2:3b qwen2.5-coder:7b llama3.1:8b mistral:7b deepseek-r1:7b qwen2.5:7b; do
-          echo \"[model-init] Pulling $$model...\";
-          /usr/bin/ollama pull $$model \
-            && echo \"[model-init] $$model OK\" \
-            || echo \"[model-init] WARNING: $$model failed, continuing...\";
-        done;
-        echo '[model-init] Model init complete. Container will exit (expected).';
+    restart: "no" # intentional: one-shot init — not a long-running service
     mem_limit: 256m
     cpu_shares: 128
     security_opt:
@@ -92,9 +68,7 @@ services:
       options:
         max-size: 2m
         max-file: "2"
-    restart: "no" # intentional: one-shot model bootstrap
     # Plain depends_on (no condition:) for Synology Package Center compatibility.
-    # The init script polls /api/tags until Ollama is ready before pulling.
     depends_on:
       - ollama
     volumes:

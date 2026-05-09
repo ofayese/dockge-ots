@@ -75,6 +75,20 @@ DONE — verified on disk, do not re-do:
 ACTUAL REMAINING WORK — verify and complete these
 ======================================================================
 
+ADDENDUM — SHELL COUNTER HARDENING UNDER `set -e`
+──────────────────────────────────────────────────
+
+Use `docs/tasks/CODER_TASK_Harden_Counter_Increments_Set_E.md` as the
+focused checklist for replacing `((X++))` with `((X+=1))` in task-doc
+shell blocks where `set -e` is active.
+
+Alignment rule:
+  - Follow that file for scan-and-fix specifics.
+  - Follow this consolidated file for pre-flight, final validation, and
+    commit flow.
+  - If duplicate instructions conflict, this file is authoritative for
+    sequencing and closeout.
+
 PHASE 0 — PRE-FLIGHT (run first, establish ground truth)
 ──────────────────────────────────────────────────────────
 

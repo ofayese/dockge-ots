@@ -171,12 +171,6 @@ defaults
   timeout client  30000ms
   timeout server  30000ms
 
-# Read service map and backends from Phase 2
-map $host $backend {
-  default backend-not-found
-  include /volume1/docker/dockge/stacks/_haproxy/maps/host.map
-}
-
 frontend http-in
   bind :80
   # Redirect HTTP to HTTPS
@@ -188,7 +182,7 @@ frontend https-in
   http-request set-header X-Forwarded-For %[src]
   
   # Use dynamic backend routing
-  use_backend %[var(req.backend)]
+  use_backend %[req.hdr(host),lower,map(/volume1/docker/dockge/stacks/_haproxy/maps/host.map,backend-not-found)]
 
 backend backend-not-found
   http-request deny status 503
@@ -470,7 +464,7 @@ set -e
 AUDIT_REPORT="docs/hive/REPO_AUDIT_REPORT.md"
 
 # Start report
-cat > "$AUDIT_REPORT" << 'EOF'
+cat > "$AUDIT_REPORT" << EOF
 # Repository Audit Report
 
 **Generated:** $(date)
@@ -489,7 +483,7 @@ COMPOSE_ERRORS=0
 for f in $(find stacks -name "compose.yaml"); do
   if ! docker compose -f "$f" config > /dev/null 2>&1; then
     echo "❌ $f: INVALID" >> "$AUDIT_REPORT"
-    ((COMPOSE_ERRORS++))
+    ((COMPOSE_ERRORS+=1))
   fi
 done
 echo "Compose | $COMPOSE_ERRORS | 0" >> "$AUDIT_REPORT"
@@ -501,7 +495,7 @@ for dir in stacks/*/; do
   if grep -q "env_file:" "$dir/compose.yaml" 2>/dev/null; then
     if [ ! -f "$dir/.env" ]; then
       echo "⚠️  $dir: Missing .env" >> "$AUDIT_REPORT"
-      ((MISSING_ENV++))
+      ((MISSING_ENV+=1))
     fi
   fi
 done
@@ -512,7 +506,7 @@ echo "Running shellcheck..."
 SHELL_ERRORS=0
 for f in $(find . -name "*.sh"); do
   if ! shellcheck "$f" 2>/dev/null; then
-    ((SHELL_ERRORS++))
+    ((SHELL_ERRORS+=1))
   fi
 done
 echo "Shell | $SHELL_ERRORS | 0" >> "$AUDIT_REPORT"
@@ -523,7 +517,7 @@ BROKEN_LINKS=0
 for link in $(find . -type l); do
   if [ ! -e "$link" ]; then
     echo "🔗 Broken link: $link" >> "$AUDIT_REPORT"
-    ((BROKEN_LINKS++))
+    ((BROKEN_LINKS+=1))
   fi
 done
 echo "Symlinks | $BROKEN_LINKS | 0" >> "$AUDIT_REPORT"
@@ -868,11 +862,13 @@ done
 
 echo "" | tee -a "$REPORT"
 echo "[10/10] Disk Space (HAProxy)" | tee -a "$REPORT"
-DISK_USAGE=$(df /volume1/@appdata/haproxy 2>/dev/null | awk 'NR==2 {print $5}')
-if [ "$DISK_USAGE" != "" ] && [ "$DISK_USAGE" -lt 80 ]; then
-  log_pass "Disk usage: $DISK_USAGE%"
+DISK_USAGE=$(df /volume1/@appdata/haproxy 2>/dev/null | awk 'NR==2 {gsub(/%/, "", $5); print $5}')
+if [ -n "$DISK_USAGE" ] && [ "$DISK_USAGE" -lt 80 ]; then
+  log_pass "Disk usage: ${DISK_USAGE}%"
+elif [ -n "$DISK_USAGE" ]; then
+  log_fail "Disk usage: ${DISK_USAGE}% (warning: approaching limit)"
 else
-  log_fail "Disk usage: $DISK_USAGE% (warning: approaching limit)"
+  log_fail "Disk usage: unavailable (warning: unable to determine usage)"
 fi
 
 echo "" | tee -a "$REPORT"

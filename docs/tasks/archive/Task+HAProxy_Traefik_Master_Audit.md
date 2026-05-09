@@ -1,3 +1,10 @@
+<!--
+SUPERSEDED — archived 2026-05-10
+All phases verified complete. See AGENTS.md ## What Works for outcomes.
+This file is retained for historical reference only.
+Consolidated into: docs/tasks/CODEBASE_HARDENING_AND_CONSOLIDATION.md
+-->
+
 ### Task: HAProxy & Traefik: Master Audit, Config Generation, and Deployment
 ### Version: 2026-05-10-combined-canonical
 ### Target: Synology DSM HAProxy Package & Traefik Stacks

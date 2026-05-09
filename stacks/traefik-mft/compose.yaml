@@ -8,7 +8,7 @@ services:
     logging:
       driver: json-file
       options:
-        max-size: "10m"
+        max-size: 10m
         max-file: "3"
     ports:
       # CRITICAL: host port maps to INTERNAL entrypoint port.
@@ -49,14 +49,17 @@ services:
       - --accesslog=true
     # Healthcheck type E: built-in binary healthcheck.
     healthcheck:
-      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      test:
+        - CMD
+        - traefik
+        - healthcheck
+        - --ping
       interval: 30s
       timeout: 10s
       retries: 5
       start_period: 15s
     networks:
       - traefik-mft
-
 networks:
   traefik-mft:
     # name: override prevents Docker double-name artefact.

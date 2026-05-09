@@ -49,11 +49,10 @@ services:
       - otsorundscore.olutechsys.com:10.0.1.15
     networks:
       - ollama-net
-
   ollama-model-init:
     image: ollama/ollama:latest
     container_name: ollama-model-init
-    restart: "no"  # intentional: one-shot init - not a long-running service
+    restart: no # intentional: one-shot init - not a long-running service
     # Plain depends_on (no condition:) for Synology Package Center docker compose compatibility.
     # The wait loop in command handles the startup race condition.
     depends_on:
@@ -89,7 +88,6 @@ services:
       - com.centurylinklabs.watchtower.enable=false
     networks:
       - ollama-net
-
   open-webui:
     container_name: otsai-webui
     image: ghcr.io/open-webui/open-webui:v0.9.2
@@ -133,7 +131,6 @@ services:
       - otsorundscore.olutechsys.com:10.0.1.15
     networks:
       - ollama-net
-
 networks:
   ollama-net:
     # name: override prevents Docker from prepending the project name.

@@ -40,3 +40,4 @@ services:
       - com.centurylinklabs.watchtower.enable=true
     extra_hosts:
       - otsorundscore.olutechsys.com:10.0.1.15
+networks: {}

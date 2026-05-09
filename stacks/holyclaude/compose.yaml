@@ -13,8 +13,6 @@ services:
     mem_limit: 4g
     cpu_shares: 768
     restart: unless-stopped
-    # Healthcheck type B: curl on CloudCLI web UI port.
-    # Port 3001 is the CloudCLI web UI. Port 3059 is dev/HMR.
     healthcheck:
       test:
         - CMD-SHELL
@@ -34,27 +32,16 @@ services:
       - PGID=${PGID:-0}
       - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL:-}
       - NOTIFY_DISCORD=${NOTIFY_DISCORD:-false}
-      # Offline / local AI stack connections
-      # Ollama: local LLM inference on NAS (otsai-server, port 11434)
       - OLLAMA_HOST=${OLLAMA_HOST:-http://10.0.1.15:11434}
-      # AnythingLLM: RAG API for document-grounded queries (rag-stack, port 3002)
       - ANYTHINGLLM_API_URL=${ANYTHINGLLM_API_URL:-http://10.0.1.15:3002}
       - ANYTHINGLLM_API_TOKEN=${ANYTHINGLLM_API_TOKEN:-}
-      # Qdrant: vector DB for direct embedding queries (rag-stack, port 6333)
       - QDRANT_URL=${QDRANT_URL:-http://10.0.1.15:6333}
       - QDRANT_API_KEY=${QDRANT_API_KEY:-}
-      # Cloud provider keys (leave blank for fully offline use)
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - CURSOR_API_KEY=${CURSOR_API_KEY:-}
     volumes:
       - claude-home:/home/claude/.claude
-      # OPERATOR EXCEPTION: workspace is user home dir, NOT ${STACK_ROOT}.
-      # /volume1/homes/laolufayese is the DSM user home for laolufayese.
-      # Override with HOLYCLAUDE_WORKSPACE in .env for other environments.
-      # EXEMPT from STACK_ROOT convention — intentional (Synology user home mount).
-      # hpdevcore (WSL2): set HOLYCLAUDE_WORKSPACE=/home/laolufayese
-      # otsmbpro16 (Mac): set HOLYCLAUDE_WORKSPACE=/Users/laolufayese
-      - ${HOLYCLAUDE_WORKSPACE:-/volume1/homes/laolufayese}:/workspace
+      - ${HOLYCLAUDE_WORKSPACE:-/volume1/docker/dockge/stacks}:/workspace
       - cloudcli-data:/home/claude/.cloudcli
     labels:
       - com.centurylinklabs.watchtower.enable=true

@@ -71,3 +71,4 @@ services:
       - TZ=America/New_York
     labels:
       - com.centurylinklabs.watchtower.enable=true
+networks: {}

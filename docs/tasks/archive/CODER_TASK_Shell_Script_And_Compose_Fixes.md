@@ -1,3 +1,5 @@
+> **Status:** ✅ SUPERSEDED / ARCHIVED — 2026-05-10
+
 # Coder Task: Shell Script and Compose File Bug Fixes
 
 **Created by:** Gordon (code review)  

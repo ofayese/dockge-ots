@@ -1,3 +1,5 @@
+> **Status:** ✅ SUPERSEDED / ARCHIVED — 2026-05-10
+
 # Unified Task: Codebase Hardening + Consolidation Sprint
 
 **Created:** 2026-05-10  

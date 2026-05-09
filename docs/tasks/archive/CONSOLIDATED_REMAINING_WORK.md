@@ -1,3 +1,5 @@
+> **Status:** ✅ SUPERSEDED / ARCHIVED — 2026-05-10
+
 # Task: Consolidated Remaining Work — 2026-05-09
 # Replaces all prior task files as the single Cursor coder entry point.
 # Run this file top-to-bottom. Each phase lists DONE/SKIP/TODO status

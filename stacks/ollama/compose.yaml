@@ -92,8 +92,8 @@ services:
         echo "[model-init] Waiting for Ollama to accept connections..."
         ATTEMPTS=0
         until /usr/bin/ollama list >/dev/null 2>&1; do
-          ATTEMPTS=$((ATTEMPTS + 1))
-          if [ "$ATTEMPTS" -gt 60 ]; then
+          ATTEMPTS=$$((ATTEMPTS + 1))
+          if [ "$$ATTEMPTS" -gt 60 ]; then
             echo "[model-init] ERROR: Ollama did not start within 5 minutes. Exiting."
             exit 1
           fi
@@ -102,32 +102,32 @@ services:
         echo "[model-init] Ollama is ready. Starting model pulls..."
 
         pull_if_missing() {
-          MODEL="$1"
+          MODEL="$$1"
           # Strip tag for display; check list for base name
-          BASE="${MODEL%%:*}"
-          if /usr/bin/ollama list 2>/dev/null | grep -q "^${BASE}"; then
-            echo "[model-init] SKIP  ${MODEL} (already present)"
+          BASE="$${MODEL%%:*}"
+          if /usr/bin/ollama list 2>/dev/null | grep -q "^$${BASE}"; then
+            echo "[model-init] SKIP  $${MODEL} (already present)"
           else
-            echo "[model-init] PULL  ${MODEL} ..."
-            /usr/bin/ollama pull "${MODEL}" && \
-              echo "[model-init] OK    ${MODEL}" || \
-              echo "[model-init] FAIL  ${MODEL} (network or registry error — will retry on next restart)"
+            echo "[model-init] PULL  $${MODEL} ..."
+            /usr/bin/ollama pull "$${MODEL}" && \
+              echo "[model-init] OK    $${MODEL}" || \
+              echo "[model-init] FAIL  $${MODEL} (network or registry error — will retry on next restart)"
           fi
         }
 
         echo "[model-init] === Tier 1: baseline models ==="
-        for MODEL in $TIER1_MODELS; do
-          pull_if_missing "$MODEL"
+        for MODEL in $$TIER1_MODELS; do
+          pull_if_missing "$$MODEL"
         done
 
         echo "[model-init] === Tier 2: primary models ==="
-        for MODEL in $TIER2_MODELS; do
-          pull_if_missing "$MODEL"
+        for MODEL in $$TIER2_MODELS; do
+          pull_if_missing "$$MODEL"
         done
 
         echo "[model-init] === Tier 3: secondary models ==="
-        for MODEL in $TIER3_MODELS; do
-          pull_if_missing "$MODEL"
+        for MODEL in $$TIER3_MODELS; do
+          pull_if_missing "$$MODEL"
         done
 
         echo "[model-init] === Complete ==="

@@ -25,7 +25,28 @@ The repo lives on a Mac (or other dev machine). The NAS receives it via `git clo
 
 - **Dockge** is started by **`scripts/dockge-start.sh`** (install as `/usr/local/etc/rc.d/dockge.sh`). The container listens on **5001** inside the image; the script publishes **host `5571` → container `5001`**. After any script update, re-run the rc script; the script **recreates** the `Dockge` container if the port binding is wrong (for example after an older `5571:5571` map).
 - **Smoke test on the NAS:** `bash scripts/check-dockge-http.sh` (defaults to `http://127.0.0.1:5571/`).
-- **HAProxy (Dockge-bound layout):** Canonical body is **[stacks/_haproxy/haproxy.cfg](../../stacks/_haproxy/haproxy.cfg)** (next to **`certs/`** and **`maps/`**). The hive proposal path **[docs/hive/proposals/_haproxy/haproxy.cfg](proposals/_haproxy/haproxy.cfg)** is an **`include`** wrapper only. **Do not** keep a copy under **`${STACK_ROOT}/docs/`** (e.g. **`…/stacks/docs/hive/…`**) — that layout is invalid; hive docs belong only at **`<repo-root>/docs/hive/`** (see **`AGENTS.md`** audit). It binds **`*:443`** with TLS from **`${STACK_ROOT}/_haproxy/certs/`** and routes by **`${STACK_ROOT}/_haproxy/maps/host.map`**. **`init-nas.sh`** creates **`stacks/_haproxy/{certs,maps}`** via **`_haproxy:certs,maps`**. If the NAS (or Synology HAProxy) already uses **`/volume1/docker/haproxy.cfg`** next to the repo root, either (a) change the service to **`haproxy -f /volume1/docker/dockge/stacks/_haproxy/haproxy.cfg`**, or (b) replace that file with a one-line **`include /volume1/docker/dockge/stacks/_haproxy/haproxy.cfg`**, or (c) keep local-only stanzas in **`/volume1/docker/haproxy.cfg`** and **`include`** the stacks file from there — avoid duplicating backends in two places. Run **`bash scripts/validate-haproxy-proposal.sh`** off-box or **`haproxy -c -f`** on the NAS before reload; open **DSM → Security → Firewall** for **443** (and **8080** for redirect). **Traefik** stacks stay separate; **`dockge-be`** → **`10.0.1.15:5571`**.
+- **HAProxy (Dockge-bound layout):** Canonical body is **[stacks/_haproxy/haproxy.cfg](../../stacks/_haproxy/haproxy.cfg)** (next to **`certs/`** and **`maps/`**). The hive proposal path **[docs/hive/proposals/_haproxy/haproxy.cfg](proposals/_haproxy/haproxy.cfg)** is an **`include`** wrapper only. **Do not** keep a copy under **`${STACK_ROOT}/docs/`** — that layout is invalid; hive docs belong only at **`<repo-root>/docs/hive/`**. It binds **`*:443`** with TLS from **`${STACK_ROOT}/_haproxy/certs/`** and routes by **`${STACK_ROOT}/_haproxy/maps/host.map`**. **`init-nas.sh`** creates **`stacks/_haproxy/{certs,maps}`** via **`_haproxy:certs,maps`**.
+
+### HAProxy Synology package paths (DSM)
+
+| Item | Path |
+| --- | --- |
+| Binary | `/volume1/@appstore/haproxy/sbin/haproxy` |
+| Live config | `/volume1/@appdata/haproxy/haproxy.cfg` |
+| Repo config | `/volume1/docker/dockge/stacks/_haproxy/haproxy.cfg` |
+
+Validate: `sudo /volume1/@appstore/haproxy/sbin/haproxy -c -f /volume1/@appdata/haproxy/haproxy.cfg`
+
+**CRITICAL — certs/ directory rule:** `haproxy.cfg` uses `bind *:443 ssl crt stacks/_haproxy/certs/`. HAProxy reads **every non-hidden file** in `certs/` as a PEM bundle. Only `*.pem` files and dotfiles (e.g. `.gitkeep`) are allowed. Any `.txt`, `.md`, or other text file causes:
+
+```
+[ALERT] unable to load certificate from file '...README.txt': no start line.
+```
+
+**Wiring options (pick one):**
+
+- **Option A:** Point HAProxy service at repo config: `-f /volume1/docker/dockge/stacks/_haproxy/haproxy.cfg`
+- **Option B:** Keep `/volume1/docker/haproxy.cfg` as a thin wrapper: `include /volume1/docker/dockge/stacks/_haproxy/haproxy.cfg`
 
 ## If your Dockge path differs from the default
 
@@ -36,11 +57,46 @@ STACK_ROOT_OVERRIDE=/volume1/docker/dockge/stacks \
   sudo bash scripts/init-nas.sh
 ```
 
+## Container access — HTTP vs HTTPS reference
+
+| Container | Port | Protocol | URL | Notes |
+| --- | --- | --- | --- | --- |
+| Dockge | 5571 | HTTP | `http://10.0.1.15:5571` | Plain HTTP |
+| Traefik dashboard | 8080 | HTTP | `http://10.0.1.15:8080/dashboard/` | Trailing slash required; only when `TRAEFIK_DASHBOARD=true` |
+| Traefik HTTP | 8880 | HTTP | `http://10.0.1.15:8880` | Redirects to HTTPS |
+| Traefik HTTPS | 6443 | HTTPS | `https://10.0.1.15:6443` | TLS — use `https://` |
+| Portainer | 9000 | HTTP | `http://10.0.1.15:9000` | Portainer CE HTTP |
+| Portainer | 9443 | HTTPS | `https://10.0.1.15:9443` | TLS — use `https://` |
+| Portainer Agent | 9001 | HTTPS (mTLS) | Internal only | Not browser-accessible |
+| Dozzle | 8892 | HTTP | `http://10.0.1.15:8892` | Plain HTTP |
+| Homepage | 7575 | HTTP | `http://10.0.1.15:7575` | Plain HTTP |
+| IT-Tools | 8894 | HTTP | `http://10.0.1.15:8894` | Plain HTTP |
+| SearXNG | 8888 | HTTP | `http://10.0.1.15:8888` | Plain HTTP |
+| Grafana | 3340 | HTTP | `http://10.0.1.15:3340` | Plain HTTP |
+| HolyClaude | 3001 | HTTP | `http://10.0.1.15:3001` | Plain HTTP |
+| otsai-webui (Open WebUI) | 8893 | HTTP | `http://10.0.1.15:8893` | Plain HTTP |
+| AnythingLLM | 3002 | HTTP | `http://10.0.1.15:3002` | NOT 3001 — conflicts with HolyClaude |
+| Qdrant | 6333 | HTTP | `http://10.0.1.15:6333/dashboard` | REST API; requires `QDRANT_API_KEY` if set |
+| Pipelines | 9099 | HTTP | `http://10.0.1.15:9099` | Plain HTTP |
+| Remotely | 5371 | HTTP | `http://10.0.1.15:5371` | Plain HTTP; TLS at reverse proxy |
+| Adminer | 8895 | HTTP | `http://10.0.1.15:8895` | Plain HTTP |
+| GitHub Desktop | 3405 | HTTP | `http://10.0.1.15:3405` | KasmVNC web UI |
+| Zabbix Web | 8532 | HTTP | `http://10.0.1.15:8532` | Plain HTTP |
+| CodexDocs | 8896 | HTTP | `http://10.0.1.15:8896` | Plain HTTP |
+| OpenResume | 8889 | HTTP | `http://10.0.1.15:8889` | Plain HTTP |
+| Watchtower metrics | 18787 | HTTP | `http://10.0.1.15:18787` | API/metrics |
+
+**"Client sent an HTTP request to an HTTPS server"** — you accessed a TLS port with `http://`. Fix: change to `https://`. Affected ports: **9443** (Portainer HTTPS), **6443** (Traefik HTTPS), **9001** (Portainer Agent — mTLS, not meant for browser `http://`/`https://` checks).
+
+**"server unexpectedly dropped the connection"** — host port published but no container listener. Most common cause: Traefik port mapping pointed to wrong internal port. Traefik listens on `:80` and `:443` internally; host must map `8880→:80` and `6443→:443`.
+
+**Traefik 404 on `/`** when dashboard is disabled — correct behaviour. Access with `http://10.0.1.15:8080/dashboard/` (trailing slash) only when `TRAEFIK_DASHBOARD=true`.
+
 ## Known outstanding issues
 
 ### Router SSL certificate (batcavegtaxe16k.asuscomm.com)
 
-The GT-AXE16000 router admin certificate (Let's Encrypt on the ASUS DDNS hostname) **expired 2025-06-06**. The UI remains reachable at **`https://10.0.1.1:8443`** but browsers show an expired cert. Renew from the router: **Administration → System** and use the control next to the certificate (“click here to manage” / ASUS certificate UI), or trigger renewal from the DDNS / certificate page. The DDNS hostname must resolve to the current WAN IP for validation to succeed.
+The GT-AXE16000 router admin certificate (Let's Encrypt on the ASUS DDNS hostname) **expired 2025-06-06**. The UI remains reachable at **`https://10.0.1.1:8443`** but browsers show an expired cert. Renew from the router: **Administration → System** and use the control next to the certificate ("click here to manage" / ASUS certificate UI), or trigger renewal from the DDNS / certificate page. The DDNS hostname must resolve to the current WAN IP for validation to succeed.
 
 ## DSM reverse proxy + platform hardening checklist
 
@@ -55,7 +111,7 @@ Apply once per NAS (or re-validate after DSM upgrades):
 
 ### WebSocket requirement (reverse proxy)
 
-Some stacks require WebSocket for core features (`remotely`, and similar interactive apps):
+Some stacks require WebSocket for core features (`remotely`, `holyclaude`, and similar interactive apps):
 
 1. Control Panel → Login Portal → Advanced → Reverse Proxy
 2. Edit target rule
@@ -90,12 +146,12 @@ Preferred: SSH into NAS → `cd /dockge` → `git pull`.
 If **`git pull`** fails with **detected dubious ownership**, the repo directory is owned by another user (often **root** after `sudo` operations) while you run **git** as your login user. Either mark the path trusted once (per user):
 
 ```bash
-git config --global --add safe.directory /volume1/docker/dockge
+git config --file .git/config --add safe.directory /volume1/docker/dockge
 ```
 
-(use your real repo path if it differs), or align ownership with your NAS Git workflow (see **`scripts/fix-permissions.sh`** / operator policy for **`${STACK_ROOT}`** vs repo root).
+(Use `--file .git/config` to avoid `~/.gitconfig.lock` issues on DSM.)
 
-If **`git pull`** fails with **`Permission denied (publickey)`** against **`git@github.com`**, you are running **git** as a user whose **`~/.ssh`** has no key **GitHub** accepts (common when using **`sudo su`** / **root**: root’s **`~/.ssh`** is not the same as your DSM user’s). Prefer **`git pull`** as the **same DSM account** that owns the deploy SSH key, or add a **read-only deploy key** for this repo (GitHub → **Settings → Deploy keys**) and install its private key only for the user that runs **`git pull`**. Alternatively switch **`origin`** to **HTTPS** and use a **fine-grained PAT** with **`repo`** scope (store via DSM / `git credential` — never commit tokens).
+If **`git pull`** fails with **`Permission denied (publickey)`** against **`git@github.com`**, you are running **git** as a user whose **`~/.ssh`** has no key **GitHub** accepts (common when using **`sudo su`** / **root**). Prefer **`git pull`** as the **same DSM account** that owns the deploy SSH key.
 
 When root execution is unavoidable and keys only exist in the operator home, preserve SSH identity:
 
@@ -105,14 +161,6 @@ sudo -E git -C /volume1/docker/dockge pull --no-rebase
 ```
 
 If new stacks were added: re-run `sudo bash scripts/init-nas.sh` so new volume directories exist.
-
-For scheduled or post-receive runs (safe to call repeatedly):
-
-```bash
-bash scripts/init-nas.sh --if-changed
-```
-
-Hashes **`init-nas.sh` itself** (via `$0`). Skips `.env` writes, `mkdir`, and `fix-permissions.sh` when the script file has not changed since the last **successful** run. The hash is written **only** after a successful full init — a failed run never poisons the stored marker, so the next `--if-changed` retries.
 
 ### Full reset helper
 
@@ -129,14 +177,45 @@ For forced full re-init (after adding new stacks or changing `STACK_MANIFEST` in
 sudo bash scripts/init-nas.sh
 ```
 
-Alternative rsync (if git on NAS is impractical):
+## Complete NAS fresh-start sequence (after DSM reset)
+
+### Prerequisites
+
+1. DSM → Package Center → install **Container Manager**
+2. SSH as `laolufayese` (Port 28)
+3. SSH key setup:
+   ```bash
+   ssh-keygen -t ed25519 -C "nas-deploy" -f ~/.ssh/id_ed25519
+   chmod 700 ~/.ssh && chmod 600 ~/.ssh/id_ed25519
+   # Add ~/.ssh/id_ed25519.pub to GitHub Settings → SSH keys
+   ssh -T git@github.com  # confirm: Hi ofayese/dockge-ots!
+   ```
+
+### Clone and bootstrap
 
 ```bash
-rsync -av --delete --exclude='.git' --exclude='.env' \
-  ~/path/to/repo/ <user>@<nas-ip>:/dockge/
+mkdir -p /volume1/docker
+cd /volume1/docker
+git clone git@github.com:ofayese/dockge-ots.git dockge
+cd /volume1/docker/dockge
+# Set safe.directory in repo config (avoids ~/.gitconfig.lock issues)
+git config --file .git/config --add safe.directory /volume1/docker/dockge
+sudo bash scripts/init-nas.sh
 ```
 
-Then: `sudo bash scripts/init-nas.sh`
+### Start Dockge
+
+```bash
+sudo cp scripts/dockge-start.sh /usr/local/etc/rc.d/dockge.sh
+sudo chmod +x /usr/local/etc/rc.d/dockge.sh
+sudo sh /usr/local/etc/rc.d/dockge.sh
+# Verify port: docker inspect Dockge shows 5001→5571 binding
+# Access: http://10.0.1.15:5571/
+```
+
+### Git pull rule (always)
+
+`git pull` must run as `laolufayese` (not root). Root has no GitHub SSH key → Permission denied (publickey). If files are root-owned after docker operations: `sudo chown -R laolufayese:administrators /volume1/docker/dockge` then `git pull`.
 
 ## Git safety on the NAS
 
@@ -147,15 +226,6 @@ The NAS working tree always contains untracked runtime dirs (`.env` files, `data
 ```bash
 git status --short          # review before any add
 git add <specific-file>    # stage only what you intend
-```
-
-If you accidentally stage a secrets file:
-
-```bash
-git rm --cached <file>
-echo "<file-pattern>" >> .gitignore
-git add .gitignore
-git commit -m "chore: untrack <file>"
 ```
 
 ### `@eaDir` git ref corruption
@@ -175,86 +245,41 @@ Permanent fix: DSM → Control Panel → Search → Indexed Locations → remove
 
 ### Recommended alias (~/.bashrc on NAS)
 
-DSM symlinks `/bin/sh -> /usr/bin/bash`, and bash invoked as `sh` enters
-POSIX mode automatically — POSIX mode **rejects hyphens in function names**.
-Define the function with an underscore name and keep the hyphenated form as
-an alias. Use `find -delete` instead of piping to `xargs rm -f` (atomic, no
-empty-`xargs` edge case, requires GNU findutils which DSM ships):
+DSM symlinks `/bin/sh -> /usr/bin/bash`, and bash invoked as `sh` enters POSIX mode — POSIX mode **rejects hyphens in function names**. Define with underscore, alias with hyphen:
 
 ```bash
 git_pull_nas() {
     find /volume1/docker/dockge/.git/refs \( -name "*eaDir*" -o -name "*SynoEAStream*" \) -delete 2>/dev/null
     git -C /volume1/docker/dockge pull --no-rebase
 }
-
-# Hyphenated alias for backward compatibility (interactive shells).
 alias git-pull-nas='git_pull_nas'
 ```
 
-Also keep `~/.profile` minimal — DSM already sources `~/.bashrc` via
-`/etc/profile` → `/etc.defaults/.bashrc_profile`, so a second
-`. ~/.bashrc` line in `~/.profile` causes `.bashrc` to be parsed twice
-on every login (visible as duplicate error messages on syntax errors).
-
-```bash
-# ~/.profile
-# DSM sources ~/.bashrc via /etc.defaults/.bashrc_profile.
-# Do not source ~/.bashrc again here.
-```
+Keep `~/.profile` minimal — DSM already sources `~/.bashrc` via `/etc.defaults/.bashrc_profile`. Do not source `~/.bashrc` again from `~/.profile` (causes double-parse and duplicate error messages).
 
 ### Ownership fix before git operations
 
 After any `sudo docker compose` operation, files in the repo dir may be owned by root. Fix before `git pull`:
 
 ```bash
-sudo chown -R laolufayese:users /volume1/docker/dockge
+sudo chown -R laolufayese:administrators /volume1/docker/dockge
 ```
+
+Note: use `administrators` group (not `users` — `users` group has zero members on this NAS).
 
 ## Git workflow options
 
-### Option A — GitHub as remote (default, no extra packages needed)
+### Option A — GitHub as remote (default)
 
 Mac → `git push` → GitHub → NAS `git pull` (manual or scheduled).
 
-### Option B — NAS Git Server as remote (Synology Git Server package)
+### Option B — NAS Git Server as remote
 
 Mac → `git push` → NAS Git Server → post-receive hook auto-deploys.
 
-To set up Option B:
-
-1. Install Synology Git Server from Package Center.
-2. Create a bare repo on the NAS:
-
-   ```bash
-   ssh <user>@<nas-ip>
-   git init --bare /volume1/git/dockge.git
-   ```
-
-3. Add a post-receive hook:
-
-   ```bash
-   cat > /volume1/git/dockge.git/hooks/post-receive << 'EOF'
-   #!/usr/bin/env bash
-   set -euo pipefail
-   WORKING_COPY="/dockge"
-   echo "Post-receive: updating working copy..."
-   git -C "$WORKING_COPY" pull --ff-only
-   bash "$WORKING_COPY/scripts/init-nas.sh" --if-changed
-   echo "Deploy complete."
-   EOF
-   chmod +x /volume1/git/dockge.git/hooks/post-receive
-   ```
-
-4. On Mac: `git remote add nas ssh://<user>@<nas-ip>/volume1/git/dockge.git`
-5. `git push nas main`
-
 ### Option C — GitHub Desktop stack (browser-based)
 
-Access `https://<NAS_IP>:3405` and use the GUI to clone, commit, and push the repo directly from the NAS browser interface. No SSH required. See [stacks/github-desktop/README.md](../stacks/github-desktop/README.md).
-
-### Git on NAS — policy
-
-Options B and C enable full git operations on the NAS. The Mac remains the primary development environment. Never `git push` from the NAS if the Mac has unpushed commits — pull first.
+Access `https://<NAS_IP>:3405` and use the GUI. No SSH required.
 
 ## Volume paths
 
@@ -264,26 +289,100 @@ Stack-level `.gitignore` files are required for data-heavy stacks (`databases`, 
 
 ## Docker network subnet registry
 
-Reserve and track custom bridge subnets to avoid Docker/LAN overlap:
+All container networks must use `172.17.0.0/8` broken into `/24` segments. `192.168.x.x` is **forbidden** — DSM Container Manager auto-assigns from that range for stacks without explicit network blocks.
 
-| Stack/network | Subnet |
-| --- | --- |
-| `github-desktop-net` | `172.29.0.0/24` |
-| `grafana-net` | `172.22.0.0/24` |
-| `prometheus-net` | `172.22.1.0/24` |
+Always set `name:` explicitly on every `networks:` block. Without it Docker prepends the project name, creating double-name artefacts (e.g. `github-desktop_github-desktop-net` instead of `github-desktop-net`).
 
-Notes:
+| Stack / network | Subnet | Network name |
+| --- | --- | --- |
+| Docker host bridge (reserved) | `172.17.0.0/16` | `docker0` — **do not use** |
+| `github-desktop-net` | `172.20.0.0/24` | `github-desktop-net` |
+| `grafana-net` | `172.22.0.0/24` | `grafana-net` |
+| `prometheus-net` | `172.22.1.0/24` | `prometheus-net` |
+| `traefik-ots` | `172.23.0.0/24` | `traefik-ots` |
+| `traefik-mft` | `172.23.1.0/24` | `traefik-mft` |
+| `portainer-net` | `172.24.0.0/24` | `portainer-net` |
+| `dozzle-net` | `172.24.1.0/24` | `dozzle-net` |
+| `homepage-net` | `172.24.2.0/24` | `homepage-net` |
+| `watchtower-net` | `172.24.3.0/24` | `watchtower-net` |
+| `it-tools-net` | `172.24.4.0/24` | `it-tools-net` |
+| `databases-net` | `172.25.0.0/24` | `databases-net` |
+| `zabbix-net` | `172.25.1.0/24` | `zabbix-net` |
+| `searxng-net` | `172.26.0.0/24` | `searxng-net` |
+| `ollama-net` | `172.27.0.0/24` | `ollama-net` |
+| `rag-net` | `172.27.1.0/24` | `rag-net` |
+| `holyclaude` | `172.28.0.0/24` | *(named volume stack — no bridge)* |
+| `remotely-net` | `172.28.1.0/24` | `remotely-net` |
+| `code-server-net` | `172.28.2.0/24` | `code-server-net` |
+| `warp-network` | `172.28.3.0/24` | `warp-network` |
+| `agents-net` | `172.28.4.0/24` | `agents-net` |
+| `codex-docs-net` | `172.28.5.0/24` | `codex-docs-net` |
+| `openresume-net` | `172.28.6.0/24` | `openresume-net` |
+| Next free | `172.28.7.0/24+` | — |
 
-- Avoid overlaps with Docker defaults (`172.17.0.0/16`) and existing custom ranges.
-- Allocate new custom subnets from `172.22.2.0/24+` unless a stack-specific reason requires otherwise.
+To check existing subnets on the NAS before adding a network:
+
+```bash
+sudo docker network inspect $(sudo docker network ls -q) \
+  --format '{{.Name}}: {{range .IPAM.Config}}{{.Subnet}}{{end}}' 2>/dev/null | grep -v '^:'
+```
 
 ### Restart policy
 
-Stacks use **`restart: unless-stopped`** by default. One-shot compose services (for example the `mcp-tools-config` Busybox placeholder) use **`restart: "no"`** with an **`# intentional`** comment in the stack `compose.yaml`.
+Stacks use **`restart: unless-stopped`** by default. One-shot compose services use **`restart: "no"`** with an **`# intentional`** comment.
+
+## Authentication and Identity
+
+→ See [docs/hive/GOOGLE_WORKSPACE_OAUTH_NAS_LOGIN.md](GOOGLE_WORKSPACE_OAUTH_NAS_LOGIN.md) for Google Workspace OAuth NAS login guide (Path A: DSM SSO Client, Path B: Synology SSO Server).
+
+## Stack tuning and customisation
+
+→ See [docs/hive/STACK_OPTIMIZATION_CUSTOMIZATION.md](STACK_OPTIMIZATION_CUSTOMIZATION.md) for per-stack tuning knobs for holyclaude, searxng, it-tools, and rag-stack.
+
+## Multi-machine Docker deployment
+
+Three Docker environments use this repo's stacks:
+
+### NAS — otsorundscore (Container Manager / DSM 7.3.2)
+
+Environment: AMD Ryzen R1600, 32 GB, CPU-only, no GPU
+Docker: Container Manager (Synology Package Center)
+Deploy: Via Dockge at `http://10.0.1.15:5571` or `docker compose` CLI via SSH
+Role: Primary inference server, shared RAG backend, offline workspace host
+**Constraint:** `depends_on` without `condition:` — older compose CLI in Package Center does not support `condition: service_healthy`
+**Constraint:** PUID/PGID default to 0 (root)
+Git: DEPLOY ONLY — commit from otsmbpro16, then `git pull` on NAS
+
+### otsmbpro16 — Mac (Apple Silicon)
+
+Docker: Docker Desktop for Mac
+Workspace: `/Users/laolufayese` → `/workspace` in HolyClaude
+Override in `.env`: `HOLYCLAUDE_WORKSPACE=/Users/laolufayese`
+Connects to NAS ollama: `http://10.0.1.15:11434`
+
+### hpdevcore — Windows 11 + WSL2
+
+Docker: Docker Engine in WSL2 (not Docker Desktop for Windows)
+Workspace: `/home/laolufayese` → `/workspace` in HolyClaude (recommended)
+Alternative workspace: `/mnt/c/Users/laolufayese` (slower I/O — avoid)
+Override in `.env`: `HOLYCLAUDE_WORKSPACE=/home/laolufayese`
+Connects to NAS ollama: `http://10.0.1.15:11434`
+
+### Connection matrix
+
+| Service | NAS port | otsmbpro16 | hpdevcore |
+| --- | --- | --- | --- |
+| Ollama API | `10.0.1.15:11434` | ✓ LAN | ✓ LAN |
+| Open WebUI | `10.0.1.15:8893` | ✓ LAN | ✓ LAN |
+| AnythingLLM | `10.0.1.15:3002` | ✓ LAN | ✓ LAN |
+| Qdrant | `10.0.1.15:6333` | ✓ LAN | ✓ LAN |
+| HolyClaude | per-machine | `localhost:3001` | `localhost:3001` |
+
+`HOLYCLAUDE_WORKSPACE` is the **only** env var that changes per machine. All other services point to the NAS at `10.0.1.15` from all three machines.
 
 ## STACK_ROOT exemptions
 
-The following stacks have **no persistent `${STACK_ROOT}` host bind mounts** and correctly **do not reference `STACK_ROOT`** in `compose.yaml`:
+The following stacks have **no persistent `${STACK_ROOT}` host bind mounts**:
 
 - **agents_gateway_data** — `docker.sock` only
 - **it-tools** — no volumes
@@ -294,104 +393,6 @@ The following stacks have **no persistent `${STACK_ROOT}` host bind mounts** and
 
 This is expected. Post-change verification that requires `STACK_ROOT` in every `compose.yaml` must **exclude** these stack names (and **portainer**, which uses operator env paths instead).
 
-## Verifying staged directories
-
-### On Mac (development — no filesystem required)
-
-List paths `init-nas.sh` would create under the resolved `STACK_ROOT` (no `mkdir`, no `.env` writes):
-
-```bash
-bash scripts/init-nas.sh --list-expected-dirs
-```
-
-Line count should match the total number of **comma-separated sub-folders** in `STACK_MANIFEST` (for example `code-server:data,config` counts as **2**).
-
-### On NAS (after running init-nas.sh)
-
-Confirm directories exist on disk:
-
-```bash
-find "${STACK_ROOT}" -mindepth 2 -maxdepth 2 -type d | sort
-```
-
-The Mac command verifies **manifest** correctness. The NAS command verifies **filesystem** state. Both should describe the same set of paths.
-
-### Manifest exhaustiveness (BSD-safe `diff`)
-
-Compare sorted stack names from `STACK_MANIFEST` against `ls stacks/`, excluding stacks in `MANIFEST_EXEMPT` in `scripts/init-nas.sh` (same names as **STACK_ROOT exemptions** plus **`docker-model-runner`** and **`portainer`**):
-
-```bash
-diff \
-  <(grep -E '^\s*"[^"]+:' scripts/init-nas.sh \
-    | sed -E 's/^[[:space:]]*"([^"]+):.*/\1/' | sort) \
-  <(ls stacks/ \
-    | grep -vE \
-      "^portainer$|^agents_gateway_data$|^it-tools$|\
-^mcp-tools-config$|^openresume$|^warp-main$|^watchtower$|\
-^docker-model-runner$" \
-    | sort)
-```
-
-Expected: **empty output** (no diff).
-
-### HIVE_OBJECTIVE.md stack list parity (table row)
-
-Stack names in `HIVE_OBJECTIVE.md` live in a **markdown table** (backtick list in the “Stack folders” row), not as `-` bullets. To compare `ls stacks/` to that list:
-
-```bash
-diff \
-  <(ls stacks/ | sort) \
-  <(grep "Stack folders" HIVE_OBJECTIVE.md \
-    | grep -oE '`[a-z][a-z0-9_-]*`' | tr -d '`' | sort -u)
-```
-
-Expected: **empty output** (no diff).
-
-## Snapshot Replication (recommended — btrfs volumes only)
-
-Configure Snapshot Replication in DSM to snapshot the shared folder containing `${STACK_ROOT}`:
-
-- **Hourly:** retain 24 snapshots
-- **Daily:** retain 7 snapshots
-- **Weekly:** retain 4 snapshots
-
-Before running `init-nas.sh` or deploying a new stack, take a manual snapshot: **Snapshot Replication** → select shared folder → **Take Snapshot**.
-
-Snapshots are instant and consume no extra space until data changes. They do **not** replace Hyper Backup — snapshots live on the same disk.
-
-## Hyper Backup (off-device backup)
-
-Back up `${STACK_ROOT}` to a remote destination (Synology C2, S3, Backblaze, another NAS, etc.) on a schedule.
-
-### Database directory exclusions
-
-Running database engines cannot be backed up consistently by file copy. Exclude all `db/` directories from Hyper Backup and use database dumps instead:
-
-| Stack        | Exclude from Hyper Backup      | Backup method                                                                 |
-| ------------ | ------------------------------- | ----------------------------------------------------------------------------- |
-| zabbix       | `${STACK_ROOT}/zabbix/db`       | `docker exec` Postgres → `pg_dumpall` → backup.sql                            |
-| databases    | `${STACK_ROOT}/databases/db`    | `docker exec` on each DB service → vendor dump                                |
-| codex-docs   | `${STACK_ROOT}/codex-docs/db`   | `docker exec mongodb mongodump` (compose **service** name `mongodb`)           |
-| grafana-prom | `${STACK_ROOT}/grafana-prom/db` | `docker exec postgres pg_dumpall` → backup.sql (only if you add a `db/` bind) |
-
-Default **grafana-prom** compose has **no** Postgres `db/` bind — back up **`data/`** with Hyper Backup; add a row-style dump only if you introduce a DB engine under `db/`.
-
-All data/ and config/ directories are safe to include in Hyper Backup.
-
-The following are also safe to include:
-
-| Path | Contents | Notes |
-| --- | --- | --- |
-| /volume1/certs/acme/wildcard/ | PEM files | Safe — no live database |
-| /volume1/certs/acme/ots-sub/ | PEM files | Safe — no live database |
-| /volume1/certs/acme/mft-sub/ | PEM files | Safe — no live database |
-| /volume1/certs/acme/otsorundscore-sub/ | PEM files | Safe — no live database |
-| /volume1/certs/acme/misfitsds-sub/ | PEM files | Safe — no live database |
-| /volume1/certs/acme/otsmbpro16/ | PEM files | Safe — no live database |
-| /volume1/certs/acme/hpdevcore/ | PEM files | Safe — no live database |
-
-Note: /volume1/certs/acme/docker-mtls/ (CA private key tree) is also safe to back up but treat as sensitive — restrict Hyper Backup destination access accordingly.
-
 ## OTS and MFT namespaces
 
 Two second-level subdomains route traffic to each NAS:
@@ -401,7 +402,7 @@ Two second-level subdomains route traffic to each NAS:
 
 Both are wildcard CNAMEs to the NAS DDNS hostname — no per-service DNS entry is needed. Add a new service by adding Traefik labels to its `compose.yaml` and joining the `traefik-ots` or `traefik-mft` network.
 
-See [docs/hive/SERVICE_MAP.md](SERVICE_MAP.md) for the full service inventory.  
+See [docs/hive/SERVICE_MAP.md](SERVICE_MAP.md) for the full service inventory.
 See [docs/hive/dns/olutechsys.com.zone](dns/olutechsys.com.zone) for the DNS zone reference.
 
 ## Traefik deployment
@@ -412,24 +413,25 @@ Traefik runs as a container on each NAS in its own Dockge stack. It is **not** p
 
 1. Deploy `traefik-ots` (or `traefik-mft`) stack first via Dockge.
 2. Confirm Traefik is healthy:
-
    ```bash
-   docker exec traefik-ots wget -qO- http://127.0.0.1:8080/ping
+   docker exec traefik-ots traefik healthcheck --ping
    ```
-
 3. Deploy service stacks — they join the `traefik-ots` / `traefik-mft` network and appear in Traefik automatically.
 
 ### Cert bind-mount dependency
 
 Traefik reads certs from `/volume1/certs/acme/ots-sub/` (or `mft-sub/`). Issue certs via **acme-sh** before deploying Traefik (see `SETUP.md` in `stacks/acme-sh/`). If the cert path is missing at startup, Traefik starts but serves a self-signed fallback — browsers will warn. Issue the cert first.
 
-### Updating service ports
+### Traefik port mapping (critical)
 
-Edit the service's `compose.yaml` labels:
+Traefik entrypoints listen on `:80` (web) and `:443` (websecure) **INSIDE** the container. Host port mapping must target these internal ports:
 
-`traefik.http.services.<name>.loadbalancer.server.port=<port>`
+- `${TRAEFIK_HTTP_PUBLISH:-8880}:80` — maps host 8880 to container :80
+- `${TRAEFIK_HTTPS_PUBLISH:-6443}:443` — maps host 6443 to container :443
 
-Restart the service container. No Traefik restart needed.
+**NOT** `:8880` or `:6443` as container targets — those have no listeners.
+
+Default: HAProxy owns host 443/80; Traefik uses 8880/6443 on the host.
 
 ### Security Advisor warning
 
@@ -439,50 +441,56 @@ Traefik mounts `/var/run/docker.sock` read-only. Security Advisor will flag this
 
 Security Advisor will report the following warnings for this repo. All are intentional and documented here.
 
-| Warning                             | Cause                                                    | Status                                                                                                                                      |
-| ----------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| Containers running as root (UID 0)  | `PUID`/`PGID` default to `0` across stacks               | Intentional — Synology Docker default. See UID/GID dual-mode docs in stack `.env.example` files and `HIVE_OBJECTIVE.md`.                    |
-| `seccomp: unconfined`               | **github-desktop** (Electron / KasmVNC requirement)      | Intentional — documented in `stacks/github-desktop/compose.yaml`.                                                                         |
-| `IPC_LOCK` capability               | **github-desktop** (Electron memory locking)             | Intentional — documented in `stacks/github-desktop/compose.yaml`.                                                                         |
-| `no-new-privileges` omitted         | **github-desktop** (Electron setuid sandbox vs DSM)    | Intentional — **`bfa07bd`**. Do not re-add NNP. Documented in `stacks/github-desktop/compose.yaml`.                                      |
-| `privileged: true` on zabbix-agent2 | Docker agent needs host access for container metrics     | Only relevant if **zabbix-agent2** is uncommented. Document the exception here before enabling. See `stacks/zabbix/compose.yaml` comments. |
-| `/var/run/docker.sock` mount        | **traefik-ots** and **traefik-mft** (Docker label discovery) | Read-only (`:ro`). Required for Traefik service auto-discovery. Documented in `compose.yaml`. |
-
-**github-desktop** intentionally **omits** `no-new-privileges:true`: Electron’s setuid sandbox cannot work under `PR_NO_NEW_PRIVS` on typical DSM kernels, which can crash or blank the UI. Other stacks in this repo may still use `no-new-privileges:true` as the fleet baseline.
+| Warning | Cause | Status |
+| --- | --- | --- |
+| Containers running as root (UID 0) | `PUID`/`PGID` default to `0` across stacks | Intentional — Synology Docker default |
+| `seccomp: unconfined` | **github-desktop** (Electron / KasmVNC requirement) | Intentional — documented in `stacks/github-desktop/compose.yaml` |
+| `IPC_LOCK` capability | **github-desktop** (Electron memory locking) | Intentional — documented in `stacks/github-desktop/compose.yaml` |
+| `no-new-privileges` omitted | **github-desktop** (Electron setuid sandbox vs DSM) | Intentional — `bfa07bd`. Do not re-add NNP |
+| `privileged: true` on zabbix-agent2 | Docker agent needs host access for container metrics | Only relevant if **zabbix-agent2** is uncommented |
+| `/var/run/docker.sock` mount | **traefik-ots** and **traefik-mft** (Docker label discovery) | Read-only (`:ro`). Required for Traefik service auto-discovery |
 
 Acknowledge these in **Security Advisor → Mark as acknowledged**. Do not remove settings from `compose.yaml` solely to silence warnings.
 
-## Native vs Docker alternatives (SynoCommunity)
+## Volume paths
 
-Some functionality in this repo can be run as native SynoCommunity packages instead of Docker stacks. The Docker stacks remain in the repo for portability and consistency. Choose native if you prefer lower overhead and tighter DSM integration.
+All writable data lives under `${STACK_ROOT}/<stack>/<sub-folder>`. The resolved absolute path is written to repo-root `.env` by `init-nas.sh`. Do not edit `.env` manually — re-run `init-nas.sh` to align `STACK_ROOT` and defaults.
 
-| Docker stack              | SynoCommunity alternative      | Notes                                                                                                                                                                                                                                                                                                                                                                                                        |
-| ------------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| acme-sh                   | cloudflared (Cloudflare Tunnel) | Cloudflare Tunnel handles external HTTPS without cert management. If using Cloudflare, `acme-sh` is redundant for public-facing certs.                                                                                                                                                                                                                                                                      |
-| nginx-proxy-manager       | cloudflared (Cloudflare Tunnel) | Cloudflare Tunnel replaces external reverse proxy. nginx-proxy-manager remains useful for internal routing.                                                                                                                                                                                                                                                                                                  |
-| zabbix-agent2 (Docker)    | Zabbix Agent (SynoCommunity)    | Native agent reports to the Zabbix Server container on `127.0.0.1:10051` and sees full DSM host metrics without privileged mode. Docker agent requires privileged + bind mounts to see host resources. Use native for NAS OS-level monitoring; use Docker agent only if you specifically need Docker container metrics in Zabbix. SNMPv3 (already configured) covers NAS hardware health without either. |
-| databases (Adminer UI)    | Adminer (SynoCommunity)         | Adminer native package provides the same database management UI without a Docker container.                                                                                                                                                                                                                                                                                                                |
-| agents_gateway_data       | —                              | No direct SynoCommunity equivalent.                                                                                                                                                                                                                                                                                                                                                                        |
+## Snapshot Replication (recommended — btrfs volumes only)
 
-Installing **cloudflared** (SynoCommunity) natively:
+Configure Snapshot Replication in DSM to snapshot the shared folder containing `${STACK_ROOT}`:
 
-1. Add SynoCommunity repo to Package Center.
-2. Install Cloudflare Tunnel package.
-3. Configure tunnel via DSM UI or `cloudflared` CLI.
-4. Point tunnel to internal services on `localhost:<port>`.
+- **Hourly:** retain 24 snapshots
+- **Daily:** retain 7 snapshots
+- **Weekly:** retain 4 snapshots
 
-If you do this: disable or remove the **acme-sh** stack (certs no longer needed for public endpoints). nginx-proxy-manager becomes optional.
+## Hyper Backup (off-device backup)
 
-## SynoCommunity dev tools (install for better NAS workflow)
+Back up `${STACK_ROOT}` to a remote destination on a schedule.
 
-Synology DSM ships with **bash** already installed — no bash package is needed. Install these from **Package Center → Community** after adding the SynoCommunity repository source:
+### Database directory exclusions
 
-| Package    | Purpose               | Impact on this repo                                      |
-| ---------- | --------------------- | -------------------------------------------------------- |
-| **Git**    | `git` client on NAS   | Enables `git pull` / `git push` from NAS (see Git workflow options) |
-| **ShellCheck** | Shell script linter | Run `shellcheck` on the NAS itself, not only on Mac      |
+| Stack | Exclude from Hyper Backup | Backup method |
+| --- | --- | --- |
+| zabbix | `${STACK_ROOT}/zabbix/db` | `docker exec` Postgres → `pg_dumpall` |
+| databases | `${STACK_ROOT}/databases/db` | `docker exec` on each DB service |
+| codex-docs | `${STACK_ROOT}/codex-docs/db` | `docker exec mongodb mongodump` |
 
-**Do not** install a third-party bash package — DSM already includes bash. Installing a third-party bash may create `PATH` conflicts.
+All `data/` and `config/` directories are safe to include in Hyper Backup.
+
+The following are also safe to include:
+
+| Path | Contents | Notes |
+| --- | --- | --- |
+| `/volume1/certs/acme/wildcard/` | PEM files | Safe — no live database |
+| `/volume1/certs/acme/ots-sub/` | PEM files | Safe — no live database |
+| `/volume1/certs/acme/mft-sub/` | PEM files | Safe — no live database |
+| `/volume1/certs/acme/otsorundscore-sub/` | PEM files | Safe — no live database |
+| `/volume1/certs/acme/misfitsds-sub/` | PEM files | Safe — no live database |
+| `/volume1/certs/acme/otsmbpro16/` | PEM files | Safe — no live database |
+| `/volume1/certs/acme/hpdevcore/` | PEM files | Safe — no live database |
+
+Note: `/volume1/certs/acme/docker-mtls/` (CA private key tree) is also safe to back up but treat as sensitive — restrict Hyper Backup destination access accordingly.
 
 ## Permissions
 

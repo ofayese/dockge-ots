@@ -152,6 +152,8 @@ flowchart TD
 
 Canonical operator flow: **[docs/hive/NAS_DEPLOYMENT.md](docs/hive/NAS_DEPLOYMENT.md)** (`init-nas.sh`, `STACK_ROOT`, `fix-permissions.sh`, rsync).
 
+Supplementary operator guides (non-proposal docs): **[docs/hive/GOOGLE_WORKSPACE_OAUTH_NAS_LOGIN.md](docs/hive/GOOGLE_WORKSPACE_OAUTH_NAS_LOGIN.md)** (Google Workspace / DSM SSO), **[docs/hive/STACK_OPTIMIZATION_CUSTOMIZATION.md](docs/hive/STACK_OPTIMIZATION_CUSTOMIZATION.md)** (per-stack tuning).
+
 ### Paths and writable data
 
 - **Bind mounts** in tracked compose files use **`${STACK_ROOT}/<stack>/…`** (resolved to an absolute path in repo-root `.env` by `scripts/init-nas.sh`) or documented operator exceptions (Portainer, code-server — see those stacks’ READMEs).

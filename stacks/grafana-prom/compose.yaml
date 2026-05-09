@@ -210,6 +210,7 @@ services:
 networks:
   grafana-net:
     name: grafana-net
+    driver: bridge
     ipam:
       config:
         # Subnet allocation on this NAS:
@@ -218,8 +219,11 @@ networks:
         # 172.22.0.0/24 = grafana-net (this stack)
         # 172.22.1.0/24 = prometheus-net (this stack)
         - subnet: 172.22.0.0/24
+          gateway: 172.22.0.1
   prometheus-net:
     name: prometheus-net
+    driver: bridge
     ipam:
       config:
         - subnet: 172.22.1.0/24
+          gateway: 172.22.1.1

@@ -9,6 +9,15 @@ Dockge Compose stack definitions for two Synology NAS hosts (OTS and MFT), plus 
 
 ---
 
+## Architecture overview
+
+- **Fleet milestones and guardrails:** [`HIVE_OBJECTIVE.md`](HIVE_OBJECTIVE.md)
+- **Google Workspace OAuth / DSM SSO:** [`docs/hive/GOOGLE_WORKSPACE_OAUTH_NAS_LOGIN.md`](docs/hive/GOOGLE_WORKSPACE_OAUTH_NAS_LOGIN.md)
+- **Stack tuning (HolyClaude, SearXNG, it-tools, rag-stack, …):** [`docs/hive/STACK_OPTIMIZATION_CUSTOMIZATION.md`](docs/hive/STACK_OPTIMIZATION_CUSTOMIZATION.md)
+- **LAN service URLs and HTTP vs HTTPS:** [`docs/hive/NAS_DEPLOYMENT.md`](docs/hive/NAS_DEPLOYMENT.md) → **Container access — HTTP vs HTTPS reference**
+
+---
+
 ## 1. After a NAS reset: bring-up order
 
 Do these in order. Long command sequences live in linked docs—do not skip them.

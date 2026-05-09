@@ -10,12 +10,13 @@ MariaDB + PostgreSQL + Adminer for any service that needs a shared DB. Distinct 
 
 ## Volumes
 
-| Host path                             | Container path             | Purpose                |
-| ------------------------------------- | -------------------------- | ---------------------- |
-| `${STACK_ROOT}/databases/db/mariadb`  | `/var/lib/mysql`           | MariaDB engine data    |
-| `${STACK_ROOT}/databases/db/postgres` | `/var/lib/postgresql/data` | PostgreSQL engine data |
+| Host path                             | Container path             | Mode | Created by    |
+| ------------------------------------- | -------------------------- | ---- | ------------- |
+| `${STACK_ROOT}/databases/db/mariadb`  | `/var/lib/mysql`           | rw   | `init-nas.sh` |
+| `${STACK_ROOT}/databases/db/postgres` | `/var/lib/postgresql/data` | rw   | `init-nas.sh` |
 
-> `STACK_ROOT` is resolved by `scripts/init-nas.sh` after `git clone`. On Synology use **`/volume1/docker/dockge/stacks`** (see `.env.example` and repo `CLAUDE.md`).
+> Run `sudo bash scripts/init-nas.sh` after cloning to create these
+> directories. Without them, the container will fail to start.
 
 ## Secrets (file-based, outside `.env`)
 

@@ -120,4 +120,3 @@ secrets:
     file: ${STACK_ROOT}/databases/secrets/mariadb_app_pw.txt
   postgres_pw:
     file: ${STACK_ROOT}/databases/secrets/postgres_pw.txt
-networks: {}

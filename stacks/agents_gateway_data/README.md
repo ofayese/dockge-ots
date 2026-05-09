@@ -8,10 +8,13 @@ Experimental **Docker MCP Gateway** wiring for DuckDuckGo search MCP. Uses the h
 | -------------- | ------------------ |
 | `8811`         | `mcp-gateway` HTTP |
 
-## Volumes / paths
+## Volumes
 
-- **`/var/run/docker.sock`** — required by `docker/mcp-gateway` to orchestrate MCP servers (see compose comments for security note).
-- Writable state should live under **`/volume1/​docker/dockge​/stacks/agents_gateway_data/`** on the NAS (not in the git checkout).
+| Host path              | Container path         | Mode | Created by |
+| ---------------------- | ---------------------- | ---- | ---------- |
+| `/var/run/docker.sock` | `/var/run/docker.sock` | rw   | operator   |
+
+No in-repo writable bind mount is declared. If future MCP gateway state is needed, place it under `${STACK_ROOT}/agents_gateway_data/` on the NAS and document the new bind before enabling it.
 
 ## Environment
 

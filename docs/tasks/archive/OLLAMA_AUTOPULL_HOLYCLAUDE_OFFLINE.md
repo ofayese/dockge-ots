@@ -1,3 +1,9 @@
+<!--
+SUPERSEDED — archived 2026-05-09
+All phases verified complete. See AGENTS.md ## What Works for outcomes.
+This file is retained for historical reference only.
+-->
+
 # Task: Automated Ollama Model Pulls + Offline AI Stack (HolyClaude + RAG)
 # Version: 2026-05-08
 # Multi-Docker context: NAS (Container Manager), otsmbpro16 (Mac), hpdevcore (Windows WSL2)

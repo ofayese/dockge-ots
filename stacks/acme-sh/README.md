@@ -7,14 +7,21 @@ Containerized acme.sh in daemon mode — issues and renews TLS certificates via 
 - `network_mode: host` (required for ACME challenges; do not change)
 - `command: daemon` — runs `acme.sh --cron` indefinitely; renewals every 60 days by default
 
-## State on disk
+## Volumes
 
-- `/volume1/​docker/dockge​/stacks/acme-sh/data/` → `/acme.sh` (issuance state, account keys, order history)
-- `/volume1/certs/acme/` → `/volume1/certs/acme/` (installed PEMs consumed by other stacks; **do not modify directly**)
+| Host path                                | Container path        | Mode | Created by    |
+| ---------------------------------------- | --------------------- | ---- | ------------- |
+| `${STACK_ROOT}/acme-sh/data`             | `/acme.sh`            | rw   | `init-nas.sh` |
+| `${ACME_CERT_ROOT:-/volume1/certs/acme}` | `/volume1/certs/acme` | rw   | operator      |
+
+> Run `sudo bash scripts/init-nas.sh` after cloning to create these
+> directories. Without them, the container will fail to start.
+
+Installed PEMs under `${ACME_CERT_ROOT:-/volume1/certs/acme}` are consumed by other stacks; **do not modify directly**.
 
 ## Required env (`.env`, gitignored)
 
-- `STACK_ROOT` — absolute path to the Dockge stacks folder (same as repo `stacks/` on disk), e.g. `/volume1/docker/dockge/stacks`
+- `STACK_ROOT` — absolute path to the Dockge stacks folder (same as repo `stacks/` on disk), e.g. `${STACK_ROOT}`
 - `CF_Token` — Cloudflare API token with `Zone.DNS Edit` on `olutechsys.com` and `olutech.systems`
 - `DISCORD_WEBHOOK_URL` — optional; renewal notifications
 
@@ -24,7 +31,7 @@ See `.env.example` for the full set.
 
 Variable substitution for `compose.yaml` uses the **default `.env` in your shell’s current directory**, not automatically `acme-sh/.env` when you pass `-f acme-sh/compose.yaml` from the parent `stacks/` folder.
 
-- **Recommended:** `cd /volume1/docker/dockge/stacks/acme-sh` then `sudo docker compose up -d` (picks up `./.env` next to `compose.yaml`).
+- **Recommended:** `cd "${STACK_ROOT}/acme-sh"` then `sudo docker compose up -d` (picks up `./.env` next to `compose.yaml`).
 - **From `stacks/`:** `sudo docker compose --env-file acme-sh/.env -f acme-sh/compose.yaml up -d` (only after `acme-sh/.env` exists on that machine — see below)
 
 A `.env` file that only exists under `acme-sh/` will still produce “not set” warnings if Compose never loads it (wrong cwd, no `--env-file`).
@@ -34,7 +41,7 @@ A `.env` file that only exists under `acme-sh/` will still produce “not set”
 That path is **not** created by `git pull`: `.env` is gitignored. On the NAS (or any host), create it once next to `compose.yaml`:
 
 ```bash
-cd /volume1/docker/dockge/stacks/acme-sh
+cd "${STACK_ROOT}/acme-sh"
 test -f .env || cp .env.example .env || sudo cp .env.example .env
 # edit .env (CF_Token, STACK_ROOT, etc.) — if the copy was done with sudo, see below
 sudo docker compose up -d

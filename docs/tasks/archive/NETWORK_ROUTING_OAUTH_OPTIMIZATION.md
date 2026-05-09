@@ -1,3 +1,9 @@
+<!--
+SUPERSEDED — archived 2026-05-09
+All phases verified complete. See AGENTS.md ## What Works for outcomes.
+This file is retained for historical reference only.
+-->
+
 # Task: Network Normalisation + HTTP/HTTPS Routing Fix + OAuth Guide + Stack Optimisation
 # Version: 2026-05-08
 

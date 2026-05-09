@@ -4,6 +4,7 @@
 # Usage:
 #   bash verify-dns-views.sh
 #   bash verify-dns-views.sh --hairpin [hostname]
+#   bash verify-dns-views.sh --help
 # Env:
 #   VERIFY_DNS_SERVER=127.0.0.1   # when running on the OTS NAS (queries local named)
 #   OTS_NAS_IP / MFT_NAS_IP       # override if your LAN differs
@@ -20,6 +21,7 @@ NC='\033[0m'
 OTS_NAS_IP="${OTS_NAS_IP:-10.0.1.15}"
 MFT_NAS_IP="${MFT_NAS_IP:-10.0.1.24}"
 OTS_HOST="${VERIFY_HAIRPIN_HOST:-otsdrv.ots.olutechsys.com}"
+HAIRPIN_HOST="${VERIFY_HAIRPIN_HOST:-otsorundscore.olutechsys.com}"
 MFT_HOST="mftdrv.mft.olutechsys.com"
 
 OTS_DNS_SERVER="${VERIFY_DNS_SERVER:-$OTS_NAS_IP}"
@@ -63,7 +65,7 @@ https_ok() {
 
 run_hairpin_probe() {
 	local host="${1:-}"
-	[[ -z "$host" ]] && host="$OTS_HOST"
+	[[ -z "$host" ]] && host="$HAIRPIN_HOST"
 	local traefik_lan
 	traefik_lan=$(expected_traefik_ip_for_host "$host")
 
@@ -92,23 +94,22 @@ run_hairpin_probe() {
 
 	echo ""
 	echo -e "${CYAN}━━ Verdict ━━${NC}"
-	if $curl_ok && [[ "$def_ip" == "$traefik_lan" ]]; then
-		echo -e "${GREEN}split-DNS not needed${NC} (for reachability): default resolver already returns Traefik LAN IP."
+	if [[ "$nas_ip" =~ ^10\. ]] && [[ "$def_ip" != "$nas_ip" ]]; then
+		echo -e "${GREEN}[SPLIT-DNS ACTIVE]${NC} NAS resolver returns LAN IP; public/default DNS differs."
 	elif $curl_ok; then
-		echo -e "${GREEN}split-DNS optional${NC}: HTTPS works via default DNS (hairpin or public path OK). Internal forward zones are an optimization / policy choice."
+		echo -e "${GREEN}[HAIRPIN OK]${NC} HTTPS works via the default resolver; split-DNS is optional for reachability."
 	else
-		if [[ "$nas_ip" == "$traefik_lan" ]] && [[ "$def_ip" != "$traefik_lan" ]]; then
-			echo -e "${YELLOW}split-DNS required${NC}: NAS resolver returns LAN Traefik IP, but HTTPS via default resolver failed. Point DHCP DNS at NAS (with DNS2 fallback) or fix hairpin / firewall."
-		elif [[ "$nas_ip" != "$traefik_lan" ]]; then
-			echo -e "${RED}split-DNS misconfigured or probe host wrong${NC}: NAS resolver did not return ${traefik_lan}. Fix Synology forward zones / dnsmasq overrides."
-		else
-			echo -e "${YELLOW}split-DNS required${NC}: HTTPS failed; check Traefik, firewall, and DNS answers."
-		fi
+		echo -e "${YELLOW}[SPLIT-DNS NEEDED]${NC} HTTPS via default resolver failed; point clients at NAS DNS or fix hairpin/firewall."
 	fi
 	echo ""
 	echo "SAN / cert: openssl s_client -servername $host -connect ${traefik_lan}:443 </dev/null 2>/dev/null | openssl x509 -noout -subject -ext subjectAltName"
 	exit 0
 }
+
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+	sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//'
+	exit 0
+fi
 
 if [[ "${1:-}" == "--hairpin" ]]; then
 	run_hairpin_probe "${2:-}"

@@ -17,7 +17,10 @@ services:
     volumes:
       - ${STACK_ROOT}/homepage/config:/app/config:rw
       - ${STACK_ROOT}/homepage/data:/app/public/icons:rw
-      # docker.sock :ro — Homepage reads container metadata for the `my-docker` integration; read-only avoids mutating the daemon API.
+
+      # /var/run socket context
+      # /var/run socket mount
+      # docker.sock :ro — Homepage reads container metadata only.
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
       - PUID=${PUID:-0}

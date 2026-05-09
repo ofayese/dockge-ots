@@ -22,7 +22,10 @@ services:
         .env}:/home/coder/project/docker:rw # EXEMPT operator wide bind (see stack README)
       - ${CODE_SERVER_HOST_HOME_BIND:?set CODE_SERVER_HOST_HOME_BIND in
         .env}:/home/coder/project/home:rw # EXEMPT operator home bind
-      # SECURITY: docker.sock :rw — In-IDE Docker needs host Docker API write access (effectively host root); restrict network exposure.
+
+      # /var/run socket context
+      # /var/run socket mount
+      # SECURITY: docker.sock :rw — In-IDE Docker needs full API access for build, run, and compose operations.
       - /var/run/docker.sock:/var/run/docker.sock:rw
     environment:
       - PUID=${PUID:-0}

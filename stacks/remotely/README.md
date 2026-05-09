@@ -7,9 +7,9 @@ no inbound firewall ports are required beyond the web UI.
 
 ## Services
 
-| Service    | Container  | Internal | Host             | Image                    |
-|------------|------------|----------|------------------|--------------------------|
-| remotely   | remotely   | 5000     | 10.0.1.15:5371   | immybot/remotely:latest  |
+| Service  | Container | Internal | Host           | Image                   |
+| -------- | --------- | -------- | -------------- | ----------------------- |
+| remotely | remotely  | 5000     | 10.0.1.15:5371 | immybot/remotely:latest |
 
 ## Prerequisites
 
@@ -23,6 +23,7 @@ sessions. Without WebSocket support in the reverse proxy, sessions will fail sil
 once an HTTPS connection is established.
 
 **DSM Reverse Proxy:**
+
 1. Control Panel → Login Portal → Advanced → Reverse Proxy
 2. Select the Remotely proxy rule → Edit
 3. Custom Header tab → Create → select **WebSocket**
@@ -33,23 +34,23 @@ once an HTTPS connection is established.
 
 ## Environment variables
 
-| Variable | Required | Default | Description |
-|---|---|---|---|
-| `REMOTELY_SERVER_URL` | Yes | `https://remotely.ots.olutechsys.com` | Public HTTPS URL for agent download links |
-| `REMOTELY_KNOWN_PROXY` | Yes | `10.0.1.15` | Reverse proxy LAN IP — trusts X-Forwarded-For |
-| `TZ` | No | `America/New_York` | Timezone for log timestamps |
+| Variable               | Required | Default                               | Description                                   |
+| ---------------------- | -------- | ------------------------------------- | --------------------------------------------- |
+| `REMOTELY_SERVER_URL`  | Yes      | `https://remotely.ots.olutechsys.com` | Public HTTPS URL for agent download links     |
+| `REMOTELY_KNOWN_PROXY` | Yes      | `10.0.1.15`                           | Reverse proxy LAN IP — trusts X-Forwarded-For |
+| `TZ`                   | No       | `America/New_York`                    | Timezone for log timestamps                   |
 
 ## Port reference
 
-| Port | Protocol | Notes |
-|---|---|---|
-| 10.0.1.15:5371 | HTTP | Web UI + API + WebSocket hub. Terminate TLS at reverse proxy. |
+| Port           | Protocol | Notes                                                         |
+| -------------- | -------- | ------------------------------------------------------------- |
+| 10.0.1.15:5371 | HTTP     | Web UI + API + WebSocket hub. Terminate TLS at reverse proxy. |
 
 ## First deploy
 
 ```bash
-sudo mkdir -p /volume1/docker/dockge/stacks/remotely/data
-cd /volume1/docker/dockge/stacks/remotely
+sudo mkdir -p "${STACK_ROOT}/remotely/data"
+cd "${STACK_ROOT}/remotely"
 cp .env.example .env
 # Edit .env: set REMOTELY_SERVER_URL to your actual public HTTPS hostname
 sudo docker compose up -d

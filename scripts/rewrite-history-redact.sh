@@ -66,34 +66,37 @@ set -euo pipefail
 
 REMOTE_URL="git@github.com:ofayese/dockge-ots.git"
 FORBIDDEN_PREFIXES=(
-  "/Volumes/docker/dockge"
-  "/volume1/docker/dockge"
+	"/Volumes/docker/dockge"
+	"/volume1/docker/dockge"
 )
 
 usage() {
-  sed -n '2,/^set -euo pipefail$/p' "$0" | sed 's/^# \{0,1\}//;$d'
+	sed -n '2,/^set -euo pipefail$/p' "$0" | sed 's/^# \{0,1\}//;$d'
 }
 
 die() {
-  printf 'rewrite-history-redact: error: %s\n' "$*" >&2
-  exit 1
+	printf 'rewrite-history-redact: error: %s\n' "$*" >&2
+	exit 1
 }
 
 require_outside_repo_clones() {
-  local path=$1 label=$2
-  for prefix in "${FORBIDDEN_PREFIXES[@]}"; do
-    case "$path" in
-      "$prefix"|"$prefix"/*)
-        die "$label ($path) lives under $prefix; choose a path outside every clone of this repo (e.g. under /tmp)."
-        ;;
-    esac
-  done
+	local path=$1 label=$2
+	for prefix in "${FORBIDDEN_PREFIXES[@]}"; do
+		case "$path" in
+		"$prefix" | "$prefix"/*)
+			die "$label ($path) lives under $prefix; choose a path outside every clone of this repo (e.g. under /tmp)."
+			;;
+		esac
+	done
 }
 
-[[ ${1:-} == "--help" || ${1:-} == "-h" ]] && { usage; exit 0; }
+[[ ${1:-} == "--help" || ${1:-} == "-h" ]] && {
+	usage
+	exit 0
+}
 
 brief_usage() {
-  cat <<'BRIEF' >&2
+	cat <<'BRIEF' >&2
 rewrite-history-redact: missing arguments — pass exactly two paths.
 
   bash scripts/rewrite-history-redact.sh <absolute-redactions-file> <absolute-empty-work-dir>
@@ -112,13 +115,16 @@ Full manual: bash scripts/rewrite-history-redact.sh --help
 BRIEF
 }
 
-[[ $# -eq 2 ]] || { brief_usage; exit 1; }
+[[ $# -eq 2 ]] || {
+	brief_usage
+	exit 1
+}
 
 REDACTIONS_FILE=$1
 WORK_DIR=$2
 
 [[ "$REDACTIONS_FILE" = /* ]] || die "redactions file must be an absolute path: $REDACTIONS_FILE"
-[[ "$WORK_DIR" = /* ]]        || die "work dir must be an absolute path: $WORK_DIR"
+[[ "$WORK_DIR" = /* ]] || die "work dir must be an absolute path: $WORK_DIR"
 
 require_outside_repo_clones "$REDACTIONS_FILE" "redactions file"
 require_outside_repo_clones "$WORK_DIR" "work dir"
@@ -128,15 +134,15 @@ require_outside_repo_clones "$WORK_DIR" "work dir"
 grep -q '==>' "$REDACTIONS_FILE" || die "redactions file has no '<value>==>REPLACEMENT' lines"
 
 if [[ -e "$WORK_DIR" ]]; then
-  if [[ -d "$WORK_DIR" ]]; then
-    [[ -z "$(ls -A "$WORK_DIR")" ]] || die "work dir exists and is not empty: $WORK_DIR"
-  else
-    die "work dir path exists and is not a directory: $WORK_DIR"
-  fi
+	if [[ -d "$WORK_DIR" ]]; then
+		[[ -z "$(ls -A "$WORK_DIR")" ]] || die "work dir exists and is not empty: $WORK_DIR"
+	else
+		die "work dir path exists and is not a directory: $WORK_DIR"
+	fi
 fi
 
-command -v git              >/dev/null || die "git not on PATH"
-command -v git-filter-repo  >/dev/null || die "git-filter-repo not on PATH (install: brew install git-filter-repo OR pipx install git-filter-repo)"
+command -v git >/dev/null || die "git not on PATH"
+command -v git-filter-repo >/dev/null || die "git-filter-repo not on PATH (install: brew install git-filter-repo OR pipx install git-filter-repo)"
 
 mkdir -p "$WORK_DIR"
 
@@ -153,18 +159,18 @@ mapfile -t PATTERNS < <(awk -F'==>' 'NF>=2 && length($1)>0 {print $1}' "$REDACTI
 
 found_any=0
 for pat in "${PATTERNS[@]}"; do
-  hit_count=$(git grep -I --all -F -l "$pat" -- "$(git rev-list --all)" 2>/dev/null | wc -l | tr -d ' ' || true)
-  if [[ "${hit_count:-0}" -gt 0 ]]; then
-    printf '  - found pattern in %s blob(s)\n' "$hit_count"
-    found_any=1
-  else
-    printf '  - WARNING: pattern not currently reachable in history (already redacted?): %s\n' "${pat:0:8}…"
-  fi
+	hit_count=$(git grep -I --all -F -l "$pat" -- "$(git rev-list --all)" 2>/dev/null | wc -l | tr -d ' ' || true)
+	if [[ "${hit_count:-0}" -gt 0 ]]; then
+		printf '  - found pattern in %s blob(s)\n' "$hit_count"
+		found_any=1
+	else
+		printf '  - WARNING: pattern not currently reachable in history (already redacted?): %s\n' "${pat:0:8}…"
+	fi
 done
 
 if [[ "$found_any" -eq 0 ]]; then
-  printf '\nNo redactions to apply — every pattern is already absent from history. Nothing to do.\n'
-  exit 0
+	printf '\nNo redactions to apply — every pattern is already absent from history. Nothing to do.\n'
+	exit 0
 fi
 
 printf '\n[3/5] Running git filter-repo --replace-text %s ...\n' "$REDACTIONS_FILE"
@@ -173,11 +179,11 @@ git filter-repo --replace-text "$REDACTIONS_FILE"
 printf '\n[4/5] Verifying no redaction pattern remains in any reachable blob ...\n'
 remaining=0
 for pat in "${PATTERNS[@]}"; do
-  hit_count=$(git grep -I --all -F -l "$pat" -- "$(git rev-list --all)" 2>/dev/null | wc -l | tr -d ' ' || true)
-  if [[ "${hit_count:-0}" -gt 0 ]]; then
-    printf '  - STILL PRESENT in %s blob(s) — pattern starts with: %s\n' "$hit_count" "${pat:0:8}…"
-    remaining=$(( remaining + 1 ))
-  fi
+	hit_count=$(git grep -I --all -F -l "$pat" -- "$(git rev-list --all)" 2>/dev/null | wc -l | tr -d ' ' || true)
+	if [[ "${hit_count:-0}" -gt 0 ]]; then
+		printf '  - STILL PRESENT in %s blob(s) — pattern starts with: %s\n' "$hit_count" "${pat:0:8}…"
+		remaining=$((remaining + 1))
+	fi
 done
 [[ "$remaining" -eq 0 ]] || die "rewrite incomplete; $remaining pattern(s) still reachable. Do NOT push."
 

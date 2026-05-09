@@ -14,15 +14,20 @@ Synology-oriented **Grafana** + **Prometheus** + exporters (`node-exporter`, `sn
 
 ## Volumes
 
-| Host path                                                        | Container path                            | Purpose                                                                   |
-| ---------------------------------------------------------------- | ----------------------------------------- | ------------------------------------------------------------------------- |
-| `${STACK_ROOT}/grafana-prom/data/grafana`                        | `/var/lib/grafana`                        | Grafana UI state, dashboards, plugins                                     |
-| `${STACK_ROOT}/grafana-prom/data/prometheus`                     | `/prometheus`                             | Prometheus TSDB                                                           |
-| `${STACK_ROOT}/grafana-prom/prom.yml`                            | `/etc/prometheus/prometheus.yml`          | Prometheus scrape config                                                  |
-| `${STACK_ROOT}/grafana-prom/snmp.yml`                            | `/etc/snmp_exporter/snmp.yml`             | SNMP exporter config                                                      |
-| `${STACK_ROOT}/grafana-prom/secrets/watchtower_bearer_token.txt` | `/etc/prometheus/watchtower_bearer_token` | Bearer token file for Watchtower metrics scrape (read-only in Prometheus) |
+| Host path                                                        | Container path                            | Mode | Created by    |
+| ---------------------------------------------------------------- | ----------------------------------------- | ---- | ------------- |
+| `${STACK_ROOT}/grafana-prom/data/grafana`                        | `/var/lib/grafana`                        | rw   | `init-nas.sh` |
+| `${STACK_ROOT}/grafana-prom/data/prometheus`                     | `/prometheus`                             | rw   | `init-nas.sh` |
+| `${STACK_ROOT}/grafana-prom/prom.yml`                            | `/etc/prometheus/prometheus.yml`          | ro   | `init-nas.sh` |
+| `${STACK_ROOT}/grafana-prom/snmp.yml`                            | `/etc/snmp_exporter/snmp.yml`             | ro   | `init-nas.sh` |
+| `${STACK_ROOT}/grafana-prom/secrets/watchtower_bearer_token.txt` | `/etc/prometheus/watchtower_bearer_token` | ro   | operator      |
+| `/`                                                              | `/rootfs`                                 | ro   | operator      |
+| `/var/run`                                                       | `/var/run`                                | ro   | operator      |
+| `/sys`                                                           | `/sys`                                    | ro   | operator      |
+| `/var/run/docker.sock`                                           | `/var/run/docker.sock`                    | ro   | operator      |
 
-> `STACK_ROOT` is written by `scripts/init-nas.sh` after `git clone`. On Synology use **`/volume1/docker/dockge/stacks`** (see each stack’s `.env.example` and repo `CLAUDE.md`).
+> Run `sudo bash scripts/init-nas.sh` after cloning to create these
+> directories. Without them, the container will fail to start.
 
 ## Bootstrap (first deploy)
 

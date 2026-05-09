@@ -9,12 +9,13 @@ Local LLM runtime (`ollama`) + open-webui front-end. CPU-only on this NAS — no
 
 ## Volumes
 
-| Host path                              | Container path      | Purpose                                |
-| -------------------------------------- | ------------------- | -------------------------------------- |
-| `${STACK_ROOT}/ollama/data/ollama`     | `/root/.ollama`     | Ollama model blobs and engine state    |
-| `${STACK_ROOT}/ollama/data/open-webui` | `/app/backend/data` | Open WebUI DB, uploads, and auth state |
+| Host path                              | Container path      | Mode | Created by    |
+| -------------------------------------- | ------------------- | ---- | ------------- |
+| `${STACK_ROOT}/ollama/data/ollama`     | `/root/.ollama`     | rw   | `init-nas.sh` |
+| `${STACK_ROOT}/ollama/data/open-webui` | `/app/backend/data` | rw   | `init-nas.sh` |
 
-> `STACK_ROOT` is resolved by `scripts/init-nas.sh` after `git clone`. On Synology use **`/volume1/docker/dockge/stacks`** (see `.env.example` and repo `CLAUDE.md`).
+> Run `sudo bash scripts/init-nas.sh` after cloning to create these
+> directories. Without them, the container will fail to start.
 
 ## Public hostname
 
@@ -27,9 +28,23 @@ Local LLM runtime (`ollama`) + open-webui front-end. CPU-only on this NAS — no
 
 ## Models
 
-`DEFAULT_MODELS=phi4:mini` — small enough to run CPU-only at usable latency.
+`DEFAULT_MODELS=phi4:mini,qwen2.5-coder:7b,nomic-embed-text` — CPU-friendly defaults with the embedding model AnythingLLM needs at startup.
 
-Pull additional models:
+The one-shot `ollama-model-init` service pulls tiered models from `.env`:
+
+| Tier   | Env var               | Default models                           |
+| ------ | --------------------- | ---------------------------------------- |
+| Tier 1 | `OLLAMA_TIER1_MODELS` | `phi4:mini nomic-embed-text llama3.2:3b` |
+| Tier 2 | `OLLAMA_TIER2_MODELS` | `qwen2.5-coder:7b llama3.1:8b`           |
+| Tier 3 | `OLLAMA_TIER3_MODELS` | `deepseek-r1:7b mistral:7b qwen2.5:7b`   |
+
+Re-run the model puller after changing tiers:
+
+```bash
+docker compose up --force-recreate ollama-model-init
+```
+
+Pull an extra model manually:
 
 ```bash
 docker exec otsai-server ollama pull <model>
@@ -39,8 +54,8 @@ docker exec otsai-server ollama pull <model>
 
 Without `mem_limit`, model loading can eat all NAS RAM. The compose enforces:
 
-- ollama: 8g (room for phi4-mini + KV cache + headroom)
-- open-webui: 512m (just a Node UI)
+- ollama: 16g (room for 14B Q4_K_M models + KV cache + headroom)
+- open-webui: 2g (web UI, uploads, and RAG-adjacent state)
 
 If you regularly run larger models (e.g. `llama3.1:70b`), bump `ollama` mem_limit significantly.
 

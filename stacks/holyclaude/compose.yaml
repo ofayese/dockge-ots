@@ -66,4 +66,3 @@ services:
 volumes:
   claude-home: {}
   cloudcli-data: {}
-networks: {}

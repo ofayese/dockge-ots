@@ -17,13 +17,14 @@ Copy `.env.example` to `.env` and set `POSTGRES_PASSWORD` to a strong value. `ST
 
 ## Volumes
 
-| Host path                     | Container path             | Purpose                                                                           |
-| ----------------------------- | -------------------------- | --------------------------------------------------------------------------------- |
-| `${STACK_ROOT}/zabbix/db`     | `/var/lib/postgresql/data` | PostgreSQL data                                                                   |
-| `${STACK_ROOT}/zabbix/data`   | `/var/lib/zabbix`          | Zabbix server state (SNMP traps, export, etc.)                                    |
-| `${STACK_ROOT}/zabbix/config` | `/etc/zabbix`              | Reserved for optional **zabbix-agent2** (see commented service in `compose.yaml`) |
+| Host path                     | Container path             | Mode | Created by    |
+| ----------------------------- | -------------------------- | ---- | ------------- |
+| `${STACK_ROOT}/zabbix/db`     | `/var/lib/postgresql/data` | rw   | `init-nas.sh` |
+| `${STACK_ROOT}/zabbix/data`   | `/var/lib/zabbix`          | rw   | `init-nas.sh` |
+| `${STACK_ROOT}/zabbix/config` | `/etc/zabbix`              | rw   | `init-nas.sh` |
 
-> `STACK_ROOT` is resolved by `scripts/init-nas.sh` after `git clone`. On Synology use **`/volume1/docker/dockge/stacks`** (see `.env.example` and repo `CLAUDE.md`). Legacy `/dockge/stacks` is only for non-host bind contexts. Override: `STACK_ROOT_OVERRIDE=/your/path sudo bash scripts/init-nas.sh`
+> Run `sudo bash scripts/init-nas.sh` after cloning to create these
+> directories. Without them, the container will fail to start.
 
 ## Dependencies
 

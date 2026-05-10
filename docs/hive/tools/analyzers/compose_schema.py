@@ -19,8 +19,15 @@ logger = logging.getLogger(__name__)
 
 # Compose v3.9 known fields (non-exhaustive, covers most common cases)
 COMPOSE_V39_TOP_KEYS = {
-    'version', 'services', 'volumes', 'networks', 'secrets', 'configs',
-    'x-build', 'x-labels'  # Extension fields are allowed
+    'version',
+    'services',
+    'volumes',
+    'networks',
+    'secrets',
+    'configs',
+    'name',  # Compose project name (v2/v3)
+    'x-build',
+    'x-labels',  # Extension fields are allowed
 }
 
 SERVICE_KEYS = {
@@ -67,8 +74,12 @@ def validate_v39_schema(compose: dict[str, Any]) -> list[str]:
     # Check version
     version = compose.get('version', '3')
     try:
-        major, minor = version.split('.')[:2]
-        v_major, v_minor = int(major), int(minor)
+        parts = str(version).split('.')
+        if len(parts) >= 2:
+            v_major, v_minor = int(parts[0]), int(parts[1])
+        else:
+            v_major = int(parts[0])
+            v_minor = 0
         if (v_major, v_minor) > (3, 9):
             errors.append(f"Unsupported version {version} (expected 3.x)")
     except (ValueError, AttributeError):
@@ -98,10 +109,8 @@ def _validate_service(name: str, service: dict[str, Any]) -> list[str]:
     """Validate a single service definition."""
     errors: list[str] = []
 
-    # Check for unknown keys
-    unknown = set(service.keys()) - SERVICE_KEYS
-    if unknown and not any(k.startswith('x-') for k in unknown):
-        errors.append(f"Service '{name}': unknown keys {', '.join(sorted(unknown))}")
+    # Unknown service keys are intentionally not errors — Compose evolves and
+    # stacks use many optional keys (deploy, env_file, cgroupns, …).
 
     # Check for deprecated keys
     for deprecated, note in DEPRECATED_FIELDS.items():

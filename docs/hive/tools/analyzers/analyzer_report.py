@@ -39,7 +39,7 @@ def build_analyzer_report(
         'env_example_file': str(env_example_file),
         'findings': {
             'schema_validation': [],
-            'env_validation': [],
+            'env_validation': {},  # Always a dict, even if .env doesn't exist
             'traefik_routing': [],
             'dependency_analysis': [],
             'security_checks': [],
@@ -95,14 +95,8 @@ def build_analyzer_report(
         traefik_issues: list[dict[str, Any]] = []
         for svc_name, svc_def in services.items():
             if isinstance(svc_def, dict):
-                labels_list = label_analyzer.normalize_labels(svc_def.get('labels'))
-                # Convert list of 'k=v' to dict
-                labels: dict[str, str] = {}
-                if isinstance(labels_list, list):
-                    for item in labels_list:
-                        if '=' in item:
-                            k, _, v = item.partition('=')
-                            labels[k.strip()] = v.strip()
+                # normalize_labels returns dict[str, str] directly
+                labels = label_analyzer.normalize_labels(svc_def.get('labels'))
                 
                 invalid = label_analyzer.detect_invalid_traefik_labels(labels)
                 missing = label_analyzer.detect_missing_router_defs(svc_name, labels)
@@ -117,8 +111,8 @@ def build_analyzer_report(
         report['findings']['traefik_routing'] = traefik_issues
 
         # Count issues
-        all_errors = schema_errors + (report['findings']['env_validation'].get('errors', []) or [])
-        all_warnings = deprecated + (report['findings']['env_validation'].get('missing_keys', []) or [])
+        all_errors = schema_errors + report['findings']['env_validation'].get('errors', [])
+        all_warnings = deprecated + report['findings']['env_validation'].get('missing_keys', [])
 
         report['summary']['total_issues'] = len(all_errors)
         report['summary']['total_warnings'] = len(all_warnings)

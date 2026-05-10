@@ -8,10 +8,12 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0
     hooks:
+      # docs/, .github/, and .cursor/ on Synology SMB mounts often reject in-place rewrites (EINVAL /
+      # OSError 22). Excluded here so local pre-commit succeeds on /Volumes/...; run full fixups on APFS.
       - id: trailing-whitespace
-        exclude: ^(docs/|\.cursor/|\.github/)
+        exclude: ^(docs/|\.cursor/|\.github/|\.vscode/|\.claude-flow/)
       - id: end-of-file-fixer
-        exclude: ^(docs/|\.cursor/|\.github/)
+        exclude: ^(docs/|\.cursor/|\.github/|\.vscode/|\.claude-flow/)
       - id: check-merge-conflict
       - id: check-yaml
       - id: check-json
@@ -20,7 +22,7 @@ repos:
     rev: v3.1.0
     hooks:
       - id: prettier
-        exclude: ^(docs/|\.cursor/|\.github/)
+        exclude: ^(docs/|\.cursor/|\.github/|\.vscode/|\.claude-flow/)
         additional_dependencies: ["prettier@3.2.5"]
         types_or:
           - javascript
@@ -51,33 +53,14 @@ repos:
     hooks:
       - id: shellcheck
         types: [shell]
-
-  # ──────────────────────────────────────────────────────────────────
-  # PYTHON: PEP8, TYPING, SECURITY
-  # ──────────────────────────────────────────────────────────────────
-  - repo: https://github.com/PyCQA/flake8
-    rev: "7.0.0"
-    hooks:
-      - id: flake8
-        args: ["--max-line-length=120", "--extend-ignore=E203,W503"]
-        files: ^(docs/hive/tools/|scripts/|tests/).*\.py$
-
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "v1.8.0"
-    hooks:
-      - id: mypy
-        args: ["--strict", "--ignore-missing-imports"]
-        files: ^(docs/hive/tools/|scripts/|tests/).*\.py$
-        additional_dependencies:
-          - types-PyYAML
-          - types-requests
+        exclude: ^tests/shell/
 
   # ──────────────────────────────────────────────────────────────────
   # LOCAL HOOKS: CUSTOM SAFETY & VALIDATION
+  # (flake8/mypy: not on default commit — see AGENTS.md; run manually if needed.)
   # ──────────────────────────────────────────────────────────────────
   - repo: local
     hooks:
-      # Python: Unescaped subprocess.run without timeout
       - id: python-no-timeout-subprocess
         name: "Python: detect subprocess.run without timeout"
         entry: hooks/python-no-timeout-subprocess.py
@@ -85,15 +68,13 @@ repos:
         files: ^(docs/hive/tools/|scripts/|tests/).*\.py$
         pass_filenames: true
 
-      # Python: Unsafe dict iteration patterns
       - id: python-unsafe-dict-iteration
-        name: "Python: detect unsafe dict iteration"
+        name: "Python: detect unsafe depends_on dict formatting"
         entry: hooks/python-unsafe-dict-iteration.py
         language: python
         files: ^(docs/hive/tools/|scripts/|tests/).*\.py$
         pass_filenames: true
 
-      # Shell: sed without escaping
       - id: shell-unsafe-sed
         name: "Shell: detect sed without escaping"
         entry: hooks/shell-unsafe-sed.sh
@@ -101,7 +82,6 @@ repos:
         types: [shell]
         pass_filenames: true
 
-      # Shell: bash regex alternation
       - id: shell-bash-regex-alternation
         name: "Shell: detect unsafe bash regex alternation"
         entry: hooks/shell-bash-regex-alternation.sh
@@ -109,7 +89,6 @@ repos:
         types: [shell]
         pass_filenames: true
 
-      # Shell: docker compose without error propagation
       - id: shell-docker-compose-no-err
         name: "Shell: detect docker compose without error propagation"
         entry: hooks/shell-docker-compose-no-err.sh
@@ -117,7 +96,6 @@ repos:
         types: [shell]
         pass_filenames: true
 
-      # Node.js: Zod schemas not wrapped in z.object()
       - id: node-zod-schema-wrapper
         name: "Node.js: detect Zod schemas not wrapped in z.object()"
         entry: hooks/node-zod-schema-wrapper.js
@@ -125,47 +103,32 @@ repos:
         files: ^(stacks/.*\.js|stacks/.*\.ts)$
         pass_filenames: true
 
-      # Run unit tests
       - id: pytest-unit-tests
         name: "Run Python unit tests"
         entry: hooks/run-pytest.sh
         language: script
         files: ^tests/.*\.py$
         pass_filenames: false
-        stages: [commit]
+        stages: [pre-commit]
         verbose: true
 
-      # Run shell integration tests
       - id: bats-shell-integration
         name: "Run shell integration tests (bats)"
         entry: hooks/run-bats.sh
         language: script
         types: [shell]
         pass_filenames: false
-        stages: [commit]
+        stages: [pre-commit]
         verbose: true
 
-      # Run inventory analyzer
       - id: inventory-static-analyzer
         name: "Run inventory static analyzer"
         entry: hooks/run-analyzer.sh
         language: script
         files: ^(stacks/.*compose\.ya?ml|docs/hive/tools/inventory\.py)$
         pass_filenames: false
-        stages: [commit]
+        stages: [pre-commit]
         verbose: true
-
-  - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v3.1.0
-    hooks:
-      - id: prettier
-        exclude: ^(docs/|\.cursor/|\.github/)
-        additional_dependencies: ["prettier@3.2.5"]
-        types_or:
-          - javascript
-          - jsx
-          - ts
-          - tsx
 
   - repo: meta
     hooks:

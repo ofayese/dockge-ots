@@ -3,7 +3,7 @@ services:
     container_name: otsai-server
     # DS723+: AMD Ryzen R1600 (2 cores / 4 threads), 32 GB RAM, CPU-only.
     # Check https://hub.docker.com/r/ollama/ollama/tags for latest stable.
-    image: ollama/ollama:latest
+    image: ollama/ollama@sha256:d00473cb58f0082c07cd6ed0d326a8a86f443ab69c51f8fc2b1a41687d45c661
     # 16g: allows 14B Q4_K_M models (8.5 GB) with KV cache headroom.
     # Never exceed 24g — DSM + other stacks need the remaining RAM.
     mem_limit: 16g
@@ -58,7 +58,7 @@ services:
     # restart: "no" — intentional: runs once per `docker compose up` cycle.
     # Re-runs on: docker compose up --force-recreate ollama-model-init
     # Models persist in STACK_ROOT/ollama/data/ollama — skips already-pulled models.
-    image: ollama/ollama:latest
+    image: ollama/ollama@sha256:d00473cb58f0082c07cd6ed0d326a8a86f443ab69c51f8fc2b1a41687d45c661
     container_name: ollama-model-init
     restart: no # intentional: one-shot init — not a long-running service
     mem_limit: 256m

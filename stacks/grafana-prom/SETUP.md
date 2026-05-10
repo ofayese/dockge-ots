@@ -27,8 +27,8 @@ This Docker Compose stack provides complete monitoring for Synology NAS using Gr
    - Use credentials from snmp.yml
 
 3. **Configure firewall rules** (if enabled):
-   - Allow traffic on ports: 3340, 9090, 9116, 9100
-   - IP range: 192.168.50.0/24 (Grafana) and 192.168.51.0/24 (Prometheus)
+   - Allow traffic on ports: **3340** (Grafana), **9090** (Prometheus), **9116** (SNMP exporter relay), **9100** (node exporter), **8080** (cAdvisor), and **UDP 161** from the Prometheus container host to **each Synology SNMP target** (see **`prom.yml`** — default **`10.0.1.15`** OTS and **`10.0.1.24`** MFT).
+   - Docker bridge subnets for this stack follow **`docs/hive/NAS_DEPLOYMENT.md` → Docker network subnet registry** (e.g. **`grafana-net`**, **`prometheus-net`** under **`172.22.x.0/24`**). **Do not** use **`192.168.x.x`** in compose networks; examples below that used **`192.168.50.0/24`** / **`192.168.51.0/24`** are **non-prod placeholders only** — replace with your LAN CIDRs when opening the host firewall to admins.
 
 ## Setup Instructions
 
@@ -43,12 +43,10 @@ TIMEZONE=America/New_York   # IANA TZ
 NAS_IP=10.0.1.15            # Management LAN IP for SNMP targets
 ```
 
-Edit `prometheus.yml`:
+SNMP targets live in **`prom.yml`** (this repo ships **SNMPv3-first** via **`snmp.yml`** — treat **SNMPv2c** as legacy/lab-only if you enable it: community strings are trivially sniffable on LANs). After editing, reload the Prometheus container.
 
 ```yaml
-- job_name: "synology-nas"
-  static_configs:
-    - targets: ["192.168.1.18:161"] # Replace with YOUR NAS IP
+# See stacks/grafana-prom/prom.yml — synology-nas job uses 10.0.1.15:161 and 10.0.1.24:161 with instance labels.
 ```
 
 ### Step 2: Create Required Directories
@@ -94,10 +92,10 @@ docker compose ps
 
 ## Network Configuration
 
-Two isolated networks are created:
+Two isolated networks are created (see **`compose.yaml`** — this stack uses **`172.22.0.0/24`** and **`172.22.1.0/24`** with gateways **`172.22.0.1`** / **`172.22.1.1`**, aligned with **`docs/hive/NAS_DEPLOYMENT.md` → Docker network subnet registry**). **Do not** use **`192.168.x.x`** in compose for this fleet.
 
-- `grafana-net` (192.168.50.0/24): Grafana ↔ Prometheus
-- `prometheus-net` (192.168.51.0/24): All exporters and Watchtower
+- `grafana-net`: Grafana ↔ Prometheus
+- `prometheus-net`: All exporters and Watchtower
 
 ## Health Checks
 

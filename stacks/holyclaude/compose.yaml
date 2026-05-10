@@ -1,6 +1,6 @@
 services:
   holyclaude:
-    image: coderluii/holyclaude:latest
+    image: coderluii/holyclaude@sha256:e897a524634b762ed486cfe38a49367ae60d78c11355dc59c700b7b9377f48de
     container_name: holyclaude
     hostname: holyclaude
     shm_size: 2g

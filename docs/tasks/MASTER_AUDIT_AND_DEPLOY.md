@@ -1,5 +1,5 @@
 # Task: Master Audit + Deploy — Full Stack
-# Version: 2026-05-09-b (25 stacks incl. psu-ots; host-named TLS paths; consolidation sprint + review additions)
+# Version: 2026-05-10-a (26 stacks incl. synology-api-bridge; host-named TLS paths; consolidation sprint + review additions)
 
 /coder
 /compound-learning
@@ -113,7 +113,7 @@ Run before Phase 1 to catch operational misconfigurations:
 
   1. Stack count and manifest match:
      ls stacks/ | grep -v '^_' | wc -l
-     # Expected: 25
+     # Expected: 26
 
   2. No untracked files in repo root (except .env files):
      git status --short | grep -v '\.env' | head -5
@@ -139,8 +139,8 @@ Run and record PASS / FAIL / NOTE for each gate.
 
 ### Gate 1: Stack count and manifest parity
 
-  Stack count is **25** ( **`remotely`** added 2026-05-08; **`psu-ots`** added 2026-05-09 ).
-  **`HIVE_OBJECTIVE.md`** must show **25** stack folders and **`--count 25`** spawn string.
+  Stack count is **26** ( **`remotely`** added 2026-05-08; **`psu-ots`** added 2026-05-09; **`synology-api-bridge`** added 2026-05-10 ).
+  **`HIVE_OBJECTIVE.md`** must show **26** stack folders and **`--count 26`** spawn string.
 
   Command:
     ls stacks/ | grep -v '^_' | wc -l
@@ -153,7 +153,7 @@ Run and record PASS / FAIL / NOTE for each gate.
         | sort -u)
 
   Expected:
-    - stack count **25**
+    - stack count **26**
     - manifest diff empty ( **`STACK_MANIFEST`** includes **`remotely:data`** and **`psu-ots:data`** among others — see **`scripts/init-nas.sh`** )
 
 ### Gate 2: Layout hygiene
@@ -515,13 +515,13 @@ PHASE 5 — DOC GAP REMEDIATION (AGENT, DOCS-ONLY)
 Apply docs-only corrections (verify on stale clones; **canonical tree as of 2026-05-09** already has these):
 
 1. Root README.md:
-   - Stack count **25** (incl. **`remotely`**, **`psu-ots`**); port table includes remotely **5371**
+   - Stack count **26** (incl. **`remotely`**, **`psu-ots`**, **`synology-api-bridge`**); port table includes remotely **5371**
    - DNS / TLS prose uses **host-named** wildcards (**`*.otsorundscore.*`**, **`*.misfitsds.*`**) — not **`*.ots.olutechsys.com`** / **`*.mft.olutechsys.com`**
    - Must reflect **`nas-reset.sh`** as reset entry point
 
 2. HIVE_OBJECTIVE.md:
-   - **25** stack folders in the table; **`psu-ots`** in the name list
-   - **25** workers / **`--count 25`** spawn string
+   - **26** stack folders in the table; **`psu-ots`** and **`synology-api-bridge`** in the name list
+   - **26** workers / **`--count 26`** spawn string
 
 3. docs/hive/NAS_DEPLOYMENT.md must contain:
    - Git safety on NAS section
@@ -813,7 +813,7 @@ PHASE 7 — VALIDATION SUITE (AGENT)
   # Shell scripts clean (post–consolidation sprint baseline)
   shellcheck -x scripts/*.sh
 
-  # Stack count is 25
+  # Stack count is 26
   ls stacks/ | grep -v '^_' | wc -l
 
   # Image healthcheck verification (optional — requires NAS or local docker access)
@@ -874,7 +874,7 @@ Required patterns to ensure are documented:
   - **Example:** `["CMD-SHELL", "nc -z 127.0.0.1 9001 || exit 1"]` (Portainer Agent).
   - **Traefik:** healthcheck uses native `traefik healthcheck --ping` (avoids TLS cert validation in probe).
 
-  [2026-05-08] remotely stack added (**24th** stack; **`psu-ots`** is **25th** — see **[2026-05-09]** bullet below):
+  [2026-05-08] remotely stack added (**24th** stack; **`psu-ots`** is **25th** — see **[2026-05-09]**; **`synology-api-bridge`** is **26th** — see **[2026-05-10]**):
   - Image: immybot/remotely:latest (no semver tags — pin by digest after first pull)
   - Port: 10.0.1.15:5371:5000
   - Requires WebSocket in DSM reverse proxy for remote sessions
@@ -889,6 +889,11 @@ Required patterns to ensure are documented:
   - PEM dirs for Traefik wildcards: **`/volume1/certs/acme/otsorundscore/`**, **`.../misfitsds/`** — align live **`acme.sh`** before Traefik restarts
   - **`scripts/*.sh`**: Tier 1–3 hardening complete — **`shellcheck -x scripts/*.sh`** clean; **`scripts/verify-dns-views.sh --hairpin`** for DNS views
   - Only version PSU **`data/Repository/`** in git — runtime DB under **`data/`** is gitignored
+
+  [2026-05-10] synology-api-bridge (26th stack) + OpenResume supply-chain + bridge security:
+  - **`stacks/synology-api-bridge/`** — loopback publish **8780**; **`STACK_MANIFEST`** **`synology-api-bridge:data`**; allowlisted DSM routes only (no `/dsm/proxy`).
+  - **`stacks/openresume/`** — pins **`yuihtt/open-resume@sha256:…`** (digest resolved on trusted host; never cross-namespace digest reuse).
+  - ACME: host-run **`deploy_certs.sh`** / **`verify_serving.sh`** documented in **`docs/hive/proposals/acme-sh/ACME_DEPLOY_HOOK_ADR.md`**.
 
   [2026-05-08] DSM best practices from mariushosting.com:
   - HTTP/2: Control Panel → Network → Connectivity → Enable HTTP/2
@@ -1094,7 +1099,7 @@ EXECUTION LOG (2026-05-09-b) — post-review additions
 EXECUTION LOG (2026-05-09) — post-sprint doc alignment
 ======================================================================
 
-- **`MASTER_AUDIT_AND_DEPLOY.md`** updated for **25** stacks (**`psu-ots`**), host-named acme/HAProxy examples, Phase **7** validation (**`verify-dns-views.sh --hairpin`**, legacy hostname **`rg`**, **`shellcheck`**), deploy order, and **`AGENTS.md`** Phase **8** compound-memory bullets reflecting completed consolidation + PSU work.
+- **`MASTER_AUDIT_AND_DEPLOY.md`** updated for **26** stacks (**`psu-ots`**, **`synology-api-bridge`**), host-named acme/HAProxy examples, Phase **7** validation (**`verify-dns-views.sh --hairpin`**, legacy hostname **`rg`**, **`shellcheck`**), deploy order, and **`AGENTS.md`** Phase **8** compound-memory bullets reflecting completed consolidation + PSU work.
 - Historical log from **2026-05-08** retained below for prior audit snapshot.
 
 ======================================================================
@@ -1120,7 +1125,7 @@ Phase 1 audit gates recorded before any Phase 5 fixes:
 
 Phase 2-4 audits recorded:
 
-- Per-stack readiness matrix generated (`24` stack folders + `_haproxy`; **superseded** — use **25** + **`psu-ots`** for current audits)
+- Per-stack readiness matrix generated (`24` stack folders + `_haproxy`; **superseded** — use **26** stacks incl. **`psu-ots`** + **`synology-api-bridge`** for current audits)
 - Cross-stack checks executed (`3001` reservation, `depends_on condition`, floating tags, empty `networks: {}`)
 - Healthcheck pattern scan executed; notable anti-pattern retained for follow-up: `dozzle` using `--version`
 

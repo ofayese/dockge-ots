@@ -1,6 +1,6 @@
 services:
   github-desktop:
-    image: ghcr.io/linuxserver/github-desktop:latest
+    image: ghcr.io/linuxserver/github-desktop@sha256:f2a11524cde94a66f374f346d06ec2f41e506a5b950e4e0781e73eb4ec631928
     container_name: github-desktop
     hostname: github-desktop
     shm_size: 1g

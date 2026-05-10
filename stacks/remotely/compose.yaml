@@ -20,7 +20,7 @@
 services:
   remotely:
     container_name: remotely
-    image: immybot/remotely:latest
+    image: immybot/remotely@sha256:9bdff2d8f7a9926731fe8394d9b0292eb5679153b1da7f3b80ecd9fa9823b89b
     # :latest - upstream does not publish semver tags; pin to digest after first pull:
     #   docker inspect immybot/remotely:latest --format '{{index .RepoDigests 0}}'
     # OPERATOR PIN NEEDED before production use.

@@ -1,6 +1,6 @@
 services:
   traefik:
-    image: traefik:v3
+    image: traefik:v3.6.2
     container_name: traefik-mft
     restart: unless-stopped
     security_opt:

@@ -6,7 +6,7 @@ Experimental **Docker MCP Gateway** wiring for DuckDuckGo search MCP. Uses the h
 
 | Host (default) | Service            |
 | -------------- | ------------------ |
-| `8811`         | `mcp-gateway` HTTP |
+| `8812` → `8811` | `mcp-gateway` HTTP (host **8812**, container **8811**) |
 
 ## Volumes
 
@@ -26,7 +26,7 @@ Images pull from Docker Hub / GHCR; outbound **HTTPS (443)** required. No extra 
 
 ## Healthcheck
 
-> Probe type: **A** — HTTP GET `/health` on port **8811** (container listen port matches published mapping).
+> Probe type: **A** — HTTP GET `/health` on container port **8811** (healthcheck runs inside the container; host publishes **8812**).
 > Source: [docker/mcp-gateway upstream health example](https://raw.githubusercontent.com/docker/mcp-gateway/main/examples/health/compose.yaml).
 > If the image is upgraded and the health endpoint changes, update the `healthcheck.test` line in `compose.yaml` accordingly.
 

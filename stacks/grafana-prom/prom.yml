@@ -25,15 +25,18 @@ scrape_configs:
   - job_name: "synology-nas"
     scrape_interval: 30s
     static_configs:
-      - targets: ["192.168.1.18:161"] # Replace with your NAS IP address
+      - targets: ["10.0.1.15:161"]
+        labels:
+          instance: otsorundscore
+      - targets: ["10.0.1.24:161"]
+        labels:
+          instance: misfitsds
     metrics_path: /snmp
     params:
       module: [synology]
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
-      - source_labels: [__param_target]
-        target_label: instance
       - target_label: __address__
         replacement: prometheus-snmp:9116
 

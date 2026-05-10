@@ -1,7 +1,7 @@
 services:
   watchtower:
     container_name: Watchtower
-    image: containrrr/watchtower:latest
+    image: containrrr/watchtower:1.7.1
     mem_limit: 128m
     cpu_shares: 256
     security_opt:

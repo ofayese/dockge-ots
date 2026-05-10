@@ -28,7 +28,7 @@ services:
       start_period: 40s
 
   warp-agent:
-    image: warpdotdev/warp-agent:latest
+    image: warpdotdev/warp-agent@sha256:c43ffad621d5a399c65bbd770131b06b1742571e96f17854b5e1b2fbe1ca2419
     container_name: warp-agent-service
     user: "${PUID:-0}:${PGID:-0}"
     depends_on:
@@ -55,7 +55,7 @@ services:
       start_period: 60s
 
   warp-claude-cli-sidecar:
-    image: warpdotdev/warp-claude-cli-sidecar:latest
+    image: warpdotdev/warp-claude-cli-sidecar@sha256:6974d8dc6224bbf1aa1ab984dbd15d1553adfb15ae385a16449071aa39b7e4a1
     container_name: warp-claude-sidecar
     depends_on:
       - warp-agent

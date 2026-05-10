@@ -81,6 +81,15 @@ EOF
 	created_env_files+=("${STACKS}/portainer/.env")
 fi
 
+if [[ ! -f "${STACKS}/synology-api-bridge/.env" ]]; then
+	cat >"${STACKS}/synology-api-bridge/.env" <<EOF
+BRIDGE_SHARED_SECRET=ci_dummy_bridge_secret
+DSM_BASE_URL=
+DSM_HTTP_TIMEOUT_SECONDS=5
+EOF
+	created_env_files+=("${STACKS}/synology-api-bridge/.env")
+fi
+
 while IFS= read -r f; do
 	[[ -n "${f}" ]] || continue
 	rel="${f#"${ROOT}"/}"

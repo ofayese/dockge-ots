@@ -113,19 +113,32 @@ Run matching **`--install-cert`** blocks in [Configure output paths](#configure-
 sudo docker exec AcmeSh acme.sh --list
 ```
 
-### 7. Reload consumers
+### 7. Reload consumers (repo scripts + ADR)
 
-After new or renewed PEMs:
+After new or renewed PEMs under **`${ACME_CERT_ROOT}`** (profiles such as **`otsorundscore`**, **`misfitsds`** — see the tree at the top of this file):
 
-- **Traefik** (`traefik-ots` / `traefik-mft`): restart or reload so file certs pick up changes (see Traefik stack README).
-- **HAProxy**: `haproxy -c` then reload Synology HAProxy package if it reads `_haproxy/certs/`.
-- **DSM / deploy scripts**: run `deploy-otsorundscore.bash` / `deploy-misfitsds.bash` from your workflow when you push DSM/Docker TLS copies.
+1. **HAProxy bundles + optional Traefik restart (host-run, preferred):**  
+   - Script: **`stacks/acme-sh/scripts/deploy_certs.sh`** — builds combined PEMs into **`${STACK_ROOT}/_haproxy/certs/`** (atomic replace + `.lkg` rollback on `haproxy -c` failure).  
+   - **Single profile (optional):** with **`BUNDLE_SPECS` unset**, set **`ACME_PROFILE=otsorundscore`** or **`misfitsds`** to stage **one** HAProxy bundle using the default filename mapping (see script header).  
+   - **Traefik:** set **`TRAEFIK_PROFILE=ots`** or **`mft`** (or **`TRAEFIK_STACK=traefik-ots`** / **`traefik-mft`**) so **only one** Traefik stack is restarted; defaults skip Traefik if unset.  
+   - **HAProxy:** the script runs **`haproxy -c`** when **`HAPROXY_BIN`** exists (Synology package default **`/volume1/@appstore/haproxy/sbin/haproxy`**) against **`HAPROXY_CFG`** (default **`${STACK_ROOT}/_haproxy/haproxy.cfg`**). On success, optionally set **`HAPROXY_RELOAD_CMD`** to your operator reload (DSM UI, or a vetted `kill -HUP` to the **running** `haproxy` pid — match **`docs/hive/NAS_DEPLOYMENT.md`** paths; do not guess on unfamiliar DSM builds).  
+   - Rationale: **[`docs/hive/proposals/acme-sh/ACME_DEPLOY_HOOK_ADR.md`](../../docs/hive/proposals/acme-sh/ACME_DEPLOY_HOOK_ADR.md)** (host-run vs in-container).
+
+2. **TLS edge verify:** **`stacks/acme-sh/scripts/verify_serving.sh`** — requires **`CONNECT_HOST`**; set **`CONNECT_PORT`** (default **`6443`**), **`SNI`** (defaults to **`CONNECT_HOST`**), **`MIN_VALID_DAYS`** (default **21** for **`openssl x509 -checkend`**), optional **`EXPECTED_SUBJECT`**. On TLS / subject / expiry failure, posts to **`DISCORD_WEBHOOK_URL`** when set (same variable name as **`stacks/acme-sh/.env.example`**).
+
+3. **Legacy bash deployers:** `deploy-otsorundscore.bash` / `deploy-misfitsds.bash` under `${ACME_CERT_ROOT}` remain operator-specific; prefer the repo **`deploy_certs.sh`** path above for Dockge-bound HAProxy.
+
+#### DSM Control Panel — manual certificate import (operator)
+
+Importing DSM’s **control panel** or **reverse-proxy** certificate is **manual** (DSM UI: *Control Panel → Security → Certificate* or the Login Portal / reverse-proxy certificate picker). **Do not** automate DSM certificate APIs from this repo without an explicit **pinned DSM major/minor** disclaimer, documented test matrix, and rollback — DSM upgrades routinely overwrite nginx fragments and certificate store layouts.
 
 ### 8. Verify
 
 ```bash
 openssl x509 -in /volume1/certs/acme/otsorundscore/fullchain.pem -noout -subject -dates 2>/dev/null || true
 sudo docker exec AcmeSh acme.sh --list
+CONNECT_HOST=10.0.1.15 CONNECT_PORT=6443 SNI=psu.otsorundscore.olutechsys.com MIN_VALID_DAYS=21 \
+  bash "${STACK_ROOT}/acme-sh/scripts/verify_serving.sh"
 ```
 
 ---

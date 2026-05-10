@@ -1,6 +1,6 @@
 # codex-docs
 
-Internal documentation hub powered by codex.team's [codex.docs](https://github.com/codex-team/codex.docs) CMS, backed by MongoDB.
+Internal documentation hub powered by codex.team's [codex.docs](https://github.com/codex-team/codex.docs) CMS, backed by MongoDB. The compose **`image:`** pins **`ghcr.io/codex-team/codex.docs@sha256:…`** (supply-chain); re-pin with `docker pull` + `docker image inspect` on your network.
 
 ## Services
 

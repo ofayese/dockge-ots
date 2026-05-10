@@ -15,13 +15,13 @@ services:
         max-file: "3"
     restart: unless-stopped
     ports:
-      - 8811:8811
+      - 8812:8811
     volumes:
       # /var/run socket context
       # SECURITY: docker.sock :rw - MCP gateway needs full API access for tool container integrations.
       - /var/run/docker.sock:/var/run/docker.sock
     # Healthcheck type: A - HTTP /health probe (wget - verified 2026-05-07)
-    # Port 8811 per published port mapping; upstream example uses /health
+    # Host publishes 8812→8811; in-container probe stays on 8811. Upstream example uses /health.
     # Source: https://raw.githubusercontent.com/docker/mcp-gateway/main/examples/health/compose.yaml
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8811/health"]

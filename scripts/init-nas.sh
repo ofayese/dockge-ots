@@ -67,6 +67,7 @@ STACK_MANIFEST=(
 	"github-desktop:config" # KasmVNC GUI - /config only, no data dir
 	"homepage:data,config"
 	"searxng:data,config"
+	"synology-api-bridge:data"
 	"grafana-prom:data,config"
 
 	# ── data,db ───────────────────────────────────────────────────────

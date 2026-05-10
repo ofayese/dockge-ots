@@ -57,6 +57,10 @@ Reference formats:
 
 This stack must pass baseline verification first (including `.claude-flow` read/write and persistence tests) before any HAProxy/TLS integration is proposed or applied.
 
+## DSM API bridge gate (before lowering HolyClaude privileges)
+
+The optional **`synology-api-bridge`** stack (`stacks/synology-api-bridge/`) exists so DSM HTTP calls can be bounded (timeouts, **`X-Bridge-Secret`**, loopback bind, **allowlisted** `api`/`method`/`version` only — **no** generic path proxy). **Do not merge** any PR that removes **`SYS_ADMIN`**, **`SYS_PTRACE`**, or **`seccomp:unconfined`** from HolyClaude until that bridge (or an equivalent audited DSM integration) is deployed, configured, and adopted in operator runbooks.
+
 ## Further tuning
 
 See [`docs/hive/STACK_OPTIMIZATION_CUSTOMIZATION.md`](../../docs/hive/STACK_OPTIMIZATION_CUSTOMIZATION.md) for WebSocket-aware hardening context, API usage notes, and resource tuning alongside this README.

@@ -19,6 +19,11 @@ Containerized acme.sh in daemon mode — issues and renews TLS certificates via 
 
 Installed PEMs under `${ACME_CERT_ROOT:-/volume1/certs/acme}` are consumed by other stacks; **do not modify directly**.
 
+## Post-issue deploy + verify (HAProxy / Traefik)
+
+- **`acme-sh/scripts/deploy_certs.sh`** — host-run: PEM → **`_haproxy/certs/`** bundles, `haproxy -c`, optional single-stack Traefik restart (**`TRAEFIK_PROFILE`** / **`TRAEFIK_STACK`**). See **`SETUP.md`** §7 and ADR **[`../../docs/hive/proposals/acme-sh/ACME_DEPLOY_HOOK_ADR.md`](../../docs/hive/proposals/acme-sh/ACME_DEPLOY_HOOK_ADR.md)**.
+- **`acme-sh/scripts/verify_serving.sh`** — fail-closed OpenSSL SNI check (optional Discord on failure via **`DISCORD_WEBHOOK_URL`**).
+
 ## Required env (`.env`, gitignored)
 
 - `STACK_ROOT` — absolute path to the Dockge stacks folder (same as repo `stacks/` on disk), e.g. `${STACK_ROOT}`

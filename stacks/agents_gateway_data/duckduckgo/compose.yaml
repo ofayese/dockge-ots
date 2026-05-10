@@ -14,8 +14,9 @@ services:
         max-size: "10m"
         max-file: "3"
     restart: unless-stopped
+    # Host 8812 → container 8811 (parity with root compose.yaml)
     ports:
-      - 8811:8811
+      - 8812:8811
     volumes:
       # /var/run socket context
       # SECURITY: docker.sock :rw — MCP gateway needs full API access for tool container integrations.

@@ -125,7 +125,7 @@ services:
       - rag-net
   pipelines:
     container_name: rag-pipelines
-    image: ghcr.io/open-webui/pipelines:main
+    image: ghcr.io/open-webui/pipelines@sha256:b48e9bc338ce2be0acfbeff01810db72408a12f07739f9e3879c1f2b00952d6e
     # Python LangChain/LangGraph pipeline server extending Open WebUI; 1g sufficient.
     mem_limit: 1g
     cpu_shares: 512

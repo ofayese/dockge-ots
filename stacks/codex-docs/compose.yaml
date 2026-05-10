@@ -31,7 +31,7 @@ services:
   codex-docs:
     container_name: CodexDocs
     # Upstream publishes rolling tags; pin when a semver tag is available.
-    image: codexteam/codex.docs:latest
+    image: ghcr.io/codex-team/codex.docs@sha256:c25f47c7f5af84206cef1fcedb2debcd25ba9ce1d4c6e5a33a0f273faff5a41f
     mem_limit: 256m
     cpu_shares: 256
     security_opt:

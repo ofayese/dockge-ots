@@ -24,6 +24,12 @@ services:
       - DOCKGE_USERNAME=${DOCKGE_USERNAME:-}
       - DOCKGE_PASSWORD=${DOCKGE_PASSWORD:-}
       - NAS_PULL_APP_TOKEN=${NAS_PULL_APP_TOKEN:-}
+      # Phase 2 PSU API + jobs (see stacks/psu-ots/.env.example)
+      - PSU_AUTH_TOKEN=${PSU_AUTH_TOKEN:-}
+      - PSU_ALLOW_STACK_RESTART=${PSU_ALLOW_STACK_RESTART:-0}
+      - PSU_REMEDIATION_ENABLED=${PSU_REMEDIATION_ENABLED:-0}
+      - PSU_GITOPS_ENABLED=${PSU_GITOPS_ENABLED:-0}
+      - PSU_REPORTS_ROOT=${PSU_REPORTS_ROOT:-/data/reports}
     volumes:
       - ${STACK_ROOT}/psu-ots/data:/data:rw
       # Repo root (parent of stacks/) for git status + scripts — same as ${DOCKGE_REPO_ROOT} when set in .env

@@ -1,16 +1,17 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    REST endpoint stubs for Dockge validation (PowerShell Universal).
+    Legacy shim — canonical REST definitions live in ../endpoints/dockge-api.ps1.
 
 .NOTES
-    Copy into `data/Repository/.universal/scripts/` on the NAS.
-    Expected routes (implement with New-PSUEndpoint / roles in PSU):
-      POST /api/v1/validate/precommit
-      POST /api/v1/validate/shell
-      POST /api/v1/analyzer/run
-      GET  /api/v1/analyzer/report
+    When copying templates to the NAS, prefer data/Repository/.universal/endpoints/dockge-api.ps1.
 #>
 
 $ErrorActionPreference = "Stop"
-Write-Output "dockge-api.ps1: template — add PSU endpoints and auth in the PSU admin UI."
+$canonical = Join-Path (Split-Path -Parent $PSScriptRoot) "endpoints/dockge-api.ps1"
+if (Test-Path -LiteralPath $canonical) {
+    . $canonical
+}
+else {
+    Write-Warning "dockge-api.ps1 (scripts): ../endpoints/dockge-api.ps1 not found."
+}

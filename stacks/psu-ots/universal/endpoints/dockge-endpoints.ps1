@@ -1,11 +1,17 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    PSU HTTP endpoint definitions for Dockge validation (template).
+    PSU HTTP endpoint entry — loads dockge-api.ps1 from the same directory.
 
 .NOTES
-    Copy into `data/Repository/.universal/endpoints/` on the NAS.
+    Copy into data/Repository/.universal/endpoints/ on the NAS.
 #>
 
 $ErrorActionPreference = "Stop"
-Write-Output "dockge-endpoints.ps1: template — register routes in PSU."
+$api = Join-Path $PSScriptRoot "dockge-api.ps1"
+if (Test-Path -LiteralPath $api) {
+    . $api
+}
+else {
+    Write-Warning "dockge-endpoints.ps1: missing dockge-api.ps1 beside this file."
+}

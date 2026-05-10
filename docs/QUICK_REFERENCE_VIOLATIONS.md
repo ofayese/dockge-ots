@@ -1,5 +1,7 @@
 # Quick Reference: Pre-Commit Hooks & Violations Found
 
+> **Historical review (2026-05):** The violations below were found during the January 2025 briefing pass and are **fixed on `main`**. For the full narrative (Phase 1 bugs 1–5 and Phase 2 bugs 6–9 — including Python hook **`any()`** short-circuiting, Compose **`x-*`** filtering, HAProxy **two-pass** `use_backend` validation, and analyzer **default dict** initializations), see **[`BUG_FIX_SUMMARY.md`](BUG_FIX_SUMMARY.md)**. Live rules and commands: **`AGENTS.md`**.
+
 ## Current Code Violations (Found in Review)
 
 ### 🔴 CRITICAL: Python Violations
@@ -29,7 +31,7 @@
   ```
 - **Issue:** When `v` is not dict, uses `str(k)` instead of `str(v)` — loses value
 - **Fix:** Change to `str(v)` in the else branch
-- **Status:** ❌ MUST FIX
+- **Status:** ✅ FIXED
 
 ### 🔴 CRITICAL: Shell Violations
 
@@ -42,7 +44,7 @@
   ```
 - **Issue:** `${STACK_ROOT}` can contain special chars; path vars need escaping
 - **Fix:** Use `sed -i "s|^STACK_ROOT=.*|STACK_ROOT=$(printf '%s\n' "$STACK_ROOT" | sed -e 's/[\/&]/\\&/g')|" "${REPO_ENV}"`
-- **Status:** ❌ MUST FIX
+- **Status:** ✅ FIXED
 
 #### Violation 4: Bash regex alternation
 - **File:** `scripts/check-dockge-http.sh`
@@ -53,7 +55,7 @@
   ```
 - **Issue:** Bash regex doesn't support `()` alternation in `[[ =~ ]]`
 - **Fix:** Change to `[[ "${code}" =~ ^(200|30[1234])$ ]]` or use pattern matching
-- **Status:** ❌ MUST FIX
+- **Status:** ✅ FIXED
 
 #### Violation 5: Docker compose in loop without error handling
 - **File:** `scripts/compose-validate.sh`
@@ -74,7 +76,7 @@
   ```
 - **Issue:** Subshell with `set -e` doesn't propagate failure to parent loop; loop continues silently
 - **Fix:** Add `|| { echo "ERROR validating $f"; exit 1; }` after docker compose command
-- **Status:** ❌ MUST FIX
+- **Status:** ✅ FIXED
 
 ### 🔴 CRITICAL: Node.js Violations
 
@@ -98,7 +100,7 @@
           .describe("Timezone in IANA format, e.g., America/New_York"),
   }),
   ```
-- **Status:** ❌ MUST FIX
+- **Status:** ✅ FIXED
 
 ## Hook Detection Patterns (for Coder implementation)
 

@@ -1,5 +1,7 @@
 # 📋 ENHANCED TASK DOCUMENTATION INDEX
 
+**Live status (May 2026):** Operational truth is in **[`AGENTS.md`](../AGENTS.md)** (repo memory, paths, hooks, test commands). Post-implementation bug narrative and Phase 2 logic fixes are in **[`BUG_FIX_SUMMARY.md`](BUG_FIX_SUMMARY.md)**. The documents below are an archived briefing pack—see the PM table for completion.
+
 ## Quick Navigation
 
 **For Cursor/Coder:** Start here  
@@ -56,7 +58,7 @@
 - **Read Time:** 15 minutes
 - **Use Case:** "What changed from the original task?"
 
-### 4. **QUICK_REFERENCE_VIOLATIONS.md** (Current Issues)
+### 4. **QUICK_REFERENCE_VIOLATIONS.md** (Historical violations + hook patterns)
 - **Path:** `./docs/QUICK_REFERENCE_VIOLATIONS.md`
 - **Size:** 7 KB
 - **Audience:** Coder during implementation
@@ -79,11 +81,11 @@
 1. Read: `ENHANCED_TASK_REVIEW.md` (15 min) — Understand the scope
 2. Read: `ENHANCED_TASK_SPECIFICATION.md` (30 min) — Learn the architecture
 3. Read: `QUICK_REFERENCE_VIOLATIONS.md` (10 min) — See existing issues
-4. Execute: `CODER_EXECUTION_CHECKLIST.md` (6-8 hours) — Do the work
+4. Skim: `CODER_EXECUTION_CHECKLIST.md` — **historical** step list (all tasks checked; implementation on `main`)
 
-**Checklist to follow:**
+**Phases (complete on `main`):**
 - Phase 1 (90 min): Pre-commit hooks (9 scripts)
-- Phase 2 (60 min): PSU automation (PowerShell)
+- Phase 2 (60 min): PSU automation (PowerShell templates under `stacks/psu-ots/universal/`)
 - Phase 3 (90 min): Shell tests (bats)
 - Phase 4 (120 min): Analyzer modules (Python)
 - Phase 5 (60 min): Validate and fix violations
@@ -114,29 +116,29 @@
 ### 📊 **I'm a Project Manager - What's the status?**
 
 **Quick Answer:**
-- ✅ **Documentation:** COMPLETE (38 KB, 4 files)
-- ✅ **Architecture:** DESIGNED (4 phases, 23 tasks)
-- ✅ **Violations:** IDENTIFIED (5 files, will block commits)
-- ⏳ **Implementation:** READY (6-8 hours for Coder)
+- ✅ **Documentation:** COMPLETE (briefing pack + alignment, May 2026)
+- ✅ **Architecture:** DESIGNED (4 phases, 23 tasks) — reference only
+- ✅ **Violations:** Addressed (see `BUG_FIX_SUMMARY.md`; `QUICK_REFERENCE_VIOLATIONS.md` is historical)
+- ✅ **Implementation:** **DONE** on `main` (pre-commit, PSU templates, bats, analyzer)
 
 **Timeline:**
 | Phase | Tasks | Time | Status |
 |-------|-------|------|--------|
-| 1 | 9 | 90 min | Ready |
-| 2 | 6 | 60 min | Ready |
-| 3 | 4 | 90 min | Ready |
-| 4 | 8 | 120 min | Ready |
-| 5 | 5 | 60 min | Ready |
-| 6 | 1 | 30 min | Ready |
-| **Total** | **23** | **7.5 hrs** | **Ready** |
+| 1 | 9 | 90 min | **✅ DONE** |
+| 2 | 6 | 60 min | **✅ DONE** |
+| 3 | 4 | 90 min | **✅ DONE** |
+| 4 | 8 | 120 min | **✅ DONE** |
+| 5 | 5 | 60 min | **✅ DONE** |
+| 6 | 1 | 30 min | **✅ DONE** |
+| **Total** | **23** | **7.5 hrs** | **✅ DONE** |
 
-**Success Criteria:**
-- [ ] 23 tasks completed
-- [ ] All pre-commit hooks passing
-- [ ] 17 shell tests passing (pytest + bats)
-- [ ] Analyzer running end-to-end
-- [ ] Single commit with message
-- [ ] 0 outstanding violations
+**Success Criteria (as implemented on `main`):**
+- [x] 23 tasks completed (see `CODER_EXECUTION_CHECKLIST.md`, all checked)
+- [x] All pre-commit hooks passing (`pre-commit run --all-files`)
+- [x] **18** bats tests passing (`bats tests/shell/*.bats -p -T`) + **`python3 -m unittest discover -s tests -p 'test_*.py'`** (not pytest by default on this repo)
+- [x] Analyzer running end-to-end (`inventory.py --all --analyze`, `--json` optional)
+- [x] Commits landed with messages referencing enhancements + bug-fix rounds
+- [x] 0 outstanding violations for the original five + Phase 2 fixes (`BUG_FIX_SUMMARY.md`)
 
 ---
 
@@ -190,31 +192,32 @@ curl -X GET http://memory-api/search?category=testing
 ```
 dockge/
 ├── .pre-commit-config.yaml                    (enhanced ✅)
-├── hooks/                                     (new directory)
+├── hooks/                                     (✅ on `main`)
 │   ├── python-no-timeout-subprocess.py
 │   ├── python-unsafe-dict-iteration.py
 │   ├── shell-unsafe-sed.sh
 │   ├── shell-bash-regex-alternation.sh
 │   ├── shell-docker-compose-no-err.sh
 │   ├── node-zod-schema-wrapper.js
-│   ├── run-pytest.sh
+│   ├── run-pytest.sh                          (runs unittest when pytest absent)
 │   ├── run-bats.sh
 │   └── run-analyzer.sh
 ├── tests/
-│   ├── shell/                                 (new directory)
+│   ├── shell/                                 (✅ on `main`)
 │   │   ├── setup.sh
 │   │   ├── compose-validate.bats
 │   │   ├── init-nas.bats
 │   │   └── check-dockge-http.bats
 │   └── test_inventory.py                      (existing)
 ├── docs/
-│   ├── ENHANCED_TASK_SPECIFICATION.md         (new ✅)
-│   ├── CODER_EXECUTION_CHECKLIST.md           (new ✅)
-│   ├── ENHANCED_TASK_REVIEW.md                (new ✅)
-│   ├── QUICK_REFERENCE_VIOLATIONS.md          (new ✅)
+│   ├── ENHANCED_TASK_SPECIFICATION.md         (briefing ✅)
+│   ├── CODER_EXECUTION_CHECKLIST.md           (briefing ✅)
+│   ├── ENHANCED_TASK_REVIEW.md                (briefing ✅)
+│   ├── QUICK_REFERENCE_VIOLATIONS.md          (briefing ✅)
+│   ├── BUG_FIX_SUMMARY.md                     (live narrative ✅)
 │   └── hive/tools/
 │       ├── inventory.py                       (modified ✅)
-│       └── analyzers/                         (new directory)
+│       └── analyzers/                         (✅ on `main`)
 │           ├── __init__.py
 │           ├── compose_schema.py
 │           ├── env_validator.py
@@ -223,14 +226,14 @@ dockge/
 │           ├── haproxy_traefik_checker.py
 │           └── analyzer_report.py
 └── stacks/psu-ots/
-    └── data/Repository/.universal/
+    └── universal/                             (tracked templates ✅)
         ├── scripts/
-        │   ├── dockge-jobs.ps1                (new)
-        │   └── dockge-api.ps1                 (new)
+        │   ├── dockge-jobs.ps1
+        │   └── dockge-api.ps1
         ├── endpoints/
-        │   └── dockge-compliance-api.ps1      (new)
+        │   └── dockge-endpoints.ps1
         └── dashboards/
-            └── dockge-compliance.ps1          (new)
+            └── dockge-compliance.ps1
 ```
 
 **Total new files:** 27  
@@ -241,31 +244,31 @@ dockge/
 
 ## Success Verification Checklist
 
-After implementation, run:
+On `main` (May 2026), operators use:
 
 ```bash
 # 1. Pre-commit hooks all pass
-pre-commit run --all-files --stages commit
+pre-commit run --all-files
 
-# 2. Python tests pass
-python3 -m pytest tests/ -v
+# 2. Python unit tests (unittest — canonical)
+python3 -m unittest discover -s tests -p 'test_*.py' -v
 
 # 3. Shell integration tests pass
-bats tests/shell/*.bats -v
+bats tests/shell/*.bats -p -T
 
 # 4. Analyzer runs successfully
-python3 docs/hive/tools/inventory.py --all --analyze
+python3 docs/hive/tools/inventory.py --all --analyze --json
 
-# 5. All files exist
-[ -d hooks ] && [ "$(ls hooks | wc -l)" -eq 9 ] && echo "✅ 9 hooks"
-[ -d tests/shell ] && [ "$(ls tests/shell/*.bats | wc -l)" -eq 3 ] && echo "✅ 3 bats"
-[ -d docs/hive/tools/analyzers ] && [ "$(ls docs/hive/tools/analyzers/*.py | wc -l)" -eq 7 ] && echo "✅ 7 analyzers"
+# 5. Key paths exist
+[ -d hooks ] && echo "✅ hooks/"
+[ -d tests/shell ] && [ "$(ls tests/shell/*.bats 2>/dev/null | wc -l)" -eq 3 ] && echo "✅ 3 bats files"
+[ -d docs/hive/tools/analyzers ] && echo "✅ analyzers/"
 
-# 6. Git status clean
-git status  # Should show clean working tree
+# 6. Git status clean (before tagging / release)
+git status
 
-# 7. View final commit
-git log --oneline -1
+# 7. Recent history
+git log --oneline -5
 ```
 
 ---
@@ -285,22 +288,20 @@ git log --oneline -1
 
 ## Key Statistics
 
-- **Total documentation created:** 38 KB (4 files)
-- **Total memory entries:** 4 (compound-project-memory)
-- **Implementation tasks:** 23 (6-8 hour estimate)
-- **New files to create:** 27
-- **Existing violations found:** 5
-- **Success criteria:** 9 ✅ tests
+- **Briefing documentation:** Original 4-pack + `BUG_FIX_SUMMARY.md` + this index alignment
+- **Memory entries:** 4 IDs mirrored in `AGENTS.md` (compound-project-memory)
+- **Implementation tasks:** 23 — **complete** on `main`
+- **Follow-up bug docs:** `BUG_FIX_SUMMARY.md` (Phase 1 + Phase 2)
 
 ---
 
 ## How to Use This Index
 
-1. **First time reading:** Follow "Reading Paths by Role" for your job title
-2. **During implementation:** Use `CODER_EXECUTION_CHECKLIST.md` as your guide
-3. **Debugging:** Jump to `QUICK_REFERENCE_VIOLATIONS.md` 
-4. **Reviewing:** Use `ENHANCED_TASK_SPECIFICATION.md` as reference
-5. **Future work:** Consult memory entries in compound-project-memory
+1. **Operators / agents:** Start with **`AGENTS.md`** and **`BUG_FIX_SUMMARY.md`**
+2. **Architecture deep-dive:** `ENHANCED_TASK_SPECIFICATION.md` (reference; line numbers may be stale)
+3. **Historical execution order:** `CODER_EXECUTION_CHECKLIST.md` (all `[x]`)
+4. **Original violation context:** `QUICK_REFERENCE_VIOLATIONS.md` (patterns; issues fixed)
+5. **Future work:** `AGENTS.md` → What Works / guardrails
 
 ---
 
@@ -308,32 +309,30 @@ git log --oneline -1
 
 | Document | Version | Date | Status |
 |----------|---------|------|--------|
-| ENHANCED_TASK_SPECIFICATION | 1.0 | 2025-01-15 | Final |
-| CODER_EXECUTION_CHECKLIST | 1.0 | 2025-01-15 | Final |
-| ENHANCED_TASK_REVIEW | 1.0 | 2025-01-15 | Final |
-| QUICK_REFERENCE_VIOLATIONS | 1.0 | 2025-01-15 | Final |
+| ENHANCED_TASK_SPECIFICATION | 1.1 | 2026-05-10 | Archival / reference |
+| CODER_EXECUTION_CHECKLIST | 1.1 | 2026-05-10 | Historical (complete) |
+| ENHANCED_TASK_REVIEW | 1.1 | 2026-05-10 | Historical snapshot |
+| QUICK_REFERENCE_VIOLATIONS | 1.1 | 2026-05-10 | Historical + patterns |
+| BUG_FIX_SUMMARY | — | 2026-05 | **Live** bug narrative |
 
-**Index Version:** 1.0  
-**Index Date:** 2025-01-15  
-**Status:** ✅ READY FOR USE
+**Index Version:** 1.1  
+**Index Date:** 2026-05-10  
+**Status:** ✅ Aligned with `main` — briefing pack archived
 
 ---
 
 ## Next Actions
 
-1. ✅ **You are here:** Reading enhanced task documentation
-2. ⏳ **Next:** Pass these docs to Cursor/Coder agent
-3. ⏳ **Next:** Coder implements all 23 tasks (6-8 hours)
-4. ⏳ **Next:** Verification testing (30 min)
-5. ⏳ **Next:** Final commit to main branch
-6. ⏳ **Next:** Extract patterns to continual-learning
-
-**Total time from start to merge:** ~8-9 hours
+1. ✅ Briefing pack authored (January 2025)
+2. ✅ Implementation merged to `main` (May 2026)
+3. ✅ Bug-fix rounds documented (`BUG_FIX_SUMMARY.md`)
+4. ✅ This index + checklist aligned with reality
+5. **Ongoing:** Operate from **`AGENTS.md`**; open new specs for new scope only
 
 ---
 
 **Document:** Enhanced Task Documentation Index  
-**Version:** 1.0  
-**Status:** ✅ COMPLETE AND READY  
-**Last Updated:** 2025-01-15  
-**Maintained By:** Gordon (Docker AI Assistant)
+**Version:** 1.1  
+**Status:** ✅ Aligned with `main` (May 2026)  
+**Last Updated:** 2026-05-10  
+**Maintained By:** Gordon (Docker AI Assistant) + repo maintainers

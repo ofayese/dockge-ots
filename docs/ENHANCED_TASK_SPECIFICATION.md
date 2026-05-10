@@ -1,6 +1,8 @@
 # Enhanced Task Specification: Dockge-OTS Ecosystem Enhancements
 ## Comprehensive Implementation Guide
 
+> **Architectural reference only (May 2026):** Implementation is **complete on `main`**. Use **`AGENTS.md`** for live commands and layout; use **`BUG_FIX_SUMMARY.md`** for post-ship bug fixes (Phase 1 + Phase 2). This file preserves design detail (regexes, module layout, contracts) and may retain **stale line numbers** — verify against the codebase when in doubt.
+
 ---
 
 ## Executive Summary
@@ -12,8 +14,8 @@ This document provides an **enhanced, production-ready specification** for imple
 3. **Shell Integration Test Suite** — Comprehensive bats tests
 4. **Static Analyzer Extension** — Full inventory.py analyzer framework
 
-**Status:** Ready for immediate Cursor/Coder implementation  
-**Estimated Duration:** 6-8 hours  
+**Status:** **Implemented** — retained as architecture reference  
+**Original estimate:** 6-8 hours  
 **Complexity:** High (integrates 4 major subsystems)
 
 ---
@@ -33,7 +35,7 @@ This document provides an **enhanced, production-ready specification** for imple
 
 **Required sections:**
 - Standard hooks (already present): trailing-whitespace, end-of-file-fixer, check-yaml, check-json, prettier, gitleaks, shfmt, shellcheck
-- Python hooks: flake8 (line length 120, ignore E203/W503), mypy (strict mode with ignore-missing-imports)
+- Python hooks: **not** flake8/mypy by default on this repo (fast hooks policy — see `AGENTS.md`); custom safety hooks below
 - **NEW custom hooks (local repo):**
   - `python-no-timeout-subprocess` — Detects `subprocess.run()` without `timeout=` parameter
   - `python-unsafe-dict-iteration` — Detects `for k, v in dict.items()` where only `k` is used (missing value)
@@ -42,13 +44,13 @@ This document provides an **enhanced, production-ready specification** for imple
   - `shell-docker-compose-no-err` — Detects `docker compose config` without `|| exit` error handling
   - `node-zod-schema-wrapper` — Detects `inputSchema: { key: z.string() }` (not wrapped in `z.object()`)
 - **NEW test runners (local repo):**
-  - `pytest-unit-tests` — Runs `pytest` on `tests/*.py` files
-  - `bats-shell-integration` — Runs `bats` on `tests/shell/*.bats` files
-  - `inventory-static-analyzer` — Runs analyzer on all compose files
+  - `pytest-unit-tests` — Hook **id** name is historical; runs **`python3 -m unittest discover -s tests -p 'test_*.py'`** via `hooks/run-pytest.sh` when pytest is not installed (canonical on this fleet per `AGENTS.md`)
+  - `bats-shell-integration` — Runs `bats tests/shell/*.bats -p -T`
+  - `inventory-static-analyzer` — Runs analyzer on compose / `inventory.py` touch paths
 
 **Key settings:**
 - `fail_fast: false` — Report all violations before stopping
-- Stages: `[commit]` for tests (not on `pre-push`)
+- Stages: **`[pre-commit]`** for test runners (post-`pre-commit migrate-config`; deprecated `commit` alias removed)
 - `verbose: true` for test runners
 
 #### 1.2 Custom Hook Scripts
@@ -124,15 +126,16 @@ This document provides an **enhanced, production-ready specification** for imple
 #### 1.3 Hook Runner Scripts
 **Directory:** `./hooks/`
 
-**Script 7: `run-pytest.sh`**
-- Runs: `python3 -m pytest tests/ -v --tb=short`
+**Script 7: Unit test runner (`hooks/run-pytest.sh`)** *(historical filename; not renamed to avoid churn)*
+- Runs: **`python3 -m unittest discover -s tests -p 'test_*.py' -v`** when pytest is unavailable (this repo’s default)
+- Optional: `pytest tests/ -v --tb=short` when pytest is on `PATH`
 - Fails if any test fails
 - Output goes to stdout (pre-commit will capture)
 - Exit code 0 if all pass, 1 if any fail
 
 **Script 8: `run-bats.sh`**
 - Checks if `bats` is installed: `command -v bats` or `bats --version`
-- Runs: `bats tests/shell/*.bats --tap`
+- Runs: **`bats tests/shell/*.bats -p -T`**
 - If bats not installed: warn and skip (exit 0)
 - Exit code 0 if all pass or skipped, 1 if any fail
 
@@ -155,7 +158,7 @@ This document provides an **enhanced, production-ready specification** for imple
 ### Deliverables
 
 #### 2.1 PSU Jobs Configuration
-**File:** `./stacks/psu-ots/data/Repository/.universal/scripts/dockge-jobs.ps1`
+**File:** `./stacks/psu-ots/universal/scripts/dockge-jobs.ps1` *(tracked in git; NAS runtime copies under `data/Repository/.universal/` per `stacks/psu-ots/README.md`)*
 
 **Job 1: Pre-commit Validation (Hourly)**
 - Name: `Pre-commit Enforcement`
@@ -167,7 +170,7 @@ This document provides an **enhanced, production-ready specification** for imple
 **Job 2: Shell Integration Tests (15 minutes)**
 - Name: `Shell Integration Tests`
 - Schedule: Every 15 minutes
-- Command: Execute `bats /nas-repo/tests/shell/*.bats --tap --no-parallelize`
+- Command: Execute `bats /nas-repo/tests/shell/*.bats -p -T` (avoid deprecated `--verbose` / wrong `-v` on bats-core 1.10+)
 - Report: Save to `/data/reports/bats-$(date +%s).json`
 - Retention: Keep last 96 reports (24 hours)
 
@@ -209,7 +212,7 @@ try {
 ```
 
 #### 2.2 PSU REST API Endpoints
-**File:** `./stacks/psu-ots/data/Repository/.universal/endpoints/dockge-api.ps1`
+**File:** `./stacks/psu-ots/universal/endpoints/dockge-endpoints.ps1` *(API surface may also span `universal/scripts/dockge-api.ps1` in-repo — see `stacks/psu-ots/README.md`)*
 
 **Endpoint 1: POST `/api/v1/validate/precommit`**
 - Body: `{ "scope": "all" | "files", "files": ["path1", "path2"] }`
@@ -249,7 +252,7 @@ try {
 - Token from environment: `$PSU_AUTH_TOKEN` (set in compose.yaml)
 
 #### 2.3 PSU Dashboard Panels
-**File:** `./stacks/psu-ots/data/Repository/.universal/dashboards/dockge-compliance.ps1`
+**File:** `./stacks/psu-ots/universal/dashboards/dockge-compliance.ps1`
 
 **Panel 1: Pre-commit Compliance**
 - Display: Last 5 runs with status badges (✓ pass, ✗ fail)
@@ -569,31 +572,31 @@ if args.analyze:
 
 ## Implementation Checklist
 
-- [ ] Phase 1: Enhanced `.pre-commit-config.yaml`
-- [ ] Phase 1: 6 custom hook scripts (Python, Shell, Node)
-- [ ] Phase 1: 3 hook runner scripts (pytest, bats, analyzer)
-- [ ] Phase 2: 3 PSU job configuration scripts
-- [ ] Phase 2: 4 REST API endpoint definitions
-- [ ] Phase 2: 5 dashboard panels
-- [ ] Phase 3: Shared test utilities (`setup.sh`)
-- [ ] Phase 3: 3 bats test suites (17 tests total)
-- [ ] Phase 4: 6 analyzer modules
-- [ ] Phase 4: Enhanced `inventory.py` integration
-- [ ] Phase 5: Run all pre-commit hooks locally
-- [ ] Phase 5: Run pytest suite
-- [ ] Phase 5: Run bats tests
-- [ ] Phase 5: Run analyzer end-to-end
-- [ ] Phase 5: Validate PSU jobs manually
-- [ ] Phase 6: Single commit with all enhancements
-- [ ] Phase 7: Store patterns in compound-project-memory
-- [ ] Phase 8: Extract lessons for continual-learning
+- [x] Phase 1: Enhanced `.pre-commit-config.yaml`
+- [x] Phase 1: 6 custom hook scripts (Python, Shell, Node)
+- [x] Phase 1: 3 hook runner scripts (unittest via `run-pytest.sh`, bats, analyzer)
+- [x] Phase 2: 3 PSU job configuration scripts
+- [x] Phase 2: 4 REST API endpoint definitions
+- [x] Phase 2: 5 dashboard panels
+- [x] Phase 3: Shared test utilities (`setup.sh`) *(optional / not present — self-contained bats)*
+- [x] Phase 3: 3 bats test suites (**18** `@test`s total)
+- [x] Phase 4: 6 analyzer modules
+- [x] Phase 4: Enhanced `inventory.py` integration
+- [x] Phase 5: Run all pre-commit hooks locally
+- [x] Phase 5: Run **unittest** suite
+- [x] Phase 5: Run bats tests
+- [x] Phase 5: Run analyzer end-to-end
+- [x] Phase 5: Validate PSU jobs manually
+- [x] Phase 6: Single commit with all enhancements
+- [x] Phase 7: Store patterns in compound-project-memory
+- [x] Phase 8: Extract lessons for continual-learning
 
 ---
 
 ## Success Criteria
 
 ✅ Pre-commit hooks block commits with pattern violations  
-✅ All 17 shell tests pass with 100% coverage  
+✅ All **18** bats `@test`s pass (with `-p -T`; skips possible)  
 ✅ Analyzer runs on all stacks without errors  
 ✅ PSU jobs execute on schedule  
 ✅ API endpoints respond with correct JSON  
@@ -615,12 +618,12 @@ if args.analyze:
 │   ├── shell-bash-regex-alternation.sh
 │   ├── shell-docker-compose-no-err.sh
 │   ├── node-zod-schema-wrapper.js
-│   ├── run-pytest.sh
+│   ├── run-pytest.sh   # historical name; runs unittest when pytest absent
 │   ├── run-bats.sh
 │   └── run-analyzer.sh
 ├── tests/
 │   ├── shell/
-│   │   ├── setup.sh
+│   │   ├── setup.sh                  (optional — not in all checkouts)
 │   │   ├── compose-validate.bats
 │   │   ├── init-nas.bats
 │   │   └── check-dockge-http.bats
@@ -635,18 +638,18 @@ if args.analyze:
 │       ├── dependency_graph.py
 │       ├── haproxy_traefik_checker.py
 │       └── analyzer_report.py
-└── stacks/psu-ots/data/Repository/.universal/
+└── stacks/psu-ots/universal/
     ├── scripts/
     │   ├── dockge-jobs.ps1
     │   └── dockge-api.ps1
     ├── endpoints/
-    │   └── dockge-compliance-api.ps1
+    │   └── dockge-endpoints.ps1
     └── dashboards/
         └── dockge-compliance.ps1
 ```
 
 ---
 
-**Document Version:** 1.0  
-**Last Updated:** 2025-01-15  
-**Status:** Ready for Implementation
+**Document Version:** 1.1 (archival alignment, May 2026)  
+**Last Updated:** 2026-05-10  
+**Status:** Architectural reference — implementation on `main`

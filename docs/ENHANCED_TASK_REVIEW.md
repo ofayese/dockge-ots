@@ -1,5 +1,7 @@
 # ENHANCED TASK REVIEW & HANDOFF SUMMARY
 
+> **Historical snapshot (2026-05):** This handoff describes the **January 2025** spec uplift before implementation. **Work is complete on `main`.** Live status: **`AGENTS.md`**. Bugs and patches after first ship: **[`BUG_FIX_SUMMARY.md`](BUG_FIX_SUMMARY.md)**. PSU templates live under **`stacks/psu-ots/universal/`** in git (NAS copies under `data/Repository/.universal/`).
+
 ## What You Provided
 Your compound-project-memory task macro outlined four major enhancements across 7 phases. Solid foundational concept but with gaps in specification, deliverable clarity, and execution guidance.
 
@@ -17,7 +19,7 @@ Your compound-project-memory task macro outlined four major enhancements across 
 |-----|-------------|
 | No specific hook detection patterns | Added regex patterns, severity levels, test cases |
 | PSU jobs undefined | Specified 4 jobs, scheduling intervals, fire-and-forget pattern |
-| No test infrastructure | Created bats framework with shared utilities and 17 tests |
+| No test infrastructure | Created bats suite (**18** `@test`s across 3 files) + **`unittest`** for Python |
 | Analyzer modules vague | Detailed all 6 modules with methods, checks, integration points |
 | No execution guidance | Created 16-task comprehensive checklist with success criteria |
 | No documentation structure | Added 2 reference documents (Spec + Checklist) |
@@ -69,7 +71,7 @@ Contains:
 ```
 Phase 1 (90 min) → Create .pre-commit-config.yaml + 9 hook scripts
 Phase 2 (60 min) → Create PSU jobs, API, dashboard
-Phase 3 (90 min) → Create bats test suite (17 tests)
+Phase 3 (90 min) → Create bats test suite (18 tests)
 Phase 4 (120 min) → Create analyzer modules (6 modules)
 Phase 5 (60 min) → Validate all, fix violations, commit
 Phase 6 (30 min) → Store patterns, extract lessons
@@ -97,7 +99,7 @@ Phase 6 (30 min) → Store patterns, extract lessons
 ### 3. Shell Integration Tests
 **Original:** "Create tests/shell/ using bats"  
 **Enhanced:**
-- 17 total tests across 3 files
+- 18 total `@test`s across 3 files (`bats … -p -T`)
 - Specific test cases (e.g., "Mock curl returning 500 response fails")
 - Shared test utilities (setup_mock_curl, etc.)
 - Mock pattern for curl, docker, filesystem
@@ -117,7 +119,7 @@ Phase 6 (30 min) → Store patterns, extract lessons
 ### Phase 1: Pre-commit
 - Hooks should detect real violations in existing code (found 6 actual issues)
 - Each custom hook needs both detection logic AND suggested fixes
-- Test runners (pytest, bats, analyzer) use `stages: [commit]` to block commits
+- Test runners (unittest via `hooks/run-pytest.sh`, bats, analyzer) use `stages: [pre-commit]` after migrate-config
 
 ### Phase 2: PSU
 - Jobs must be fire-and-forget (queue → return immediately)
@@ -140,7 +142,7 @@ Phase 6 (30 min) → Store patterns, extract lessons
 ### Phase 5: Validation
 - Pre-commit will find 6 violations in existing code
 - These must be fixed before commit succeeds
-- All 23 tests should pass (pytest + bats + analyzer)
+- All 23 tasks done; verification uses **unittest** + **bats** + analyzer (`AGENTS.md`)
 - Git commit must mention all 4 enhancements
 
 ## Risk Mitigation
@@ -157,7 +159,7 @@ Phase 6 (30 min) → Store patterns, extract lessons
 
 ✅ All 23 tasks completed  
 ✅ All pre-commit hooks pass locally  
-✅ All 17 shell integration tests pass  
+✅ All **18** bats tests pass (with `-p -T`; some skips in real-repo context)  
 ✅ Analyzer runs on all stacks without fatal errors  
 ✅ Single commit with proper message  
 ✅ Zero integration issues  
@@ -176,7 +178,7 @@ Phase 6 (30 min) → Store patterns, extract lessons
    - Phase 2: PSU automation (6 PowerShell scripts)
    - Phase 3: Shell test suite (3 bats files + utilities)
    - Phase 4: Analyzer modules (6 Python modules + integration)
-   - Phase 5: Validation & fixes (pre-commit, pytest, bats, analyzer)
+   - Phase 5: Validation & fixes (pre-commit, unittest, bats, analyzer)
 
 3. **Verify success:**
    - Run success verification checklist

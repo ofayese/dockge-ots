@@ -1,5 +1,7 @@
 # Bug Fix Summary: Coder Agent Phase 1 Issues
 
+**Note:** The original Gordon briefing pack (`docs/ENHANCED_TASK_*`, `docs/INDEX.md`) is retained for architectural context only. Implementations and fixes documented here are complete on `main` (see also `AGENTS.md`).
+
 ## Timeline
 
 1. **Coder Agent** completed Phase 1-4 implementation (pre-commit hooks, PSU automation, shell tests, analyzer modules)

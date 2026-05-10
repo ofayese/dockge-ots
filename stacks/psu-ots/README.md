@@ -46,13 +46,47 @@ Git-tracked PowerShell templates (copy into `data/Repository/.universal/` on the
 
 | Path | Role |
 |------|------|
-| `universal/scripts/dockge-jobs.ps1` | Background jobs **A–G** + backup / remediation / gitops stubs. Each `Invoke-PSUJob_*` queues `Start-Job` and writes timestamped JSON under `PSU_REPORTS_ROOT` (default `/data/reports`) with **48h** retention. |
+| `universal/scripts/dockge-jobs.ps1` | Background jobs **A–G** + backup + **`Invoke-PSUJob_AutoRemediation`** / **`Invoke-PSUJob_GitOpsSync`**. Each `Invoke-PSUJob_*` queues `Start-Job` and writes timestamped JSON under `PSU_REPORTS_ROOT` (default `/data/reports`) with **48h** retention. |
 | `universal/endpoints/dockge-api.ps1` | Registers `/api/v1/*` routes; enforces **`Authorization: Bearer`** vs **`PSU_AUTH_TOKEN`**. Optional: `PSU_ALLOW_STACK_RESTART`, `PSU_REMEDIATION_ENABLED`, `PSU_GITOPS_ENABLED`. |
 | `universal/endpoints/dockge-endpoints.ps1` | Dot-sources `dockge-api.ps1` (single entry for the `endpoints/` folder). |
 | `universal/dashboards/dockge-compliance.ps1` | NOC panels **A–G** (UD auto-refresh) backed by the JSON reports above. |
+| `universal/scripts/Import-PSUGalleryModules.ps1` | **Required** gallery import (throws unless `PSU_GALLERY_OPTIONAL=1`). |
+| `universal/scripts/Install-PSUGalleryModules.ps1` | Downloads modules from PSGallery (`Install-PSResource` / `Install-Module`); used by **`PSU_GALLERY_INSTALL=1`** and **`Dockerfile`**. |
+| `scripts/docker-gallery-entrypoint.sh` | Compose **entrypoint** wrapper: optional install, then `exec ./Universal/Universal.Server` (matches upstream image). |
 
-**Operational notes:** the PSU container does **not** mount `docker.sock`; stack restarts and deep Docker introspection return **503/501** with guidance to use Dockge UI or host-side automation. **Trivy** / **SMART** probes run only when those tools exist in the image or on the host bind. **GitOps / provision / restore** APIs are explicit **501** placeholders until you wire PAT + `:rw` repo mounts.
+**Operational notes:** the PSU container does **not** mount `docker.sock`. **`Invoke-PSUJob_AutoRemediation`** runs **`docker compose pull && up -d`** and **`docker image prune -a -f`** on the **NAS host over SSH** when **`NAS_HOST_IP`**, **`NAS_SSH_USER`**, **`SSH_KEY_PATH`**, and **`NAS_HOST_STACKS_ROOT`** are set (see **`NAS_HOST_SSH_SETUP.md`**). **Trivy** / **SMART** probes run only when those tools exist in the image or on the host bind. **`POST /api/v1/gitops/sync`** queues `Invoke-PSUJob_GitOpsSync` when **`PSU_GITOPS_ENABLED=1`** and `/nas-repo` is writable; **`POST /api/v1/provision/stack`** and **`POST /api/v1/restore/request`** remain **501** placeholders.
+
+### PSU Gallery modules (required by default)
+
+`Import-PSUGalleryModules` loads every module in **`Get-DockgePSUGalleryModuleNames`**. Unless **`PSU_GALLERY_OPTIONAL=1`**, a failed import **throws** (dashboard/endpoints/jobs fail fast). Use optional mode only while staging; do not leave it on in production if you rely on gallery behavior.
+
+| Area | Modules (Linux set) |
+|------|----------------------|
+| Dashboard UX | `Universal.Utilities.Apps`, `Universal.Components.Loader` |
+| Notifications / triggers | `Universal.Notifications`, `PowerShellUniversal.Triggers.Email`, `PowerShellUniversal.Triggers.Discord` |
+| Monitoring / API | `PowerShellUniversal.API.Monitoring`, `PowerShellUniversal.API.System` |
+| Health checks | `PowerShellUniversal.HealthCheck.InternetAccess`, `PowerShellUniversal.HealthCheck.ExcessiveRunspaces` |
+| Network / certs | `Universal.Apps.NetworkUtilities`, `PowerShellUniversal.Apps.NetworkUtilities`, `PowerShellUniversal.Apps.LetsEncrypt` |
+| DB / tests | `PowerShellUniversal.API.dbatools`, `PowerShellUniversal.Apps.Pester` |
+| Utilities | `PowerShellUniversal.Scripts`, `PowerShellUniversal.Apps.Tools`, `PowerShellUniversal.API.PSResourceGet`, `PowerShellUniversal.Plaster`, `PowerShellUniversal.Apps.Cookbook`, `PowerShellUniversal.Apps.Random` |
+| Identity | `Universal.Apps.ActiveDirectory`, `PowerShellUniversal.Roles.ActiveDirectory` |
+
+**Windows-only add-ons** (set **`PSU_GALLERY_INCLUDE_WINDOWS=1`** for install/import lists): `PowerShellUniversal.Apps.TaskManager`, `PowerShellUniversal.Apps.Services`, `PowerShellUniversal.Apps.AutomatedLab`, `Universal.Apps.WindowsSystemInformation`.
+
+**Three ways to satisfy strict import**
+
+1. **Bake into an image** — from `stacks/psu-ots/`: `docker build -t psu-ots:gallery .` then point compose `image:` at `psu-ots:gallery` (see **`Dockerfile`**; uses the same digest as compose by default).
+2. **Download on container start** — set **`PSU_GALLERY_INSTALL=1`** in `.env` (compose mounts **`scripts/docker-gallery-entrypoint.sh`** and runs **`Install-PSUGalleryModules.ps1`** before Universal.Server). Requires outbound HTTPS to PSGallery. **`PSU_GALLERY_INSTALL_STRICT=0`** allows partial install (import may still fail until all modules resolve).
+3. **Manual / PSU Admin** — install the same module names under the PSU modules path, or set **`PSU_GALLERY_OPTIONAL=1`** only until (1) or (2) is done.
+
+Ensure `chmod +x stacks/psu-ots/scripts/docker-gallery-entrypoint.sh` on the host so the bind-mounted script is executable.
+
+**NAS rollout checklist:** [`GALLERY_ROLLOUT_NAS.md`](./GALLERY_ROLLOUT_NAS.md).
+
+**API:** `GET /api/v1/psu/gallery-modules` (Bearer **`PSU_AUTH_TOKEN`**) returns import rows. **Jobs:** JSON reports include **`galleryModulesLoaded`** after a successful import in the worker.
+
+**References:** [PowerShell Universal Gallery](https://powershelluniversal.com/gallery), [ironmansoftware/universal-modules](https://github.com/ironmansoftware/universal-modules). **Community templates:** GitHub search `powershell universal dashboard` / `ironmansoftware` for chart ideas (keep attribution if you vendor snippets).
 
 ## Image pin
 
-`ironmansoftware/universal@sha256:069b858b0f010d522144745ac918cc12c8ea022d516f011fe7e2596efc3a03c4` — tag `2026.1.6-ubuntu-24.04`. Re-resolve digest when upgrading.
+Default: `ironmansoftware/universal@sha256:069b858b0f010d522144745ac918cc12c8ea022d516f011fe7e2596efc3a03c4` — tag `2026.1.6-ubuntu-24.04`. Re-resolve digest when upgrading. If you build **`Dockerfile`**, tag and pin that image instead.

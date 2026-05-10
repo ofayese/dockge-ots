@@ -83,13 +83,51 @@ function Invoke-DockgeStacksList {
 }
 
 if ($PSScriptRoot) {
-    $jobs = Join-Path (Split-Path -Parent $PSScriptRoot) "scripts/dockge-jobs.ps1"
+    $repoUniversal = Split-Path -Parent $PSScriptRoot
+    $jobs = Join-Path $repoUniversal "scripts/dockge-jobs.ps1"
     if (Test-Path -LiteralPath $jobs) {
         . $jobs
+    }
+    $galleryInit = Join-Path $repoUniversal "scripts/Import-PSUGalleryModules.ps1"
+    if (-not (Test-Path -LiteralPath $galleryInit)) {
+        if ($env:PSU_GALLERY_OPTIONAL -ne '1') {
+            throw "dockge-api.ps1: Import-PSUGalleryModules.ps1 not found at '$galleryInit'."
+        }
+    }
+    else {
+        . $galleryInit
+        if ($env:PSU_GALLERY_OPTIONAL -eq '1') {
+            try { Import-PSUGalleryModules -Optional | Out-Null } catch { Write-Warning "dockge-api.ps1: gallery (optional): $($_.Exception.Message)" }
+        }
+        else {
+            Import-PSUGalleryModules | Out-Null
+        }
     }
 }
 
 if (Get-Command New-PSUEndpoint -ErrorAction SilentlyContinue) {
+
+    New-PSUEndpoint -Url "/api/v1/psu/gallery-modules" -Method GET -Endpoint {
+        $auth = Test-PSUBearerAuth
+        if ($null -ne $auth) { return $auth }
+        $rows = @()
+        if ($global:DockgePSUGalleryModuleState -and $global:DockgePSUGalleryModuleState.Count -gt 0) {
+            foreach ($kv in $global:DockgePSUGalleryModuleState.GetEnumerator()) {
+                $rows += [ordered]@{
+                    module = $kv.Key
+                    ok     = [bool]$kv.Value.ok
+                    error  = $kv.Value.error
+                }
+            }
+        }
+        else {
+            $rows = @([ordered]@{ module = "(not loaded)"; ok = $false; error = "Run Import-PSUGalleryModules from universal/scripts or install gallery modules on the PSU host." })
+        }
+        [ordered]@{
+            generatedAtUtc = (Get-Date).ToUniversalTime().ToString("o")
+            modules        = $rows
+        } | ConvertTo-Json -Depth 6
+    }
 
     New-PSUEndpoint -Url "/api/v1/stacks/status" -Method GET -Endpoint {
         $auth = Test-PSUBearerAuth
@@ -256,10 +294,17 @@ if (Get-Command New-PSUEndpoint -ErrorAction SilentlyContinue) {
     New-PSUEndpoint -Url "/api/v1/gitops/sync" -Method POST -Endpoint {
         $auth = Test-PSUBearerAuth
         if ($null -ne $auth) { return $auth }
-        if (Get-Command New-PSUApiResponse -ErrorAction SilentlyContinue) {
-            return (New-PSUApiResponse -StatusCode 501 -Body '{"error":"GitOps PR automation not implemented in-container (needs :rw repo + PAT on host)."}' -ContentType "application/json")
+        if ($env:PSU_GITOPS_ENABLED -ne "1") {
+            if (Get-Command New-PSUApiResponse -ErrorAction SilentlyContinue) {
+                return (New-PSUApiResponse -StatusCode 403 -Body '{"error":"PSU_GITOPS_ENABLED is not 1"}' -ContentType "application/json")
+            }
+            return '{"error":"gitops disabled"}'
         }
-        return '{"error":"not_implemented"}'
+        if (-not (Get-Command Invoke-PSUJob_GitOpsSync -ErrorAction SilentlyContinue)) {
+            return '{"error":"dockge-jobs.ps1 not loaded"}'
+        }
+        $q = Invoke-PSUJob_GitOpsSync
+        $q | ConvertTo-Json -Depth 6
     }
 
     New-PSUEndpoint -Url "/api/v1/provision/stack" -Method POST -Endpoint {

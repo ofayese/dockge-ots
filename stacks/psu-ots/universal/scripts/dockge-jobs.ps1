@@ -187,6 +187,7 @@ function Invoke-PSUJob_NasHealth {
         try { $obj.mdstat = (Invoke-Sh "cat /proc/mdstat 2>/dev/null") } catch { }
         try { $obj.loadavg = (Invoke-Sh "cat /proc/loadavg 2>/dev/null") } catch { }
         try { $obj.btrfs = (Invoke-Sh "btrfs scrub status / 2>/dev/null | head -n 20") } catch { }
+        try { $obj.memorySummary = (Invoke-Sh "free -m 2>/dev/null | head -n 6") } catch { }
         $obj.galleryModulesLoaded = @($galLoaded)
         ($obj | ConvertTo-Json -Depth 6) | Set-Content -LiteralPath $OutPath -Encoding UTF8
     }
@@ -623,9 +624,113 @@ function Invoke-PSUJob_AutoRemediation {
             }
             return $warn
         }
+        function Test-NasHardwareDegradedObject {
+            param($nh)
+            $reasons = @()
+            if ($null -eq $nh) { return @{ degraded = $false; reasons = $reasons } }
+            $md = [string]$nh.mdstat
+            if (-not [string]::IsNullOrWhiteSpace($md)) {
+                if ($md -match '\(F\)' -or $md -match '\(D\)' -or $md -match '(?i)\bdegraded\b') { $reasons += "mdstat" }
+            }
+            $bt = [string]$nh.btrfs
+            if (-not [string]::IsNullOrWhiteSpace($bt)) {
+                if ($bt -match '(?i)with\s+(\d+)\s+uncorrectable') {
+                    try {
+                        if ([int]$Matches[1] -gt 0) { $reasons += ("btrfs uncorrectable: " + $Matches[1]) }
+                    }
+                    catch { }
+                }
+            }
+            return @{ degraded = ($reasons.Count -gt 0); reasons = $reasons }
+        }
+        function Test-NasLoadOrMemoryCritical {
+            param($nh, [double]$Load1Max, [double]$MemAvailRatioMin)
+            $loadCrit = $false
+            $memCrit = $false
+            $load1 = $null
+            if ($null -ne $nh) {
+                $la = [string]$nh.loadavg
+                if (-not [string]::IsNullOrWhiteSpace($la)) {
+                    $tok = ($la -split '\s+')[0]
+                    try {
+                        $load1 = [double]$tok
+                        if ($load1 -ge $Load1Max) { $loadCrit = $true }
+                    }
+                    catch { }
+                }
+                $memBlock = [string]$nh.memorySummary
+                if (-not [string]::IsNullOrWhiteSpace($memBlock)) {
+                    foreach ($line in ($memBlock -split "`n")) {
+                        if ($line -notmatch '^\s*Mem:\s+') { continue }
+                        if ($line -match 'Mem:\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)') {
+                            $total = [double]$Matches[1]
+                            $avail = [double]$Matches[6]
+                            if ($total -gt 0 -and (($avail / $total) -lt $MemAvailRatioMin)) { $memCrit = $true }
+                            break
+                        }
+                    }
+                }
+            }
+            return @{ loadCritical = $loadCrit; memCritical = $memCrit; load1 = $load1 }
+        }
+        function Get-EmergencyBackupManifestEntries {
+            param([string]$RepoPath)
+            $manifest = @()
+            $targets = @(
+                (Join-Path $RepoPath ".pre-commit-config.yaml"),
+                (Join-Path $RepoPath "stacks/_haproxy/haproxy.cfg")
+            )
+            foreach ($t in $targets) {
+                if (Test-Path -LiteralPath $t) {
+                    try {
+                        $h = Get-FileHash -LiteralPath $t -Algorithm SHA256
+                        $manifest += [ordered]@{ path = $t; sha256 = $h.Hash; size = (Get-Item $t).Length }
+                    }
+                    catch { }
+                }
+            }
+            return $manifest
+        }
+        function Send-PSUSafeModeWebhookAlerts {
+            param([string]$Reason, [string]$Detail)
+            $msg = "PSU Safe Mode: $Reason — $Detail"
+            $urls = @($env:PSU_SAFE_MODE_WEBHOOK_URL, $env:PSU_SAFE_MODE_DISCORD_WEBHOOK) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+            foreach ($url in $urls) {
+                try {
+                    if ($url -match 'discord\.com/api/webhooks') {
+                        $body = (@{ content = $msg } | ConvertTo-Json -Compress)
+                        $null = Invoke-RestMethod -Uri $url -Method POST -Body $body -ContentType "application/json" -TimeoutSec 20 -ErrorAction Stop
+                    }
+                    else {
+                        $payload = @{
+                            source  = "psu-ots"
+                            severity = "critical"
+                            reason  = $Reason
+                            detail  = $Detail
+                            at      = (Get-Date).ToUniversalTime().ToString("o")
+                        } | ConvertTo-Json -Compress
+                        $null = Invoke-RestMethod -Uri $url -Method POST -Body $payload -ContentType "application/json" -TimeoutSec 20 -ErrorAction Stop
+                    }
+                }
+                catch { }
+            }
+            try {
+                $snd = Get-Command Send-PSUNotification -ErrorAction SilentlyContinue
+                if ($null -ne $snd) {
+                    & $snd -Title "PSU Safe Mode" -Body $msg -ErrorAction SilentlyContinue
+                }
+            }
+            catch { }
+        }
 
         $thresh = 90
         try { $thresh = [int]$env:PSU_REMEDIATION_DISK_THRESHOLD_PCT } catch { }
+        $loadCritTh = 8.0
+        try { $loadCritTh = [double]$env:PSU_REMEDIATION_LOADAVG1_CRITICAL } catch { }
+        $memRatioMin = 0.08
+        try { $memRatioMin = [double]$env:PSU_REMEDIATION_MEM_AVAILABLE_RATIO_MIN } catch { }
+        $dockerCpuPct = 90
+        try { $dockerCpuPct = [int]$env:PSU_REMEDIATION_DOCKER_CPU_PCT } catch { }
 
         $driftRaw = Get-LatestReportContentByPrefix -Root $reportsRoot -Prefix "image-drift"
         $analyzerPath = Join-Path $reportsRoot "analyzer-latest.json"
@@ -646,6 +751,131 @@ function Invoke-PSUJob_AutoRemediation {
             target            = if (Test-PSUHostSshConfigured) { ("{0}@{1}" -f $env:NAS_SSH_USER, $env:NAS_HOST_IP) } else { $null }
         }
         $obj.sshSessions = @()
+        $obj.nasHealthTriage = [ordered]@{}
+        $obj.safeMode = [ordered]@{ triggered = $false }
+        $obj.cpuTriage = [ordered]@{ triggered = $false }
+
+        $nasObj = $null
+        if (-not [string]::IsNullOrWhiteSpace($nasRaw)) {
+            try { $nasObj = $nasRaw | ConvertFrom-Json -ErrorAction Stop } catch { $obj.notes += ("nas-health parse: " + $_.Exception.Message) }
+        }
+
+        $sshOk = Test-PSUHostSshConfigured
+        $hostStacksRoot = Get-NasHostStacksRootForSsh
+        $stackRestartAllowed = ($env:PSU_ALLOW_STACK_RESTART -eq "1")
+
+        $hwSig = (Test-NasHardwareDegradedObject -nh $nasObj)
+        $lmSig = (Test-NasLoadOrMemoryCritical -nh $nasObj -Load1Max $loadCritTh -MemAvailRatioMin $memRatioMin)
+        $obj.nasHealthTriage = [ordered]@{
+            load1            = $lmSig.load1
+            loadCritical     = [bool]$lmSig.loadCritical
+            memCritical      = [bool]$lmSig.memCritical
+            hardwareDegraded = [bool]$hwSig.degraded
+            hardwareReasons  = @($hwSig.reasons)
+        }
+
+        if ($env:PSU_SAFE_MODE_ENABLED -eq "1" -and $hwSig.degraded) {
+            $obj.safeMode.triggered = $true
+            $obj.safeMode.hardwareReasons = @($hwSig.reasons)
+            $obj.actions += "Safe Mode: hardware degradation detected — stopping configured stacks and capturing manifest."
+            $obj.safeMode.emergencyBackupManifest = @(Get-EmergencyBackupManifestEntries -RepoPath $Repo)
+            Send-PSUSafeModeWebhookAlerts -Reason "hardware_degraded" -Detail (($hwSig.reasons | Out-String).Trim())
+            if ($sshOk -and -not [string]::IsNullOrWhiteSpace($hostStacksRoot)) {
+                $stopList = @()
+                if (-not [string]::IsNullOrWhiteSpace($env:PSU_SAFE_MODE_STOP_STACKS)) {
+                    $stopList = @($env:PSU_SAFE_MODE_STOP_STACKS -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ -match '^[a-zA-Z0-9._-]+$' })
+                }
+                $stopped = @()
+                foreach ($sname in $stopList) {
+                    $tstop = @'
+set -e
+d='__SR__/__SN__'
+if [ ! -d "$d" ]; then exit 0; fi
+if [ -f "$d/compose.yaml" ]; then f=compose.yaml
+elif [ -f "$d/docker-compose.yaml" ]; then f=docker-compose.yaml
+elif [ -f "$d/docker-compose.yml" ]; then f=docker-compose.yml
+else exit 0; fi
+cd "$d" && docker compose -f "$f" stop
+'@
+                    $rstop = Invoke-PSUHostSsh -RemoteBashScript ($tstop.Replace('__SR__', $hostStacksRoot).Replace('__SN__', $sname))
+                    $stopped += [ordered]@{ stack = $sname; ssh = $rstop }
+                    $obj.sshSessions += [ordered]@{ action = "safe_mode_compose_stop"; stack = $sname; ssh = $rstop }
+                }
+                $obj.safeMode.stoppedStacks = $stopped
+            }
+            else {
+                $obj.safeMode.stoppedStacks = @()
+                $obj.safeMode.note = "SSH or NAS_HOST_STACKS_ROOT not configured — stacks not stopped remotely."
+            }
+            if ($env:PSU_SAFE_MODE_QUEUE_BACKUP -ne "0" -and -not [string]::IsNullOrWhiteSpace($GalleryInit) -and (Test-Path -LiteralPath $GalleryInit)) {
+                $dj = Join-Path ([System.IO.Path]::GetDirectoryName($GalleryInit)) "dockge-jobs.ps1"
+                if (Test-Path -LiteralPath $dj) {
+                    try {
+                        . $dj
+                        if (Get-Command Invoke-PSUJob_BackupSnapshot -ErrorAction SilentlyContinue) {
+                            $obj.safeMode.backupSnapshotJob = Invoke-PSUJob_BackupSnapshot
+                            $obj.actions += "Safe Mode: queued backup-snapshot job (Invoke-PSUJob_BackupSnapshot)."
+                        }
+                    }
+                    catch { $obj.safeMode.backupSnapshotError = $_.Exception.Message }
+                }
+            }
+            Add-RemediationAppendixToLatestReport -Root $reportsRoot -Prefix "nas-health" -Entry ([ordered]@{
+                generatedAtUtc   = (Get-Date).ToUniversalTime().ToString("o")
+                action           = "safe_mode_hardware"
+                hardwareReasons  = @($hwSig.reasons)
+                stoppedStacks    = $obj.safeMode.stoppedStacks
+                backupSnapshot   = $obj.safeMode.backupSnapshotJob
+                backupError      = $obj.safeMode.backupSnapshotError
+            })
+        }
+
+        if ($env:PSU_REMEDIATION_CPU_TRIAGE -eq "1" -and $sshOk -and -not [string]::IsNullOrWhiteSpace($hostStacksRoot) -and $stackRestartAllowed -and ($lmSig.loadCritical -or $lmSig.memCritical)) {
+            $obj.cpuTriage.triggered = $true
+            $topRemote = @'
+set -e
+top -b -n 1 | head -n 40
+echo '---DOCKERSTATS---'
+docker stats --no-stream --format '{{.Name}} {{.CPUPerc}}' 2>/dev/null || true
+'@
+            $topR = Invoke-PSUHostSsh -RemoteBashScript $topRemote
+            $obj.cpuTriage.topAndStats = $topR
+            $cpuScript = @'
+set +e
+docker stats --no-stream --format '{{.Name}} {{.CPUPerc}}' 2>/dev/null | while IFS= read -r line; do
+  [ -z "$line" ] && continue
+  name="${line%% *}"
+  pct="${line##* }"
+  pct="${pct%%%}"
+  awk -v p="$pct" -v th=__TH_INT__ 'BEGIN{exit !(p+0>=th)}' || continue
+  svc=$(docker inspect -f '{{if .Config.Labels}}{{index .Config.Labels "com.docker.compose.service"}}{{end}}' "$name" 2>/dev/null || true)
+  wd=$(docker inspect -f '{{if .Config.Labels}}{{index .Config.Labels "com.docker.compose.project.working_dir"}}{{end}}' "$name" 2>/dev/null || true)
+  if [ -z "$svc" ] || [ -z "$wd" ] || [ ! -d "$wd" ]; then echo "skip $name (no compose labels)"; continue; fi
+  if [ -f "$wd/compose.yaml" ]; then f=compose.yaml
+  elif [ -f "$wd/docker-compose.yaml" ]; then f=docker-compose.yaml
+  elif [ -f "$wd/docker-compose.yml" ]; then f=docker-compose.yml
+  else echo "skip $name (no compose file)"; continue; fi
+  (cd "$wd" && docker compose -f "$f" restart "$svc") && echo "restarted $name service=$svc in $wd"
+done
+exit 0
+'@
+            $cpuScript = $cpuScript.Replace('__TH_INT__', [string][int]$dockerCpuPct)
+            $cpuR = Invoke-PSUHostSsh -RemoteBashScript $cpuScript
+            $obj.cpuTriage.restartSsh = $cpuR
+            $obj.sshSessions += [ordered]@{ action = "cpu_triage_compose_restart"; ssh = $cpuR }
+            Add-RemediationAppendixToLatestReport -Root $reportsRoot -Prefix "nas-health" -Entry ([ordered]@{
+                generatedAtUtc = (Get-Date).ToUniversalTime().ToString("o")
+                action         = "cpu_memory_triage"
+                load1          = $lmSig.load1
+                loadCritical   = [bool]$lmSig.loadCritical
+                memCritical    = [bool]$lmSig.memCritical
+                topStdout      = $topR.stdout
+                topStderr      = $topR.stderr
+                restartStdout  = $cpuR.stdout
+                restartStderr  = $cpuR.stderr
+                restartExit    = $cpuR.exitCode
+            })
+        }
 
         if (-not [string]::IsNullOrWhiteSpace($driftRaw)) {
             try { $obj.imageDriftReport = ($driftRaw | ConvertFrom-Json -ErrorAction Stop) } catch { $obj.notes += ("image-drift parse: " + $_.Exception.Message) }
@@ -656,10 +886,6 @@ function Invoke-PSUJob_AutoRemediation {
             try { $obj.analyzerLatest = ($analyzerRaw | ConvertFrom-Json -ErrorAction Stop) } catch { $obj.notes += ("analyzer-latest parse: " + $_.Exception.Message) }
         }
         else { $obj.notes += "analyzer-latest.json missing (GET /api/v1/analyzer/report or scheduled analyzer)." }
-
-        $sshOk = Test-PSUHostSshConfigured
-        $hostStacksRoot = Get-NasHostStacksRootForSsh
-        $stackRestartAllowed = ($env:PSU_ALLOW_STACK_RESTART -eq "1")
 
         if ($null -ne $obj.imageDriftReport -and $obj.imageDriftReport.floatingTags) {
             foreach ($ft in @($obj.imageDriftReport.floatingTags)) {

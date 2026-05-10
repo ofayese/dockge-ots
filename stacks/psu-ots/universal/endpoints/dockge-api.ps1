@@ -4,8 +4,9 @@
     REST API endpoints for Dockge / NAS automation (Phase 2).
 
 .DESCRIPTION
-    Registers PSU endpoints under /api/v1/*. Each route validates
+    Registers PSU endpoints under /api/v1/*. Most routes validate
     Authorization: Bearer <token> against $env:PSU_AUTH_TOKEN (fail closed if unset).
+    POST /api/v1/webhooks/nas-alert uses PSU_NAS_ALERT_WEBHOOK_TOKEN (X-PSU-Nas-Alert-Token or Bearer) when set, else the same Bearer rule.
 
 .NOTES
     Copy into data/Repository/.universal/endpoints/. Requires PSU (New-PSUEndpoint).
@@ -55,6 +56,40 @@ function Test-PSUBearerAuth {
         return '{"error":"Bearer token mismatch."}'
     }
     return $null
+}
+
+function Test-PSUNasWebhookAuth {
+    <#
+    NAS outbound webhooks: if PSU_NAS_ALERT_WEBHOOK_TOKEN is set, accept that value via
+    header X-PSU-Nas-Alert-Token or Authorization: Bearer <same>. Otherwise fall back to Test-PSUBearerAuth (PSU_AUTH_TOKEN).
+    #>
+    $tok = $env:PSU_NAS_ALERT_WEBHOOK_TOKEN
+    if ([string]::IsNullOrWhiteSpace($tok)) {
+        return (Test-PSUBearerAuth)
+    }
+    $x = $null
+    if ($null -ne $Headers) {
+        foreach ($p in $Headers.PSObject.Properties) {
+            if ($p.Name -match '(?i)^x-psu-nas-alert-token$') {
+                $x = [string]$p.Value
+                break
+            }
+        }
+    }
+    if (-not [string]::IsNullOrWhiteSpace($x) -and ($x.Trim() -ceq $tok.Trim())) { return $null }
+    $ba = $null
+    $authHdr = $null
+    if ($null -ne $Headers) {
+        foreach ($p in $Headers.PSObject.Properties) {
+            if ($p.Name -match '(?i)^authorization$') { $authHdr = [string]$p.Value; break }
+        }
+    }
+    if (-not [string]::IsNullOrWhiteSpace($authHdr) -and $authHdr -match '^\s*Bearer\s+(\S+)\s*$') { $ba = $Matches[1].Trim() }
+    if (-not [string]::IsNullOrWhiteSpace($ba) -and ($ba -ceq $tok.Trim())) { return $null }
+    if (Get-Command New-PSUApiResponse -ErrorAction SilentlyContinue) {
+        return (New-PSUApiResponse -StatusCode 401 -Body '{"error":"Invalid NAS alert token (set X-PSU-Nas-Alert-Token or Authorization: Bearer to PSU_NAS_ALERT_WEBHOOK_TOKEN)."}' -ContentType "application/json")
+    }
+    return '{"error":"nas_webhook_unauthorized"}'
 }
 
 function Get-LatestReportJson {
@@ -289,6 +324,27 @@ if (Get-Command New-PSUEndpoint -ErrorAction SilentlyContinue) {
             return ($q | ConvertTo-Json -Depth 5)
         }
         return '{"error":"jobs not loaded"}'
+    }
+
+    New-PSUEndpoint -Url "/api/v1/webhooks/nas-alert" -Method POST -Endpoint {
+        $auth = Test-PSUNasWebhookAuth
+        if ($null -ne $auth) { return $auth }
+        if ($env:PSU_REMEDIATION_ENABLED -ne "1") {
+            if (Get-Command New-PSUApiResponse -ErrorAction SilentlyContinue) {
+                return (New-PSUApiResponse -StatusCode 403 -Body '{"error":"PSU_REMEDIATION_ENABLED is not 1"}' -ContentType "application/json")
+            }
+            return '{"error":"remediation disabled"}'
+        }
+        if (-not (Get-Command Invoke-PSUJob_AutoRemediation -ErrorAction SilentlyContinue)) {
+            return '{"error":"jobs not loaded"}'
+        }
+        $q = Invoke-PSUJob_AutoRemediation
+        [ordered]@{
+            accepted            = $true
+            source              = "nas-alert-webhook"
+            remediationQueued   = $q
+            generatedAtUtc      = (Get-Date).ToUniversalTime().ToString("o")
+        } | ConvertTo-Json -Depth 6
     }
 
     New-PSUEndpoint -Url "/api/v1/gitops/sync" -Method POST -Endpoint {

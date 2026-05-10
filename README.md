@@ -2,10 +2,10 @@
 
 Dockge Compose stack definitions for two Synology NAS hosts (OTS and MFT), plus **`stacks/_haproxy/`** for the optional Synology HAProxy edge. The Dockge **host** container is **not** a stack here: it is started by [`scripts/dockge-start.sh`](scripts/dockge-start.sh) (install to rc.d). TLS is issued with **`acme-sh`** (DNS-01) to **`/volume1/certs/acme/`**; Traefik and HAProxy consume those PEMs. Full architecture and hive milestones: [`HIVE_OBJECTIVE.md`](HIVE_OBJECTIVE.md).
 
-| NAS | Hostname                    | LAN IP      | DNS namespace          |
-| --- | --------------------------- | ----------- | ---------------------- |
+| NAS | Hostname                    | LAN IP      | DNS namespace                                                        |
+| --- | --------------------------- | ----------- | -------------------------------------------------------------------- |
 | OTS | `otsorundscore.synology.me` | `10.0.1.15` | `*.otsorundscore.olutechsys.com` / `*.otsorundscore.olutech.systems` |
-| MFT | `misfitsds.synology.me`     | `10.0.1.24` | `*.misfitsds.olutechsys.com` / `*.misfitsds.olutech.systems` |
+| MFT | `misfitsds.synology.me`     | `10.0.1.24` | `*.misfitsds.olutechsys.com` / `*.misfitsds.olutech.systems`         |
 
 ---
 
@@ -106,19 +106,19 @@ sudo sh -c 'cat /volume1/certs/acme/otsorundscore/fullchain.pem /volume1/certs/a
 
 ## 9. Key scripts and files
 
-| Path                                                                           | Role                         |
-| ------------------------------------------------------------------------------ | ---------------------------- |
-| [`scripts/dockge-start.sh`](scripts/dockge-start.sh)                           | Dockge host container (rc.d) |
-| [`scripts/init-nas.sh`](scripts/init-nas.sh)                                   | Post-clone dirs + `.env`     |
-| [`scripts/fix-permissions.sh`](scripts/fix-permissions.sh)                     | Bind-mount ownership         |
-| [`scripts/compose-validate.sh`](scripts/compose-validate.sh)                   | All Compose files (CI)       |
-| [`scripts/check-dockge-http.sh`](scripts/check-dockge-http.sh)                 | Probe Dockge on 5571         |
-| [`scripts/verify-repo-layout.sh`](scripts/verify-repo-layout.sh)               | Hive / stack path guard      |
-| [`scripts/validate-haproxy-proposal.sh`](scripts/validate-haproxy-proposal.sh) | HAProxy `-c` off-box         |
-| [`stacks/acme-sh/SETUP.md`](stacks/acme-sh/SETUP.md)                           | Cert issue/install runbook   |
+| Path                                                                                                 | Role                                             |
+| ---------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| [`scripts/dockge-start.sh`](scripts/dockge-start.sh)                                                 | Dockge host container (rc.d)                     |
+| [`scripts/init-nas.sh`](scripts/init-nas.sh)                                                         | Post-clone dirs + `.env`                         |
+| [`scripts/fix-permissions.sh`](scripts/fix-permissions.sh)                                           | Bind-mount ownership                             |
+| [`scripts/compose-validate.sh`](scripts/compose-validate.sh)                                         | All Compose files (CI)                           |
+| [`scripts/check-dockge-http.sh`](scripts/check-dockge-http.sh)                                       | Probe Dockge on 5571                             |
+| [`scripts/verify-repo-layout.sh`](scripts/verify-repo-layout.sh)                                     | Hive / stack path guard                          |
+| [`scripts/validate-haproxy-proposal.sh`](scripts/validate-haproxy-proposal.sh)                       | HAProxy `-c` off-box                             |
+| [`stacks/acme-sh/SETUP.md`](stacks/acme-sh/SETUP.md)                                                 | Cert issue/install runbook                       |
 | [`docs/hive/CERT_REISSUE_TRAEFIK_OAUTH_RUNBOOK.md`](docs/hive/CERT_REISSUE_TRAEFIK_OAUTH_RUNBOOK.md) | Ordered: reissue → Traefik → Google OAuth Step 1 |
-| [`docs/hive/NAS_DEPLOYMENT.md`](docs/hive/NAS_DEPLOYMENT.md)                   | Full NAS reference           |
-| [`AGENTS.md`](AGENTS.md)                                                       | Agent memory and conventions |
+| [`docs/hive/NAS_DEPLOYMENT.md`](docs/hive/NAS_DEPLOYMENT.md)                                         | Full NAS reference                               |
+| [`AGENTS.md`](AGENTS.md)                                                                             | Agent memory and conventions                     |
 
 ---
 

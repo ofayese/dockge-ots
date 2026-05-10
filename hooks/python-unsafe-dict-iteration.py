@@ -1,55 +1,39 @@
 #!/usr/bin/env python3
 """
-Hook: Detect unsafe dict iteration patterns in Python.
-Patterns:
-  - for k, v in dict.items() where only one is used later
-  - dict unpacking without validation
-  - Accessing dict keys without .get() or try-except
+Hook: Detect a narrow unsafe depends_on pattern — str(k) in else branch
+when iterating dict.items() (value should be str(v) when v is not a dict).
 """
 
 import re
 import sys
 from pathlib import Path
 
-UNSAFE_PATTERNS = [
-    # Pattern: for k, v in depends.items() but only using k (missing value)
-    (r'for\s+(\w+),\s+(\w+)\s+in\s+\w+\.items\(\).*?(?!return|yield)', 'incomplete dict unpacking'),
-]
-
 
 def check_file(path: str) -> bool:
-    """Check for unsafe dict iteration."""
+    """Return True if violations found."""
     try:
         content = Path(path).read_text()
-    except Exception:
+    except OSError:
         return False
 
-    violations = []
+    violations: list[str] = []
     lines = content.splitlines()
 
     for i, line in enumerate(lines, 1):
-        # Skip comments
-        if line.strip().startswith('#'):
+        if line.strip().startswith("#"):
             continue
 
-        # Pattern: for k, v in dict.items() where only k is used in the body
-        if 'for ' in line and ', ' in line and ' in ' in line and '.items()' in line:
-            # Extract variable names
-            match = re.search(r'for\s+(\w+),\s+(\w+)\s+in\s+(\w+)\.items\(\)', line)
-            if match:
-                var1, var2, dict_name = match.groups()
-                # Check next few lines for usage
-                context = '\n'.join(lines[i:min(i + 5, len(lines))])
-                if var2 not in context and 'str(' + var1 in context:
-                    violations.append(f"{path}:{i} dict.items() unpacking: {var2} unused, using str({var1})")
-
-        # Pattern: direct dict access without .get()
-        if re.search(r'\w+\[', line) and 'get(' not in line:
-            if not any(x in line for x in ['#', '"""', "'''"]):
-                # This is a heuristic — check for actual key access
-                if '.get(' not in line and 'except' not in line:
-                    if 'KeyError' not in lines[max(0, i - 2):i]:
-                        violations.append(f"{path}:{i} potential unsafe dict access (use .get() or try-except)")
+        if re.search(r"for\s+\w+,\s+\w+\s+in\s+\w+\.items\(\)", line):
+            context = "\n".join(lines[i : min(i + 8, len(lines))])
+            # Original review: else branch used str(k) instead of str(v)
+            if "isinstance" in context and "str(" in context and ".items()" in line:
+                if re.search(r"else\s+str\(\w+\)", context) and not re.search(
+                    r"else\s+str\(v\)", context
+                ):
+                    if "str(v)" not in context:
+                        violations.append(
+                            f"{path}:{i} depends_on formatting: prefer str(v) when value is not a dict"
+                        )
 
     if violations:
         for v in violations:

@@ -5,8 +5,8 @@
  * Issue: Zod best practice is to always use z.object() for schemas to ensure consistency.
  */
 
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
 const args = process.argv.slice(2);
 let failed = false;
@@ -17,15 +17,15 @@ for (const file of args) {
   }
 
   try {
-    const content = fs.readFileSync(file, 'utf8');
-    const lines = content.split('\n');
+    const content = fs.readFileSync(file, "utf8");
+    const lines = content.split("\n");
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       const lineNum = i + 1;
 
       // Skip comments
-      if (line.trim().startsWith('//') || line.trim().startsWith('/*')) {
+      if (line.trim().startsWith("//") || line.trim().startsWith("/*")) {
         continue;
       }
 
@@ -39,12 +39,16 @@ for (const file of args) {
       //   export const schema = z.object(...)
       //   const nested = z.object(...).strict()
 
-      const schemaMatch = line.match(/(?:export\s+)?const\s+\w+\s*=\s*z\.(string|array|union|record|enum|intersection|discriminatedUnion|effect|refine|lazy|tuple|promise|date|never|nan|bigint|boolean|number|null|undefined|any)\s*[\(]/);
+      const schemaMatch = line.match(
+        /(?:export\s+)?const\s+\w+\s*=\s*z\.(string|array|union|record|enum|intersection|discriminatedUnion|effect|refine|lazy|tuple|promise|date|never|nan|bigint|boolean|number|null|undefined|any)\s*[\(]/,
+      );
 
       if (schemaMatch) {
         // This is a schema without z.object() wrapper
         const type = schemaMatch[1];
-        console.error(`${file}:${lineNum}: Zod schema should be wrapped in z.object() (found z.${type}): ${line.trim()}`);
+        console.error(
+          `${file}:${lineNum}: Zod schema should be wrapped in z.object() (found z.${type}): ${line.trim()}`,
+        );
         failed = true;
       }
     }

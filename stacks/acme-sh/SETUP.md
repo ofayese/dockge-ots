@@ -984,18 +984,18 @@ sudo synopkg restart ContainerManager
 
 ## What this stack manages
 
-| Component                              | Cert                                                | Auto-renewed                  | Deployed by                      |
-| -------------------------------------- | --------------------------------------------------- | ----------------------------- | -------------------------------- |
-| DSM HTTPS — otsorundscore              | `wildcard/` (`*.olutechsys.com`)                    | acme.sh                       | `deploy-otsorundscore.bash`      |
-| DSM HTTPS — misfitsds                  | `wildcard/` (`*.olutechsys.com`)                    | acme.sh                       | `deploy-misfitsds.bash`          |
-| Docker daemon TLS — otsorundscore      | `wildcard/fullchain.pem`                            | acme.sh                       | `deploy-otsorundscore.bash`      |
-| Docker daemon mTLS — otsorundscore     | `docker-mtls/servers/otsorundscore.olutechsys.com/` | local `docker-mtls-*` scripts | `deploy-otsorundscore-mtls.bash` |
-| DSM cert slot — otsorundscore services | `otsorundscore-sub/`                                | acme.sh                       | `deploy-otsorundscore.bash`      |
-| DSM cert slot — misfitsds services     | `misfitsds-sub/`                                    | acme.sh                       | `deploy-misfitsds.bash`          |
-| MacBook (otsmbpro16)                   | `otsmbpro16/`                                       | acme.sh                       | `deploy-otsmbpro16.bash`         |
-| Laptop (hpdevcore)                     | `hpdevcore/`                                        | acme.sh                       | `deploy-hpdevcore.bash`          |
-| OTS namespace services                 | `otsorundscore/` (`*.otsorundscore.{olutechsys,olutech.systems}`)                 | acme.sh                       | Traefik file certs (`tls.yaml`)  |
-| MFT namespace services                 | `misfitsds/` (`*.misfitsds.{olutechsys,olutech.systems}`)                 | acme.sh                       | Traefik file certs (`tls.yaml`)  |
+| Component                              | Cert                                                              | Auto-renewed                  | Deployed by                      |
+| -------------------------------------- | ----------------------------------------------------------------- | ----------------------------- | -------------------------------- |
+| DSM HTTPS — otsorundscore              | `wildcard/` (`*.olutechsys.com`)                                  | acme.sh                       | `deploy-otsorundscore.bash`      |
+| DSM HTTPS — misfitsds                  | `wildcard/` (`*.olutechsys.com`)                                  | acme.sh                       | `deploy-misfitsds.bash`          |
+| Docker daemon TLS — otsorundscore      | `wildcard/fullchain.pem`                                          | acme.sh                       | `deploy-otsorundscore.bash`      |
+| Docker daemon mTLS — otsorundscore     | `docker-mtls/servers/otsorundscore.olutechsys.com/`               | local `docker-mtls-*` scripts | `deploy-otsorundscore-mtls.bash` |
+| DSM cert slot — otsorundscore services | `otsorundscore-sub/`                                              | acme.sh                       | `deploy-otsorundscore.bash`      |
+| DSM cert slot — misfitsds services     | `misfitsds-sub/`                                                  | acme.sh                       | `deploy-misfitsds.bash`          |
+| MacBook (otsmbpro16)                   | `otsmbpro16/`                                                     | acme.sh                       | `deploy-otsmbpro16.bash`         |
+| Laptop (hpdevcore)                     | `hpdevcore/`                                                      | acme.sh                       | `deploy-hpdevcore.bash`          |
+| OTS namespace services                 | `otsorundscore/` (`*.otsorundscore.{olutechsys,olutech.systems}`) | acme.sh                       | Traefik file certs (`tls.yaml`)  |
+| MFT namespace services                 | `misfitsds/` (`*.misfitsds.{olutechsys,olutech.systems}`)         | acme.sh                       | Traefik file certs (`tls.yaml`)  |
 
 The previous local CA codebase (`setup-docker-tls.bash`, `deploy-nas-cert.bash`)
 has been retired and archived to `/volume1/certs/archives/scripts-2026-04-27/`.

@@ -21,7 +21,9 @@ Admin UI: `https://psu.otsorundscore.olutechsys.com` (via Traefik) or publish ho
 
 ## Repository layout
 
-Versioned PSU config lives under **`data/Repository/`** (`.universal/*.ps1`, `Scripts/`, `Apps/`). Runtime DB files under `data/` are gitignored except `Repository/`.
+Versioned PSU config lives under **`data/Repository/`** on the NAS (`.universal/*.ps1`, `Scripts/`, `Apps/`). Runtime DB files under `data/` are gitignored.
+
+**Git-tracked templates:** copy [`universal/`](./universal/) into `data/Repository/.universal/` after first deploy (root `.gitignore` ignores `stacks/**/data/`, so templates ship beside the stack instead of under `data/`).
 
 ## Security notes
 
@@ -30,13 +32,13 @@ Versioned PSU config lives under **`data/Repository/`** (`.universal/*.ps1`, `Sc
 
 ## Automation
 
-| Script | Purpose |
-|--------|---------|
-| `NAS-Fix-Permissions` | Runs `fix-permissions.sh` against `PSU_STACK_ROOT` |
-| `NAS-Check-Dockge-Status` | Runs `check-dockge-http.sh` |
-| `NAS-Detect-Config-Drift` | `git status` drift hints |
-| `NAS-Validate-SSL-Certs` | OpenSSL notAfter on `fullchain.pem` |
-| `NAS-Monitor-Dockge-Stacks` | Dockge API inventory (needs credentials) |
+| Script                      | Purpose                                            |
+| --------------------------- | -------------------------------------------------- |
+| `NAS-Fix-Permissions`       | Runs `fix-permissions.sh` against `PSU_STACK_ROOT` |
+| `NAS-Check-Dockge-Status`   | Runs `check-dockge-http.sh`                        |
+| `NAS-Detect-Config-Drift`   | `git status` drift hints                           |
+| `NAS-Validate-SSL-Certs`    | OpenSSL notAfter on `fullchain.pem`                |
+| `NAS-Monitor-Dockge-Stacks` | Dockge API inventory (needs credentials)           |
 
 ## Image pin
 

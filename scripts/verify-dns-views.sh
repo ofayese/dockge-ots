@@ -60,7 +60,10 @@ https_ok() {
 	local host="$1"
 	local code
 	code=$(curl -kI -o /dev/null -s -w '%{http_code}' --max-time 15 "https://$host" || echo "000")
-	[[ "$code" =~ ^(2|3)[0-9][0-9]$ ]]
+	case "$code" in
+	2[0-9][0-9] | 3[0-9][0-9]) return 0 ;;
+	*) return 1 ;;
+	esac
 }
 
 run_hairpin_probe() {
@@ -88,9 +91,9 @@ run_hairpin_probe() {
 	code=$(curl -kI -o /dev/null -s -w '%{http_code}' --max-time 15 "https://$host" || echo "000")
 	echo "HTTP status: $code"
 	local curl_ok=false
-	if [[ "$code" =~ ^(2|3)[0-9][0-9]$ ]]; then
-		curl_ok=true
-	fi
+	case "$code" in
+	2[0-9][0-9] | 3[0-9][0-9]) curl_ok=true ;;
+	esac
 
 	echo ""
 	echo -e "${CYAN}━━ Verdict ━━${NC}"

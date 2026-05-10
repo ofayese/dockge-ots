@@ -34,11 +34,11 @@ once an HTTPS connection is established.
 
 ## Environment variables
 
-| Variable               | Required | Default                               | Description                                   |
-| ---------------------- | -------- | ------------------------------------- | --------------------------------------------- |
+| Variable               | Required | Default                                         | Description                                   |
+| ---------------------- | -------- | ----------------------------------------------- | --------------------------------------------- |
 | `REMOTELY_SERVER_URL`  | Yes      | `https://remotely.otsorundscore.olutechsys.com` | Public HTTPS URL for agent download links     |
-| `REMOTELY_KNOWN_PROXY` | Yes      | `10.0.1.15`                           | Reverse proxy LAN IP — trusts X-Forwarded-For |
-| `TZ`                   | No       | `America/New_York`                    | Timezone for log timestamps                   |
+| `REMOTELY_KNOWN_PROXY` | Yes      | `10.0.1.15`                                     | Reverse proxy LAN IP — trusts X-Forwarded-For |
+| `TZ`                   | No       | `America/New_York`                              | Timezone for log timestamps                   |
 
 ## Port reference
 

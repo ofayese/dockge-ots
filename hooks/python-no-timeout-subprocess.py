@@ -1,37 +1,34 @@
 #!/usr/bin/env python3
 """
-Hook: Detect subprocess.run() without timeout parameter.
-Usage: pre-commit hook detects dangerous subprocess patterns.
+Hook: Detect subprocess.run() without timeout= in the call (may span lines).
 """
 
-import re
 import sys
 from pathlib import Path
 
-UNSAFE_PATTERNS = [
-    re.compile(r'subprocess\.run\([^)]*\)', re.MULTILINE),  # Basic check
-]
-
 
 def check_file(path: str) -> bool:
-    """Check if file has unsafe subprocess patterns. Return True if violations found."""
+    """Return True if violations found."""
     try:
-        content = Path(path).read_text()
-    except Exception:
+        lines = Path(path).read_text().splitlines()
+    except OSError:
         return False
 
-    violations = []
-    for i, line in enumerate(content.splitlines(), 1):
-        # Skip comments
-        if line.strip().startswith('#'):
+    violations: list[str] = []
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        if line.strip().startswith("#"):
+            i += 1
             continue
-
-        # Check if subprocess.run exists WITHOUT timeout= parameter
-        if 'subprocess.run(' in line and 'timeout=' not in line:
-            # Heuristic: if line has subprocess.run and NOT timeout, flag it
-            # (Allow if it's in a comment or string)
-            if not any(x in line[:line.find('subprocess.run')] for x in ['#', '"""', "'''"]):
-                violations.append(f"{path}:{i} subprocess.run without timeout")
+        if "subprocess.run(" not in line:
+            i += 1
+            continue
+        # Gather a small window — timeout= often appears on following lines.
+        chunk = "\n".join(lines[i : min(i + 16, len(lines))])
+        if "timeout=" not in chunk:
+            violations.append(f"{path}:{i + 1} subprocess.run without timeout=")
+        i += 1
 
     if violations:
         for v in violations:

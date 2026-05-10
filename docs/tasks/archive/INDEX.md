@@ -1,8 +1,8 @@
-> **Current live status:** Use **[`AGENTS.md`](../AGENTS.md)** for operator truth (paths, hooks, test commands, guardrails) and **[`BUG_FIX_SUMMARY.md`](BUG_FIX_SUMMARY.md)** for the post-ship bug/fix narrative. Everything below is the **Gordon briefing pack** — historical and architectural reference (January 2025 design; implementation **complete on `main`** as of May 2026).
+> **Current live status:** Use **[`AGENTS.md`](../../../AGENTS.md)** for operator truth (paths, hooks, test commands, guardrails) and **[`BUG_FIX_SUMMARY.md`](BUG_FIX_SUMMARY.md)** for the post-ship bug/fix narrative. **This briefing pack is archived** under `docs/tasks/archive/` (you are reading `INDEX.md` here). Everything below is the **Gordon briefing pack** — historical and architectural reference (January 2025 design; implementation **complete on `main`** as of May 2026).
 
 # 📋 ENHANCED TASK DOCUMENTATION INDEX
 
-The index and linked specs describe what was built; **`AGENTS.md`** remains the source of truth for day-to-day work.
+The index and linked specs describe what was built; **`AGENTS.md`** at repo root remains the source of truth for day-to-day work.
 
 ## Quick Navigation
 
@@ -212,11 +212,14 @@ dockge/
 │   │   └── check-dockge-http.bats
 │   └── test_inventory.py                      (existing)
 ├── docs/
-│   ├── ENHANCED_TASK_SPECIFICATION.md         (briefing ✅)
-│   ├── CODER_EXECUTION_CHECKLIST.md           (briefing ✅)
-│   ├── ENHANCED_TASK_REVIEW.md                (briefing ✅)
-│   ├── QUICK_REFERENCE_VIOLATIONS.md          (briefing ✅)
-│   ├── BUG_FIX_SUMMARY.md                     (live narrative ✅)
+│   ├── tasks/
+│   │   └── archive/                           (Gordon briefing pack — archived)
+│   │       ├── INDEX.md
+│   │       ├── ENHANCED_TASK_SPECIFICATION.md
+│   │       ├── CODER_EXECUTION_CHECKLIST.md
+│   │       ├── ENHANCED_TASK_REVIEW.md
+│   │       ├── QUICK_REFERENCE_VIOLATIONS.md
+│   │       └── BUG_FIX_SUMMARY.md
 │   └── hive/tools/
 │       ├── inventory.py                       (modified ✅)
 │       └── analyzers/                         (✅ on `main`)
@@ -311,15 +314,15 @@ git log --oneline -5
 
 | Document | Version | Date | Status |
 |----------|---------|------|--------|
-| ENHANCED_TASK_SPECIFICATION | 1.2 | 2026-05-09 | Archival / reference |
-| CODER_EXECUTION_CHECKLIST | 1.2 | 2026-05-09 | Historical (complete) |
-| ENHANCED_TASK_REVIEW | 1.2 | 2026-05-09 | Historical snapshot |
-| QUICK_REFERENCE_VIOLATIONS | 1.2 | 2026-05-09 | Historical + patterns |
-| BUG_FIX_SUMMARY | — | 2026-05 | **Live** bug narrative |
+| ENHANCED_TASK_SPECIFICATION | 1.3 | 2026-05-09 | Archival / reference |
+| CODER_EXECUTION_CHECKLIST | 1.3 | 2026-05-09 | Historical (complete) |
+| ENHANCED_TASK_REVIEW | 1.3 | 2026-05-09 | Historical snapshot |
+| QUICK_REFERENCE_VIOLATIONS | 1.3 | 2026-05-09 | Historical + patterns |
+| BUG_FIX_SUMMARY | — | 2026-05 | Archived (Phase 1 + 2 narrative) |
 
-**Index Version:** 1.2  
+**Index Version:** 1.3  
 **Index Date:** 2026-05-09  
-**Status:** ✅ Aligned with `main` — briefing pack lives under `docs/` (canonical paths)
+**Status:** ✅ Aligned with `main` — briefing pack **archived** under `docs/tasks/archive/`
 
 ---
 
@@ -334,7 +337,7 @@ git log --oneline -5
 ---
 
 **Document:** Enhanced Task Documentation Index  
-**Version:** 1.2  
+**Version:** 1.3  
 **Status:** ✅ Aligned with `main` (May 2026)  
 **Last Updated:** 2026-05-09  
 **Maintained By:** Gordon (Docker AI Assistant) + repo maintainers

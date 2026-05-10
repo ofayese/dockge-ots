@@ -1,7 +1,7 @@
 # Enhanced Task Specification: Dockge-OTS Ecosystem Enhancements
 ## Comprehensive Implementation Guide
 
-> **Deprecation / scope (May 2026):** This file is **purely an architectural reference document** — implementation is **complete on `main`**. Use **[`AGENTS.md`](../AGENTS.md)** for live commands and layout; use **[`BUG_FIX_SUMMARY.md`](BUG_FIX_SUMMARY.md)** for post-ship bug fixes (Phase 1 + Phase 2). Design detail (regexes, module layout, contracts) is preserved here and may include **stale line numbers** — verify against the codebase when in doubt.
+> **Deprecation / scope (May 2026):** This file is **purely an architectural reference document** — implementation is **complete on `main`**. Use **[`AGENTS.md`](../../../AGENTS.md)** for live commands and layout; use **[`BUG_FIX_SUMMARY.md`](BUG_FIX_SUMMARY.md)** for post-ship bug fixes (Phase 1 + Phase 2). Design detail (regexes, module layout, contracts) is preserved here and may include **stale line numbers** — verify against the codebase when in doubt.
 
 ---
 

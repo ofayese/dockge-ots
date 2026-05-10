@@ -1,6 +1,6 @@
 # Dockge-OTS Enhancements: Coder Execution Checklist
 
-> **Historical status (2026-05):** Superseded by execution on `main` — see [`AGENTS.md`](../AGENTS.md) and git log. Implementation is complete. This checklist remains as an audit trail; all numbered tasks are marked done below. Canonical commands: `pre-commit run --all-files`, `python3 -m unittest discover -s tests -p 'test_*.py' -v`, `bats tests/shell/*.bats -p -T`.
+> **Historical status (2026-05):** Superseded by execution on `main` — see [`AGENTS.md`](../../../AGENTS.md) and git log. Implementation is complete. This checklist remains as an audit trail; all numbered tasks are marked done below. Canonical commands: `pre-commit run --all-files`, `python3 -m unittest discover -s tests -p 'test_*.py' -v`, `bats tests/shell/*.bats -p -T`.
 
 ## Overview
 This checklist guides the implementation of four major enhancements to the dockge-ots ecosystem through Cursor/Coder.
@@ -14,7 +14,7 @@ This checklist guides the implementation of four major enhancements to the dockg
 ## PHASE 1: PRE-COMMIT ENFORCEMENT SYSTEM (9 tasks)
 
 ### Setup
-- [x] **1.1** Read `.pre-commit-config.yaml` template in `docs/ENHANCED_TASK_SPECIFICATION.md`
+- [x] **1.1** Read `.pre-commit-config.yaml` template in `docs/tasks/archive/ENHANCED_TASK_SPECIFICATION.md`
 - [x] **1.2** Create `./hooks/` directory
 - [x] **1.3** Make all hook scripts executable: `chmod +x ./hooks/*.sh ./hooks/*.js ./hooks/*.py`
 

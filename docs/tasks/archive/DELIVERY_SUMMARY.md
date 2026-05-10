@@ -12,35 +12,38 @@
 
 ## 📋 Deliverables Checklist
 
-### Documentation Files (5 files, 38 KB)
-- ✅ `./docs/INDEX.md` (11 KB)
+### Documentation Files (6 core briefing files + this summary; paths under `docs/tasks/archive/`)
+- ✅ `docs/tasks/archive/INDEX.md` (11 KB)
   - Navigation guide for all roles
   - Reading paths by job title
   - File structure overview
   
-- ✅ `./docs/ENHANCED_TASK_SPECIFICATION.md` (22 KB)
+- ✅ `docs/tasks/archive/ENHANCED_TASK_SPECIFICATION.md` (22 KB)
   - Complete architecture reference
   - Phases 1-4 with detailed deliverables
   - File locations and methods
   - Success criteria
   
-- ✅ `./docs/CODER_EXECUTION_CHECKLIST.md` (16 KB)
+- ✅ `docs/tasks/archive/CODER_EXECUTION_CHECKLIST.md` (16 KB)
   - 23 numbered tasks
   - Phase-by-phase breakdown
   - Test commands and success criteria
   - Debugging tips
   
-- ✅ `./docs/ENHANCED_TASK_REVIEW.md` (8.6 KB)
+- ✅ `docs/tasks/archive/ENHANCED_TASK_REVIEW.md` (8.6 KB)
   - Gap analysis vs original
   - Key improvements
   - Implementation notes
   
-- ✅ `./docs/QUICK_REFERENCE_VIOLATIONS.md` (7 KB)
+- ✅ `docs/tasks/archive/QUICK_REFERENCE_VIOLATIONS.md` (7 KB)
   - 5 existing code violations
   - Hook detection patterns
   - FAIL/PASS code examples
 
-**Total Documentation:** 64.6 KB (readable by humans, executable by machines)
+- ✅ `docs/tasks/archive/BUG_FIX_SUMMARY.md`
+  - Phase 1 + Phase 2 bug narrative after first ship
+
+**Total Documentation:** 64.6 KB+ (readable by humans, executable by machines)
 
 ---
 
@@ -141,11 +144,14 @@ dockge/
 │   ├── init-nas.bats
 │   └── check-dockge-http.bats
 ├── docs/
-│   ├── INDEX.md                               [NEW - 11 KB]
-│   ├── ENHANCED_TASK_SPECIFICATION.md         [NEW - 22 KB]
-│   ├── CODER_EXECUTION_CHECKLIST.md           [NEW - 16 KB]
-│   ├── ENHANCED_TASK_REVIEW.md                [NEW - 8.6 KB]
-│   ├── QUICK_REFERENCE_VIOLATIONS.md          [NEW - 7 KB]
+│   ├── tasks/
+│   │   └── archive/                           [Gordon briefing pack — archived]
+│   │       ├── INDEX.md
+│   │       ├── ENHANCED_TASK_SPECIFICATION.md
+│   │       ├── CODER_EXECUTION_CHECKLIST.md
+│   │       ├── ENHANCED_TASK_REVIEW.md
+│   │       ├── QUICK_REFERENCE_VIOLATIONS.md
+│   │       └── BUG_FIX_SUMMARY.md
 │   └── hive/tools/
 │       ├── inventory.py                       [MODIFIED]
 │       └── analyzers/                         [NEW - 7 files]
@@ -172,10 +178,10 @@ Total modified files: 2
 ## 🚀 How to Proceed
 
 ### For Immediate Action (Cursor/Coder):
-1. **Read:** `./docs/INDEX.md` (5 min) — Navigation
-2. **Understand:** `./docs/ENHANCED_TASK_SPECIFICATION.md` (30 min)
-3. **Implement:** Follow `./docs/CODER_EXECUTION_CHECKLIST.md` (6-8 hours)
-4. **Debug:** Use `./docs/QUICK_REFERENCE_VIOLATIONS.md` as needed
+1. **Read:** `docs/tasks/archive/INDEX.md` (5 min) — Navigation
+2. **Understand:** `docs/tasks/archive/ENHANCED_TASK_SPECIFICATION.md` (30 min)
+3. **Implement:** Follow `docs/tasks/archive/CODER_EXECUTION_CHECKLIST.md` (6-8 hours)
+4. **Debug:** Use `docs/tasks/archive/QUICK_REFERENCE_VIOLATIONS.md` as needed
 5. **Verify:** Run success checklist from Phase 5
 6. **Commit:** Use provided commit message template
 
@@ -280,9 +286,9 @@ Total modified files: 2
 All patterns, decisions, and architectural choices have been documented and stored for future reference:
 
 **Immediate Use (Coder implementation):**
-- `./docs/ENHANCED_TASK_SPECIFICATION.md` — Architecture
-- `./docs/CODER_EXECUTION_CHECKLIST.md` — Implementation guide
-- `./docs/QUICK_REFERENCE_VIOLATIONS.md` — Debugging
+- `docs/tasks/archive/ENHANCED_TASK_SPECIFICATION.md` — Architecture
+- `docs/tasks/archive/CODER_EXECUTION_CHECKLIST.md` — Implementation guide
+- `docs/tasks/archive/QUICK_REFERENCE_VIOLATIONS.md` — Debugging
 
 **Future Use (continual-learning extraction):**
 - 4 memory entries in compound-project-memory

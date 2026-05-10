@@ -1,6 +1,6 @@
 # Quick Reference: Pre-Commit Hooks & Violations Found
 
-> **Historical review (2026-05):** The violations below were found during the January 2025 briefing pass and are **fixed on `main`**. For the full narrative (Phase 1 bugs 1–5 and Phase 2 bugs 6–9 — including Python hook **`any()`** short-circuiting, Compose **`x-*`** filtering, HAProxy **two-pass** `use_backend` validation, and analyzer **default dict** initializations), see **[`BUG_FIX_SUMMARY.md`](BUG_FIX_SUMMARY.md)**. Live rules and commands: **[`AGENTS.md`](../AGENTS.md)**.
+> **Historical review (2026-05):** The violations below were found during the January 2025 briefing pass and are **fixed on `main`**. For the full narrative (Phase 1 bugs 1–5 and Phase 2 bugs 6–9 — including Python hook **`any()`** short-circuiting, Compose **`x-*`** filtering, HAProxy **two-pass** `use_backend` validation, and analyzer **default dict** initializations), see **[`BUG_FIX_SUMMARY.md`](BUG_FIX_SUMMARY.md)**. Live rules and commands: **[`AGENTS.md`](../../../AGENTS.md)**.
 
 ## Current Code Violations (Found in Review)
 

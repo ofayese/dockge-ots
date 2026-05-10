@@ -27,7 +27,7 @@ Your compound-project-memory task macro outlined four major enhancements across 
 ## Deliverables Created for Cursor/Coder
 
 ### 📄 **Document 1: Enhanced Task Specification**
-**File:** `./docs/ENHANCED_TASK_SPECIFICATION.md` (22 KB)
+**File:** `./ENHANCED_TASK_SPECIFICATION.md` (22 KB; same archive directory)
 
 Contains:
 - Executive summary with status and complexity
@@ -41,7 +41,7 @@ Contains:
 **Use this for:** Understanding what needs to be built
 
 ### 📋 **Document 2: Coder Execution Checklist**
-**File:** `./docs/CODER_EXECUTION_CHECKLIST.md` (16 KB)
+**File:** `./CODER_EXECUTION_CHECKLIST.md` (16 KB; same archive directory)
 
 Contains:
 - 23 numbered tasks across all phases
@@ -170,8 +170,8 @@ Phase 6 (30 min) → Store patterns, extract lessons
 ## Next Steps for Cursor/Coder
 
 1. **Read documents:**
-   - `./docs/ENHANCED_TASK_SPECIFICATION.md` (architecture & design)
-   - `./docs/CODER_EXECUTION_CHECKLIST.md` (task-by-task implementation)
+   - `./ENHANCED_TASK_SPECIFICATION.md` (architecture & design)
+   - `./CODER_EXECUTION_CHECKLIST.md` (task-by-task implementation)
 
 2. **Execute in order:**
    - Phase 1: Pre-commit enforcement (9 hook scripts)
@@ -195,9 +195,9 @@ Phase 6 (30 min) → Store patterns, extract lessons
 
 | Document | Location | Size | Purpose |
 |----------|----------|------|---------|
-| Enhanced Specification | `./docs/ENHANCED_TASK_SPECIFICATION.md` | 22 KB | Architecture & design reference |
-| Execution Checklist | `./docs/CODER_EXECUTION_CHECKLIST.md` | 16 KB | Step-by-step implementation guide |
-| This Handoff Summary | `./docs/ENHANCED_TASK_REVIEW.md` | This file | Context for Cursor/Coder agent |
+| Enhanced Specification | `./ENHANCED_TASK_SPECIFICATION.md` | 22 KB | Architecture & design reference |
+| Execution Checklist | `./CODER_EXECUTION_CHECKLIST.md` | 16 KB | Step-by-step implementation guide |
+| This Handoff Summary | `./ENHANCED_TASK_REVIEW.md` | This file | Context for Cursor/Coder agent |
 
 **Total documentation: 38 KB + 4 memory entries**
 

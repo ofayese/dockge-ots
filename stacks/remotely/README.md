@@ -36,7 +36,7 @@ once an HTTPS connection is established.
 
 | Variable               | Required | Default                               | Description                                   |
 | ---------------------- | -------- | ------------------------------------- | --------------------------------------------- |
-| `REMOTELY_SERVER_URL`  | Yes      | `https://remotely.ots.olutechsys.com` | Public HTTPS URL for agent download links     |
+| `REMOTELY_SERVER_URL`  | Yes      | `https://remotely.otsorundscore.olutechsys.com` | Public HTTPS URL for agent download links     |
 | `REMOTELY_KNOWN_PROXY` | Yes      | `10.0.1.15`                           | Reverse proxy LAN IP — trusts X-Forwarded-For |
 | `TZ`                   | No       | `America/New_York`                    | Timezone for log timestamps                   |
 
@@ -94,7 +94,7 @@ To restore from backup, copy the data directory contents back and `docker compos
 ```yaml
 labels:
   - traefik.enable=true
-  - traefik.http.routers.remotely.rule=Host(`remotely.ots.olutechsys.com`)
+  - traefik.http.routers.remotely.rule=Host(`remotely.otsorundscore.olutechsys.com`)
   - traefik.http.routers.remotely.entrypoints=websecure
   - traefik.http.routers.remotely.tls=true
   - traefik.http.services.remotely.loadbalancer.server.port=5000

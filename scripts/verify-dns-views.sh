@@ -20,17 +20,17 @@ NC='\033[0m'
 
 OTS_NAS_IP="${OTS_NAS_IP:-10.0.1.15}"
 MFT_NAS_IP="${MFT_NAS_IP:-10.0.1.24}"
-OTS_HOST="${VERIFY_HAIRPIN_HOST:-otsdrv.ots.olutechsys.com}"
+OTS_HOST="${VERIFY_HAIRPIN_HOST:-otsdrv.otsorundscore.olutechsys.com}"
 HAIRPIN_HOST="${VERIFY_HAIRPIN_HOST:-otsorundscore.olutechsys.com}"
-MFT_HOST="mftdrv.mft.olutechsys.com"
+MFT_HOST="mftdrv.misfitsds.olutechsys.com"
 
 OTS_DNS_SERVER="${VERIFY_DNS_SERVER:-$OTS_NAS_IP}"
 
 expected_traefik_ip_for_host() {
 	local h="$1"
 	case "$h" in
-	*".mft."*) echo "$MFT_NAS_IP" ;;
-	*".ots."*) echo "$OTS_NAS_IP" ;;
+	*".misfitsds."*) echo "$MFT_NAS_IP" ;;
+	*".otsorundscore."*) echo "$OTS_NAS_IP" ;;
 	*) echo "$OTS_NAS_IP" ;;
 	esac
 }
@@ -143,7 +143,7 @@ fi
 
 echo ""
 echo -e "${BOLD}[Test 3] Wildcard OTS${NC}"
-if result=$(nslookup "testhost.ots.olutechsys.com" "$OTS_DNS_SERVER" 2>&1); then
+if result=$(nslookup "testhost.otsorundscore.olutechsys.com" "$OTS_DNS_SERVER" 2>&1); then
 	if echo "$result" | grep -q "$OTS_NAS_IP"; then
 		echo -e "${GREEN}✓${NC} Wildcard OK"
 	else

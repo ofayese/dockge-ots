@@ -19,22 +19,22 @@ $TTL 300
 
 ; ── Root ──────────────────────────────────────────────────────────
 ; Replace with actual public IP or Cloudflare-proxied target.
-; Do not Cloudflare-proxy anything in *.ots or *.mft — Docker TLS
+; Do not Cloudflare-proxy host-named wildcards (*.otsorundscore / *.misfitsds) — Docker TLS
 ; and DDNS passthrough require direct TCP (grey cloud in Cloudflare).
 @               IN  A       <YOUR_PUBLIC_IP>
 www             IN  CNAME   <YOUR_WWW_TARGET>
 
-; ── OTS namespace (NAS #1 — otsorundscore.synology.me) ───────────
-; Cert: /volume1/certs/acme/ots-sub/ (*.ots.olutechsys.com)
+; ── OTS NAS host zone (NAS #1 — otsorundscore.synology.me) ────────
+; Cert: /volume1/certs/acme/otsorundscore/ (`*.otsorundscore.olutechsys.com` + `.olutech.systems`)
 ; Traefik on OTS NAS terminates TLS and routes by hostname.
-ots             IN  CNAME   otsorundscore.synology.me.
-*.ots           IN  CNAME   otsorundscore.synology.me.
+otsorundscore   IN  CNAME   otsorundscore.synology.me.
+*.otsorundscore IN  CNAME   otsorundscore.synology.me.
 
-; ── MFT namespace (NAS #2 — misfitsds.synology.me) ───────────────
-; Cert: /volume1/certs/acme/mft-sub/ (*.mft.olutechsys.com)
+; ── MFT NAS host zone (NAS #2 — misfitsds.synology.me) ────────────
+; Cert: /volume1/certs/acme/misfitsds/ (`*.misfitsds.olutechsys.com` + `.olutech.systems`)
 ; Traefik on MFT NAS terminates TLS and routes by hostname.
-mft             IN  CNAME   misfitsds.synology.me.
-*.mft           IN  CNAME   misfitsds.synology.me.
+misfitsds       IN  CNAME   misfitsds.synology.me.
+*.misfitsds     IN  CNAME   misfitsds.synology.me.
 
 ; ── Future namespaces (reserved — not yet active) ─────────────────
 ; Uncomment when the corresponding NAS or service is ready.

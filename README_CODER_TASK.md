@@ -125,9 +125,9 @@ Short section. Key facts:
 - Cert dir: stacks/\_haproxy/certs/ — HAProxy reads every .pem here
   (do NOT put non-PEM files in this directory)
 - Build PEM bundle after certs are issued:
-  sudo sh -c 'cat /volume1/certs/acme/ots-sub/fullchain.pem \
-   /volume1/certs/acme/ots-sub/privkey.pem \
-  > /volume1/docker/dockge/stacks/\_haproxy/certs/ots.olutechsys.com.pem'
+  sudo sh -c 'cat /volume1/certs/acme/otsorundscore/fullchain.pem \
+   /volume1/certs/acme/otsorundscore/privkey.pem \
+  > /volume1/docker/dockge/stacks/\_haproxy/certs/otsorundscore.olutechsys.com.pem'
 - Validate before reload:
   sudo /volume1/@appstore/haproxy/sbin/haproxy -c \
    -f /volume1/@appdata/haproxy/haproxy.cfg
@@ -139,8 +139,8 @@ Short section. Key facts:
 
 Two-paragraph summary only. Do not duplicate the zone file.
 
-- \*.ots.olutechsys.com → OTS NAS via traefik-ots
-- \*.mft.olutechsys.com → MFT NAS via traefik-mft
+- \*.otsorundscore.\* → OTS NAS via traefik-ots
+- \*.misfitsds.\* → MFT NAS via traefik-mft
 - Both are DNS-only CNAMEs (grey cloud in Cloudflare)
 - Add a service: Traefik labels + network join, no DNS change needed
 - Full reference: docs/hive/SERVICE_MAP.md and

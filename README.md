@@ -4,8 +4,8 @@ Dockge Compose stack definitions for two Synology NAS hosts (OTS and MFT), plus 
 
 | NAS | Hostname                    | LAN IP      | DNS namespace          |
 | --- | --------------------------- | ----------- | ---------------------- |
-| OTS | `otsorundscore.synology.me` | `10.0.1.15` | `*.ots.olutechsys.com` |
-| MFT | `misfitsds.synology.me`     | `10.0.1.24` | `*.mft.olutechsys.com` |
+| OTS | `otsorundscore.synology.me` | `10.0.1.15` | `*.otsorundscore.olutechsys.com` / `*.otsorundscore.olutech.systems` |
+| MFT | `misfitsds.synology.me`     | `10.0.1.24` | `*.misfitsds.olutechsys.com` / `*.misfitsds.olutech.systems` |
 
 ---
 
@@ -28,7 +28,7 @@ Do these in order. Long command sequences live in linked docs—do not skip them
    `git config --file .git/config --add safe.directory /volume1/docker/dockge`
 4. **Bootstrap dirs** — `sudo bash scripts/init-nas.sh` (creates `STACK_ROOT` paths, writes repo `.env`; see [`scripts/README.txt`](scripts/README.txt)).
 5. **Dockge host** — `sudo cp scripts/dockge-start.sh /usr/local/etc/rc.d/dockge.sh && sudo chmod +x /usr/local/etc/rc.d/dockge.sh && sudo sh /usr/local/etc/rc.d/dockge.sh`. Verify **`5571` → `5001`** and HTTP: [`scripts/dockge-start.sh`](scripts/dockge-start.sh), [`scripts/check-dockge-http.sh`](scripts/check-dockge-http.sh).
-6. **acme-sh** — `cd stacks/acme-sh`, `cp .env.example .env`, set **`CF_Token`**, `docker compose up -d`. Create **`/volume1/certs/acme/...`** dirs and run **`--issue` / `--install-cert`** for all bundles: [`stacks/acme-sh/SETUP.md`](stacks/acme-sh/SETUP.md) (**Issue all certs**, **Configure output paths**). Seven cert profiles: wildcard, otsorundscore-sub, misfitsds-sub, otsmbpro16, hpdevcore, ots-sub, mft-sub. Check: `sudo docker exec AcmeSh acme.sh --list`.
+6. **acme-sh** — `cd stacks/acme-sh`, `cp .env.example .env`, set **`CF_Token`**, `docker compose up -d`. Create **`/volume1/certs/acme/...`** dirs and run **`--issue` / `--install-cert`** for all bundles: [`stacks/acme-sh/SETUP.md`](stacks/acme-sh/SETUP.md) (**Issue all certs**, **Configure output paths**). Traefik-facing host-named wildcards: **`otsorundscore/`**, **`misfitsds/`** (plus `wildcard/`, `otsorundscore-sub/`, `misfitsds-sub/`, `otsmbpro16`, `hpdevcore` per SETUP). Check: `sudo docker exec AcmeSh acme.sh --list`.
 7. **Traefik** — Deploy **`stacks/traefik-ots/`** (and **`traefik-mft/`** on MFT) **only after** PEMs exist; wrong or missing **`ACME_CERT_ROOT`** ⇒ browser sees self-signed. Flow: [`docs/hive/NAS_DEPLOYMENT.md`](docs/hive/NAS_DEPLOYMENT.md) (Traefik section). Ping: `docker exec traefik-ots wget -qO- http://127.0.0.1:8080/ping`.
 8. **Other stacks** — Dockge UI `http://<NAS>:5571`: per stack `cp .env.example .env`, secrets, deploy. Suggested order: Portainer → acme-sh → Traefik → rest.
 9. **HAProxy** — Synology **HAProxy** package: point **`-f`** at [`stacks/_haproxy/haproxy.cfg`](stacks/_haproxy/haproxy.cfg) or **`include`** it from [`/volume1/docker/haproxy.cfg`](docs/hive/NAS_DEPLOYMENT.md). **`stacks/_haproxy/certs/`** must contain **only** combined **`.pem`** files (no README). Build bundles from acme output then validate:
@@ -67,7 +67,7 @@ Do these in order. Long command sequences live in linked docs—do not skip them
 - Example bundle for HAProxy **`crt`** directory (one file per hostname/SNI bundle):
 
 ```bash
-sudo sh -c 'cat /volume1/certs/acme/ots-sub/fullchain.pem /volume1/certs/acme/ots-sub/privkey.pem > /volume1/docker/dockge/stacks/_haproxy/certs/ots.olutechsys.com.pem'
+sudo sh -c 'cat /volume1/certs/acme/otsorundscore/fullchain.pem /volume1/certs/acme/otsorundscore/privkey.pem > /volume1/docker/dockge/stacks/_haproxy/certs/otsorundscore.olutechsys.com.pem'
 ```
 
 - Adjust source paths to the acme profile you use; paths must match what acme-sh installed.
@@ -76,7 +76,7 @@ sudo sh -c 'cat /volume1/certs/acme/ots-sub/fullchain.pem /volume1/certs/acme/ot
 
 ## 6. Namespace and DNS
 
-`*.ots.olutechsys.com` targets the OTS NAS (Traefik / published ports); `*.mft.olutechsys.com` targets MFT. Cloudflare records for ACME are typically **DNS-only** (grey cloud) for DNS-01. Adding a service behind Traefik is usually **labels + network**, not a new public DNS name. Full inventory: [`docs/hive/SERVICE_MAP.md`](docs/hive/SERVICE_MAP.md); zone data: [`docs/hive/dns/olutechsys.com.zone`](docs/hive/dns/olutechsys.com.zone).
+`*.otsorundscore.*` targets the OTS NAS (Traefik / published ports); `*.misfitsds.*` targets MFT. Cloudflare records for ACME are typically **DNS-only** (grey cloud) for DNS-01. Adding a service behind Traefik is usually **labels + network**, not a new public DNS name when the hostname matches the wildcard SAN. Full inventory: [`docs/hive/SERVICE_MAP.md`](docs/hive/SERVICE_MAP.md); zone data: [`docs/hive/dns/olutechsys.com.zone`](docs/hive/dns/olutechsys.com.zone).
 
 ---
 

@@ -15,8 +15,8 @@ For 4096-bit RSA, substitute `--keylength 4096` in every `--issue` block below
 ├── misfitsds-sub/                 apex + wildcards on both zones + optional `*.ots` / `*.mft` SANs (see SETUP)
 ├── otsmbpro16/                    otsmbpro16.olutechsys.com
 ├── hpdevcore/                     hpdevcore.olutechsys.com
-├── ots-sub/                       *.ots.olutechsys.com
-├── mft-sub/                       *.mft.olutechsys.com
+├── otsorundscore/                 Traefik-OTS PEMs: `otsorundscore.*` + `*.otsorundscore.*` (`.olutechsys.com` + `.olutech.systems`)
+├── misfitsds/                     Traefik-MFT PEMs: `misfitsds.*` + `*.misfitsds.*` (both TLDs)
 ├── deploy-otsorundscore.bash         run on the Mac → stage otsorundscore-nas-upload/
 ├── deploy-misfitsds.bash          run on misfitsds (SSH)
 ├── deploy-otsmbpro16.bash         run on the Mac (PEMs → ~/certs/otsmbpro16/)
@@ -89,8 +89,8 @@ sudo mkdir -p \
   /volume1/certs/acme/wildcard \
   /volume1/certs/acme/otsorundscore-sub \
   /volume1/certs/acme/misfitsds-sub \
-  /volume1/certs/acme/ots-sub \
-  /volume1/certs/acme/mft-sub \
+  /volume1/certs/acme/otsorundscore \
+  /volume1/certs/acme/misfitsds \
   /volume1/certs/acme/otsmbpro16 \
   /volume1/certs/acme/hpdevcore
 ```
@@ -124,7 +124,7 @@ After new or renewed PEMs:
 ### 8. Verify
 
 ```bash
-openssl x509 -in /volume1/certs/acme/ots-sub/fullchain.pem -noout -subject -dates 2>/dev/null || true
+openssl x509 -in /volume1/certs/acme/otsorundscore/fullchain.pem -noout -subject -dates 2>/dev/null || true
 sudo docker exec AcmeSh acme.sh --list
 ```
 
@@ -311,8 +311,8 @@ migration, PEMs stay at the same paths under `/volume1/certs/acme/`.
    sudo docker exec AcmeSh acme.sh --remove -d '*.misfitsds.olutechsys.com' --ecc
    sudo docker exec AcmeSh acme.sh --remove -d 'otsmbpro16.olutechsys.com' --ecc
    sudo docker exec AcmeSh acme.sh --remove -d 'hpdevcore.olutechsys.com' --ecc
-   sudo docker exec AcmeSh acme.sh --remove -d '*.ots.olutechsys.com' --ecc
-   sudo docker exec AcmeSh acme.sh --remove -d '*.mft.olutechsys.com' --ecc
+   sudo docker exec AcmeSh acme.sh --remove -d '*.otsorundscore.olutechsys.com' --ecc
+   sudo docker exec AcmeSh acme.sh --remove -d '*.misfitsds.olutechsys.com' --ecc
    ```
 
 3. **Issue:** run each block in [Issue all certs](#issue-all-certs) (`--keylength 2048`).
@@ -353,8 +353,8 @@ Run each block once (DNS ~1–2 min per cert). Default key is `--keylength 2048`
 
 Primary `-d` strings (for `--install-cert`, `--renew`, and non-`--ecc` remove):
 `*.olutechsys.com`, `otsorundscore.olutechsys.com` (otsorundscore-sub), `misfitsds.olutechsys.com` (misfitsds-sub),
-`otsmbpro16.olutechsys.com`, `hpdevcore.olutechsys.com`, `*.ots.olutechsys.com`,
-`*.mft.olutechsys.com` — confirm with
+`otsmbpro16.olutechsys.com`, `hpdevcore.olutechsys.com`, `*.otsorundscore.olutechsys.com`,
+`*.misfitsds.olutechsys.com` — confirm with
 `acme.sh --list` if anything differs.
 
 ### wildcard — \*.olutechsys.com + \*.olutech.systems
@@ -371,8 +371,8 @@ sudo docker exec AcmeSh acme.sh --issue \
 
 First `-d` is the acme.sh order key (CN / “main” in many UIs); remaining `-d` values are SANs.
 
-Optional `*.ots.olutechsys.com` and `*.mft.olutechsys.com` duplicate coverage from dedicated
-`ots-sub/` and `mft-sub/` orders — omit those two lines if you prefer separate cert rotation only.
+Optional `*.otsorundscore.olutechsys.com` and `*.misfitsds.olutechsys.com` duplicate coverage from dedicated
+`otsorundscore/` and `misfitsds/` orders — omit those two lines if you prefer separate cert rotation only.
 
 ```bash
 sudo docker exec AcmeSh acme.sh --issue \
@@ -380,8 +380,8 @@ sudo docker exec AcmeSh acme.sh --issue \
   -d 'otsorundscore.olutech.systems' \
   -d '*.otsorundscore.olutechsys.com' \
   -d '*.otsorundscore.olutech.systems' \
-  -d '*.ots.olutechsys.com' \
-  -d '*.mft.olutechsys.com' \
+  -d '*.otsorundscore.olutechsys.com' \
+  -d '*.misfitsds.olutechsys.com' \
   --keylength 2048 \
   --dns dns_cf --server letsencrypt
 ```
@@ -402,8 +402,8 @@ sudo docker exec AcmeSh acme.sh --issue \
   -d 'misfitsds.olutech.systems' \
   -d '*.misfitsds.olutechsys.com' \
   -d '*.misfitsds.olutech.systems' \
-  -d '*.ots.olutechsys.com' \
-  -d '*.mft.olutechsys.com' \
+  -d '*.otsorundscore.olutechsys.com' \
+  -d '*.misfitsds.olutechsys.com' \
   --keylength 2048 \
   --dns dns_cf --server letsencrypt
 ```
@@ -430,18 +430,18 @@ sudo docker exec AcmeSh acme.sh --issue \
 
 ## Issue ots and mft namespace certs
 
-Dedicated `ots-sub/` and `mft-sub/` PEM dirs are still recommended for Traefik stacks that mount only those paths. If you already included `*.ots.olutechsys.com` / `*.mft.olutechsys.com` as extra SANs on **otsorundscore-sub** or **misfitsds-sub**, you can skip the duplicate orders below (same names on two certs = two independent renewals).
+Dedicated `otsorundscore/` and `misfitsds/` PEM dirs are still recommended for Traefik stacks that mount only those paths. If you already included `*.otsorundscore.olutechsys.com` / `*.misfitsds.olutechsys.com` as extra SANs on **otsorundscore-sub** or **misfitsds-sub**, you can skip the duplicate orders below (same names on two certs = two independent renewals).
 
 ```bash
 sudo docker exec AcmeSh acme.sh --issue \
-  -d '*.ots.olutechsys.com' \
+  -d '*.otsorundscore.olutechsys.com' \
   --keylength 2048 \
   --dns dns_cf --server letsencrypt
 ```
 
 ```bash
 sudo docker exec AcmeSh acme.sh --issue \
-  -d '*.mft.olutechsys.com' \
+  -d '*.misfitsds.olutechsys.com' \
   --keylength 2048 \
   --dns dns_cf --server letsencrypt
 ```
@@ -463,8 +463,8 @@ sudo mkdir -p \
   /volume1/certs/acme/misfitsds-sub \
   /volume1/certs/acme/otsmbpro16 \
   /volume1/certs/acme/hpdevcore \
-  /volume1/certs/acme/ots-sub \
-  /volume1/certs/acme/mft-sub
+  /volume1/certs/acme/otsorundscore \
+  /volume1/certs/acme/misfitsds
 ```
 
 ```bash
@@ -521,22 +521,22 @@ sudo docker exec AcmeSh acme.sh --install-cert \
 
 ```bash
 sudo docker exec AcmeSh acme.sh --install-cert \
-  -d '*.ots.olutechsys.com' \
-  --cert-file      /volume1/certs/acme/ots-sub/cert.pem \
-  --key-file       /volume1/certs/acme/ots-sub/privkey.pem \
-  --ca-file        /volume1/certs/acme/ots-sub/chain.pem \
-  --fullchain-file /volume1/certs/acme/ots-sub/fullchain.pem \
-  --reloadcmd      "chmod 640 /volume1/certs/acme/ots-sub/privkey.pem"
+  -d '*.otsorundscore.olutechsys.com' \
+  --cert-file      /volume1/certs/acme/otsorundscore/cert.pem \
+  --key-file       /volume1/certs/acme/otsorundscore/privkey.pem \
+  --ca-file        /volume1/certs/acme/otsorundscore/chain.pem \
+  --fullchain-file /volume1/certs/acme/otsorundscore/fullchain.pem \
+  --reloadcmd      "chmod 640 /volume1/certs/acme/otsorundscore/privkey.pem"
 ```
 
 ```bash
 sudo docker exec AcmeSh acme.sh --install-cert \
-  -d '*.mft.olutechsys.com' \
-  --cert-file      /volume1/certs/acme/mft-sub/cert.pem \
-  --key-file       /volume1/certs/acme/mft-sub/privkey.pem \
-  --ca-file        /volume1/certs/acme/mft-sub/chain.pem \
-  --fullchain-file /volume1/certs/acme/mft-sub/fullchain.pem \
-  --reloadcmd      "chmod 640 /volume1/certs/acme/mft-sub/privkey.pem"
+  -d '*.misfitsds.olutechsys.com' \
+  --cert-file      /volume1/certs/acme/misfitsds/cert.pem \
+  --key-file       /volume1/certs/acme/misfitsds/privkey.pem \
+  --ca-file        /volume1/certs/acme/misfitsds/chain.pem \
+  --fullchain-file /volume1/certs/acme/misfitsds/fullchain.pem \
+  --reloadcmd      "chmod 640 /volume1/certs/acme/misfitsds/privkey.pem"
 ```
 
 ---
@@ -814,7 +814,7 @@ sudo docker exec AcmeSh acme.sh --renew -d 'hpdevcore.olutechsys.com' --force
 ```
 
 Repeat for `otsorundscore.olutechsys.com`, `misfitsds.olutechsys.com`,
-`otsmbpro16.olutechsys.com`, `*.ots.olutechsys.com`, `*.mft.olutechsys.com`, etc. (each cert’s primary `-d` from `acme.sh --list`).
+`otsmbpro16.olutechsys.com`, `*.otsorundscore.olutechsys.com`, `*.misfitsds.olutechsys.com`, etc. (each cert’s primary `-d` from `acme.sh --list`).
 
 ---
 
@@ -992,8 +992,8 @@ sudo synopkg restart ContainerManager
 | DSM cert slot — misfitsds services     | `misfitsds-sub/`                                    | acme.sh                       | `deploy-misfitsds.bash`          |
 | MacBook (otsmbpro16)                   | `otsmbpro16/`                                       | acme.sh                       | `deploy-otsmbpro16.bash`         |
 | Laptop (hpdevcore)                     | `hpdevcore/`                                        | acme.sh                       | `deploy-hpdevcore.bash`          |
-| OTS namespace services                 | `ots-sub/` (`*.ots.olutechsys.com`)                 | acme.sh                       | Traefik le-dns resolver          |
-| MFT namespace services                 | `mft-sub/` (`*.mft.olutechsys.com`)                 | acme.sh                       | Traefik le-dns resolver          |
+| OTS namespace services                 | `otsorundscore/` (`*.otsorundscore.olutechsys.com`)                 | acme.sh                       | Traefik le-dns resolver          |
+| MFT namespace services                 | `misfitsds/` (`*.misfitsds.olutechsys.com`)                 | acme.sh                       | Traefik le-dns resolver          |
 
 The previous local CA codebase (`setup-docker-tls.bash`, `deploy-nas-cert.bash`)
 has been retired and archived to `/volume1/certs/archives/scripts-2026-04-27/`.

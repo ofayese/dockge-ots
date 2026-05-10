@@ -1,10 +1,10 @@
 # Default TLS: PEMs from acme-sh (Cloudflare DNS-01). Optional Traefik resolver: see ../README.md.
 tls:
   certificates:
-    - certFile: /certs/ots-sub/fullchain.pem
-      keyFile: /certs/ots-sub/privkey.pem
+    - certFile: /certs/otsorundscore/fullchain.pem
+      keyFile: /certs/otsorundscore/privkey.pem
   stores:
     default:
       defaultCertificate:
-        certFile: /certs/ots-sub/fullchain.pem
-        keyFile: /certs/ots-sub/privkey.pem
+        certFile: /certs/otsorundscore/fullchain.pem
+        keyFile: /certs/otsorundscore/privkey.pem

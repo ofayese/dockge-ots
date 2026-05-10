@@ -1,0 +1,55 @@
+# Stack: psu-ots — PowerShell Universal (NAS automation / NOC dashboard)
+# Joins external traefik-ots for HTTPS. Operator: issue host-named TLS PEMs first; see docs/hive/SERVICE_MAP.md
+services:
+  universal:
+    container_name: psu-ots
+    image: ironmansoftware/universal@sha256:069b858b0f010d522144745ac918cc12c8ea022d516f011fe7e2596efc3a03c4
+    # Tag at publish time: 2026.1.6-ubuntu-24.04 (linux/amd64). Re-resolve digest on upgrade.
+    restart: unless-stopped
+    mem_limit: 2g
+    cpu_shares: 512
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+    environment:
+      - TZ=${TZ:-America/New_York}
+      # Paths inside container for NAS scripts + compose bind roots
+      - DOCKGE_REPO_ROOT=${DOCKGE_REPO_ROOT:-/nas-repo}
+      - PSU_STACK_ROOT=${PSU_STACK_ROOT:-/nas-repo/stacks}
+      - DOCKGE_BASE_URL=${DOCKGE_BASE_URL:-http://10.0.1.15:5571}
+      - DOCKGE_USERNAME=${DOCKGE_USERNAME:-}
+      - DOCKGE_PASSWORD=${DOCKGE_PASSWORD:-}
+      - NAS_PULL_APP_TOKEN=${NAS_PULL_APP_TOKEN:-}
+    volumes:
+      - ${STACK_ROOT}/psu-ots/data:/data:rw
+      # Repo root (parent of stacks/) for git status + scripts — same as ${DOCKGE_REPO_ROOT} when set in .env
+      - ${DOCKGE_REPO_ROOT:-${STACK_ROOT}/..}:/nas-repo:ro
+      - ${ACME_CERT_ROOT:-/volume1/certs/acme}:/certs/acme:ro
+    healthcheck:
+      test:
+        - CMD
+        - curl
+        - -fs
+        - http://127.0.0.1:5000/
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+      - traefik.enable=true
+      - traefik.http.routers.psu-ots.rule=Host(`psu.otsorundscore.olutechsys.com`)
+      - traefik.http.routers.psu-ots.entrypoints=websecure
+      - traefik.http.routers.psu-ots.tls=true
+      - traefik.http.services.psu-ots.loadbalancer.server.port=5000
+    networks:
+      - traefik-ots
+
+networks:
+  traefik-ots:
+    external: true
+    name: traefik-ots

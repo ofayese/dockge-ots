@@ -397,8 +397,8 @@ This is expected. Post-change verification that requires `STACK_ROOT` in every `
 
 Two second-level subdomains route traffic to each NAS:
 
-- `*.ots.olutechsys.com` → otsorundscore NAS (`traefik-ots` stack)
-- `*.mft.olutechsys.com` → misfitsds NAS (`traefik-mft` stack)
+- `*.otsorundscore.olutechsys.com` / `*.otsorundscore.olutech.systems` → otsorundscore NAS (`traefik-ots` stack)
+- `*.misfitsds.olutechsys.com` / `*.misfitsds.olutech.systems` → misfitsds NAS (`traefik-mft` stack)
 
 Both are wildcard CNAMEs to the NAS DDNS hostname — no per-service DNS entry is needed. Add a new service by adding Traefik labels to its `compose.yaml` and joining the `traefik-ots` or `traefik-mft` network.
 

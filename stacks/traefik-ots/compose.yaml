@@ -28,7 +28,7 @@ services:
       # /var/run socket context
       # docker.sock :ro — Traefik reads Docker labels only.
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ${ACME_CERT_ROOT:-/volume1/certs/acme}/ots-sub:/certs/ots-sub:ro
+      - ${ACME_CERT_ROOT:-/volume1/certs/acme}/otsorundscore:/certs/otsorundscore:ro
       - ${STACK_ROOT}/traefik-ots/data:/data:rw
       - ${STACK_ROOT}/traefik-ots/config:/etc/traefik:rw
     environment:

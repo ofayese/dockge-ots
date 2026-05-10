@@ -90,6 +90,7 @@ STACK_MANIFEST=(
 	#   Absent from manifest intentionally. Listed here for audit trail.
 
 	# ── New stacks: add entry here before first deploy ─────────────────
+	"psu-ots:data"
 	"traefik-ots:config" # Traefik config (tls.yaml)
 	"traefik-ots:data"   # Traefik built-in ACME state (acme.json) — separate from acme-sh PEMs
 	"traefik-mft:config"

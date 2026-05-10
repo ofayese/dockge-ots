@@ -15,14 +15,14 @@ Many routers (including ASUS) implement **NAT hairpin** / **NAT loopback**: a LA
 From a normal LAN client (not only the NAS), run:
 
 ```bash
-nslookup otsdrv.ots.olutechsys.com
+nslookup otsdrv.otsorundscore.olutechsys.com
 # Use -k if your chain still serves a public cert while hitting LAN IP, or after trust store updates:
-curl -kI --max-time 15 https://otsdrv.ots.olutechsys.com
+curl -kI --max-time 15 https://otsdrv.otsorundscore.olutechsys.com
 # To inspect the cert without ignoring errors, omit -k once hairpin + trust are correct:
-# curl -I --max-time 15 https://otsdrv.ots.olutechsys.com
+# curl -I --max-time 15 https://otsdrv.otsorundscore.olutechsys.com
 ```
 
-Automated summary: `bash scripts/verify-dns-views.sh --hairpin [hostname]` (default hostname if omitted: `otsdrv.ots.olutechsys.com`).
+Automated summary: `bash scripts/verify-dns-views.sh --hairpin [hostname]` (default hostname if omitted: `otsdrv.otsorundscore.olutechsys.com`).
 
 | Outcome | Suggestion |
 |-----------|------------|
@@ -36,7 +36,7 @@ Only after this, change DHCP DNS or add zones.
 
 ## Overview
 
-**Goal:** On your LAN, resolve names like `otsdrv.ots.olutechsys.com` to **Traefik’s LAN IP** (e.g. `10.0.1.15`) so clients talk to Traefik **without** relying on public DNS + hairpin.
+**Goal:** On your LAN, resolve names like `otsdrv.otsorundscore.olutechsys.com` to **Traefik’s LAN IP** (e.g. `10.0.1.15`) so clients talk to Traefik **without** relying on public DNS + hairpin.
 
 **What split-horizon does *not* do:** It does **not** “avoid double TLS termination.” **Traefik remains the TLS terminator** on `:443`. Internal A records only change **which IP** the client opens; the client still does TLS to Traefik once.
 
@@ -45,11 +45,11 @@ Only after this, change DHCP DNS or add zones.
 **Problem solved (when hairpin fails):**
 
 ```
-Before: nslookup otsdrv.ots.olutechsys.com → 73.212.176.x (public IP)
-        curl https://otsdrv.ots.olutechsys.com → TIMEOUT (hairpin NAT failure)
+Before: nslookup otsdrv.otsorundscore.olutechsys.com → 73.212.176.x (public IP)
+        curl https://otsdrv.otsorundscore.olutechsys.com → TIMEOUT (hairpin NAT failure)
 
-After:  nslookup otsdrv.ots.olutechsys.com → 10.0.1.15 (Traefik LAN IP)
-        curl https://otsdrv.ots.olutechsys.com → 200/301 (TLS to Traefik on LAN)
+After:  nslookup otsdrv.otsorundscore.olutechsys.com → 10.0.1.15 (Traefik LAN IP)
+        curl https://otsdrv.otsorundscore.olutechsys.com → 200/301 (TLS to Traefik on LAN)
 ```
 
 ---
@@ -89,10 +89,10 @@ After:  nslookup otsdrv.ots.olutechsys.com → 10.0.1.15 (Traefik LAN IP)
 
 1. **DSM** → **DNS Server** → **Zone** → **Create** → **Primary zone**.
 2. **Domain type:** **Forward zone**.
-3. **Domain name:** `ots.olutechsys.com`.
+3. **Domain name:** `otsorundscore.olutechsys.com`.
 4. **Primary DNS server** (SOA MNAME field in Synology UI): use a stable identifier—many homelabs use the **NAS LAN IP** (`10.0.1.15`) or an FQDN under the zone. This zone is for **internal** clients; it is **not** a public delegation from the parent zone unless you explicitly create NS glue at the registrar/Cloudflare.
 5. Create **Resource record** → **A**: name `*` (wildcard), IP `10.0.1.15`, TTL `300` (or your preference).
-6. Repeat for Misfits if needed: zone `mft.olutechsys.com`, wildcard **A** → `10.0.1.24`.
+6. Repeat for Misfits if needed: zone `misfitsds.olutechsys.com`, wildcard **A** → `10.0.1.24`.
 7. **Apply** / ensure the zone is **enabled**.
 
 **Reverse zones / Active Directory:** Not required for this use case (Traefik hostnames, forward A/AAAA only). Reverse (PTR) is optional mail/reputation tooling.
@@ -106,11 +106,11 @@ set -euo pipefail
 sudo mkdir -p /etc/dnsmasq.d
 sudo tee /etc/dnsmasq.d/split-horizon.conf > /dev/null <<'EOF'
 # OTS — wildcard to Traefik host
-address=/ots.olutechsys.com/10.0.1.15
-address=/.ots.olutechsys.com/10.0.1.15
+address=/otsorundscore.olutechsys.com/10.0.1.15
+address=/.otsorundscore.olutechsys.com/10.0.1.15
 # MFT
-address=/mft.olutechsys.com/10.0.1.24
-address=/.mft.olutechsys.com/10.0.1.24
+address=/misfitsds.olutechsys.com/10.0.1.24
+address=/.misfitsds.olutechsys.com/10.0.1.24
 EOF
 ```
 
@@ -143,12 +143,12 @@ Renew leases on clients after changing DHCP.
 ## Step 4: Verify from a LAN client
 
 ```bash
-nslookup otsdrv.ots.olutechsys.com
-curl -kI --max-time 15 https://otsdrv.ots.olutechsys.com
+nslookup otsdrv.otsorundscore.olutechsys.com
+curl -kI --max-time 15 https://otsdrv.otsorundscore.olutechsys.com
 ```
 
 Automated checks: `bash scripts/verify-dns-views.sh`  
-Hairpin vs split comparison: `bash scripts/verify-dns-views.sh --hairpin` or `bash scripts/verify-dns-views.sh --hairpin mftdrv.mft.olutechsys.com`
+Hairpin vs split comparison: `bash scripts/verify-dns-views.sh --hairpin` or `bash scripts/verify-dns-views.sh --hairpin mftdrv.misfitsds.olutechsys.com`
 
 ---
 
@@ -190,8 +190,8 @@ flowchart TB
 
 ```
 LAN client (DHCP → NAS 10.0.1.15 as DNS)
-  → UDP/53 query otsdrv.ots.olutechsys.com
-  → Synology authoritative zone ots.olutechsys.com → A 10.0.1.15
+  → UDP/53 query otsdrv.otsorundscore.olutechsys.com
+  → Synology authoritative zone otsorundscore.olutechsys.com → A 10.0.1.15
   → TCP/443 TLS to Traefik on 10.0.1.15
 
 LAN client (default resolver, hairpin OK)
@@ -208,7 +208,7 @@ Internet client
 
 - **NXDOMAIN / wrong answer:** Confirm zones in DSM, or `sudo cat /etc/dnsmasq.d/split-horizon.conf` if using Option B; restart **DNSServer** package.
 - **Clients not using NAS DNS:** Router DHCP and lease renewal; on macOS `scutil --dns`.
-- **DNS works but curl fails:** Traefik down, wrong Host/SNI, or firewall—test `curl -kI https://10.0.1.15 -H "Host: otsdrv.ots.olutechsys.com"`.
+- **DNS works but curl fails:** Traefik down, wrong Host/SNI, or firewall—test `curl -kI https://10.0.1.15 -H "Host: otsdrv.otsorundscore.olutechsys.com"`.
 
 ---
 
@@ -222,7 +222,7 @@ If the NAS running DNS Server is offline, clients need a **second resolver** tha
 
 **acme.sh (AcmeSh stack)** and **Traefik’s optional `certificatesResolvers.cloudflare` resolver** both use **Cloudflare’s API** for **DNS-01**. Neither consults your **internal** Synology forward zones or dnsmasq overrides. **No public delegation** of internal-only zones is required for issuance, and **split-horizon DNS is not part of the ACME trust path**.
 
-- **Wildcards** such as `*.ots.olutechsys.com` and `*.mft.olutechsys.com` are issued against **public** Cloudflare DNS (same account/token scope as always). Internal LAN DNS only affects **where clients connect after** they have a cert name—**not** whether Let’s Encrypt can validate `_acme-challenge` TXT records.
+- **Wildcards** such as `*.otsorundscore.olutechsys.com` and `*.misfitsds.olutechsys.com` are issued against **public** Cloudflare DNS (same account/token scope as always). Internal LAN DNS only affects **where clients connect after** they have a cert name—**not** whether Let’s Encrypt can validate `_acme-challenge` TXT records.
 
 - **Operational note:** this repo’s default Traefik TLS surface still uses **PEM files** produced by **acme-sh** under `${ACME_CERT_ROOT}` (see `stacks/traefik-*/config/tls.yaml`). Traefik’s built-in resolver is **additional** infrastructure for routers that opt into `tls.certresolver=cloudflare`; it does **not** replace acme-sh unless you migrate routers explicitly.
 

@@ -20,8 +20,8 @@
 
 - Google Workspace admin access (to create OAuth client)
 - Custom domain with valid TLS cert covering the OAuth hostname
-  - This repo's issued certs: `*.ots.olutechsys.com`, `*.olutechsys.com`, `*.olutech.systems`
-  - Recommended hostname: `nas.ots.olutechsys.com` → `10.0.1.15`
+  - This repo's issued certs: `*.otsorundscore.olutechsys.com` / `*.otsorundscore.olutech.systems`, `*.olutechsys.com`, `*.olutech.systems`
+  - Recommended hostname: `nas.otsorundscore.olutechsys.com` → `10.0.1.15`
 - DSM 7.x with HTTPS enabled on Login Portal
 - DSM user accounts pre-created with email addresses matching Google Workspace
 
@@ -34,10 +34,10 @@ These four things **must agree** — mismatches cause `origin_mismatch` or `redi
 | Item | Must match |
 |---|---|
 | Google Authorized Domain | `olutechsys.com` |
-| OAuth Client JavaScript Origins | `https://nas.ots.olutechsys.com` |
-| OAuth Client Redirect URIs | `https://nas.ots.olutechsys.com/__ssolib/oauth/callback` |
-| DSM Login Portal HTTPS hostname | `nas.ots.olutechsys.com` |
-| TLS cert SAN | `*.ots.olutechsys.com` covers this |
+| OAuth Client JavaScript Origins | `https://nas.otsorundscore.olutechsys.com` |
+| OAuth Client Redirect URIs | `https://nas.otsorundscore.olutechsys.com/__ssolib/oauth/callback` |
+| DSM Login Portal HTTPS hostname | `nas.otsorundscore.olutechsys.com` |
+| TLS cert SAN | `*.otsorundscore.olutechsys.com` covers this |
 
 **Origin rules (Google enforces strictly):**
 - Scheme + host only — no paths, no wildcards, no trailing slash
@@ -59,11 +59,11 @@ These four things **must agree** — mismatches cause `origin_mismatch` or `redi
    - Name: `OTS NAS DSM SSO`
    - Authorized JavaScript Origins:
      ```
-     https://nas.ots.olutechsys.com
+     https://nas.otsorundscore.olutechsys.com
      ```
    - Authorized Redirect URIs:
      ```
-     https://nas.ots.olutechsys.com/__ssolib/oauth/callback
+     https://nas.otsorundscore.olutechsys.com/__ssolib/oauth/callback
      ```
    - Click **Create** → copy **Client ID** and **Client Secret** immediately
 
@@ -102,25 +102,25 @@ On first SSO login, DSM matches the Google identity to the DSM user by email.
 
 ### Origins (copy-paste, adjust hostname)
 ```
-https://nas.ots.olutechsys.com
+https://nas.otsorundscore.olutechsys.com
 ```
 
 ### Redirect URIs (copy-paste, adjust hostname)
 ```
-https://nas.ots.olutechsys.com/__ssolib/oauth/callback
+https://nas.otsorundscore.olutechsys.com/__ssolib/oauth/callback
 ```
 
 ### Routing table
 | Public URL | Reverse proxy | DSM service |
 |---|---|---|
-| `https://nas.ots.olutechsys.com` | Traefik :6443 | DSM HTTPS :5001 |
+| `https://nas.otsorundscore.olutechsys.com` | Traefik :6443 | DSM HTTPS :5001 |
 
 ---
 
 ## Validation checklist
 
-- [ ] TLS cert SAN covers `nas.ots.olutechsys.com` (wildcard `*.ots.olutechsys.com` does)
-- [ ] Origin exactly matches `https://nas.ots.olutechsys.com` (no trailing slash, no path)
+- [ ] TLS cert SAN covers `nas.otsorundscore.olutechsys.com` (wildcard `*.otsorundscore.olutechsys.com` does)
+- [ ] Origin exactly matches `https://nas.otsorundscore.olutechsys.com` (no trailing slash, no path)
 - [ ] Redirect URI exactly matches including `/__ssolib/oauth/callback`
 - [ ] DSM Login Portal HTTPS is enabled and accessible at the OAuth hostname
 - [ ] Test DSM user exists with matching Google Workspace email address
@@ -135,7 +135,7 @@ https://nas.ots.olutechsys.com/__ssolib/oauth/callback
 |---|---|---|
 | `origin_mismatch` | Browser URL doesn't match registered origin | Add the exact `scheme://host:port` to Origins |
 | `redirect_uri_mismatch` | DSM sends a different callback URL than registered | Copy exact URI from DSM SSO Client config |
-| `NET::ERR_CERT_AUTHORITY_INVALID` | DSM serving self-signed cert on the OAuth hostname | Issue cert for `nas.ots.olutechsys.com` via acme-sh |
+| `NET::ERR_CERT_AUTHORITY_INVALID` | DSM serving self-signed cert on the OAuth hostname | Issue cert for `nas.otsorundscore.olutechsys.com` via acme-sh |
 | `Client sent HTTP request to HTTPS server` | Reverse proxy sending HTTP to DSM HTTPS backend | Set proxy destination to `https://` |
 | `400 Bad Request` from DSM | Same HTTP/HTTPS mismatch at proxy layer | Verify Traefik backend uses `https://` for DSM |
 

@@ -43,5 +43,9 @@ def check_file(path: str) -> bool:
 
 
 if __name__ == "__main__":
-    failed = any(check_file(f) for f in sys.argv[1:])
+    # Evaluate every file; any() short-circuits and would hide later violations.
+    failed = False
+    for f in sys.argv[1:]:
+        if check_file(f):
+            failed = True
     sys.exit(1 if failed else 0)

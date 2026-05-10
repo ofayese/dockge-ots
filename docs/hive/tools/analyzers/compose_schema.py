@@ -85,10 +85,11 @@ def validate_v39_schema(compose: dict[str, Any]) -> list[str]:
     except (ValueError, AttributeError):
         errors.append(f"Invalid version format: {version}")
 
-    # Check top-level keys
+    # Check top-level keys (x-* extensions are valid; do not skip validation for other typos)
     unknown_keys = set(compose.keys()) - COMPOSE_V39_TOP_KEYS
-    if unknown_keys and not any(k.startswith('x-') for k in unknown_keys):
-        errors.append(f"Unknown top-level keys: {', '.join(sorted(unknown_keys))}")
+    invalid_unknown = {k for k in unknown_keys if not k.startswith("x-")}
+    if invalid_unknown:
+        errors.append(f"Unknown top-level keys: {', '.join(sorted(invalid_unknown))}")
 
     # Validate services exist
     services = compose.get('services', {})

@@ -48,37 +48,34 @@ def validate_haproxy_config(config_path: Path) -> list[str]:
     if not has_defaults:
         issues.append("Missing 'defaults' section in HAProxy config")
 
-    # Check for frontend/backend definitions
-    frontends = set()
-    backends = set()
+    # Pass 1: collect frontend/backend names (HAProxy often lists frontends before backends).
+    frontends: set[str] = set()
+    backends: set[str] = set()
 
-    for i, line in enumerate(lines, 1):
+    for line in lines:
         stripped = line.strip()
-
-        # Skip comments
         if stripped.startswith('#'):
             continue
-
-        # Extract frontend names
         if stripped.startswith('frontend '):
             parts = stripped.split()
             if len(parts) >= 2:
                 frontends.add(parts[1])
-
-        # Extract backend names
         if stripped.startswith('backend '):
             parts = stripped.split()
             if len(parts) >= 2:
                 backends.add(parts[1])
 
-        # Check for bind directives
+    # Pass 2: line-specific checks (bind, use_backend vs complete backend set).
+    for i, line in enumerate(lines, 1):
+        stripped = line.strip()
+        if stripped.startswith('#'):
+            continue
+
         if 'bind' in stripped and '*:' not in stripped:
             if not any(c.isdigit() for c in stripped):
                 issues.append(f"Line {i}: 'bind' directive without port number: {stripped[:50]}")
 
-        # Check for backend usage
         if 'use_backend' in stripped:
-            # Extract backend name from "use_backend backend_name ..."
             match = re.search(r'use_backend\s+(\w+)', stripped)
             if match:
                 backend_name = match.group(1)

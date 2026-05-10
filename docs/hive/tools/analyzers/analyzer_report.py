@@ -38,10 +38,12 @@ def build_analyzer_report(
         'env_file': str(env_file),
         'env_example_file': str(env_example_file),
         'findings': {
-            'schema_validation': [],
+            # Dict-shaped defaults so except paths and dashboard aggregation never call
+            # .get() on lists (AttributeError) when the try block fails before reassignment.
+            'schema_validation': {},
             'env_validation': {},  # Always a dict, even if .env doesn't exist
             'traefik_routing': [],
-            'dependency_analysis': [],
+            'dependency_analysis': {},
             'security_checks': [],
         },
         'summary': {

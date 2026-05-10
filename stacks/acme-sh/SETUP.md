@@ -50,7 +50,7 @@ Adjust IPs if your VLAN differs. Optionally mirror them as comments in `acme-sh/
 
 **What to do instead**
 
-- Serve HTTPS by **hostname** (`*.ots.…`, `*.otsorundscore.…`, etc.) and resolve those names on the LAN via **split DNS**, **`/etc/hosts`**, or your router — the PEM from acme.sh stays valid for those names.
+- Serve HTTPS by **hostname** (`*.otsorundscore.…`, `*.misfitsds.…`, etc.) and resolve those names on the LAN via **split DNS**, **`/etc/hosts`**, or your router — the PEM from acme.sh stays valid for those names. (Historical `*.ots.*` / `*.mft.*` hostnames are deprecated for new work — see root **`AGENTS.md`**.)
 - Need TLS **to an IP** or **Docker daemon** identity? Use **hostname + DNS** for LE-backed services, or **private PKI** (e.g. mTLS scripts under your acme tree: `SAN_IPS=10.0.1.15` for daemon certs — not the same as LE).
 
 ---
@@ -435,6 +435,7 @@ Dedicated `otsorundscore/` and `misfitsds/` PEM dirs are still recommended for T
 ```bash
 sudo docker exec AcmeSh acme.sh --issue \
   -d '*.otsorundscore.olutechsys.com' \
+  -d '*.otsorundscore.olutech.systems' \
   --keylength 2048 \
   --dns dns_cf --server letsencrypt
 ```
@@ -442,6 +443,7 @@ sudo docker exec AcmeSh acme.sh --issue \
 ```bash
 sudo docker exec AcmeSh acme.sh --issue \
   -d '*.misfitsds.olutechsys.com' \
+  -d '*.misfitsds.olutech.systems' \
   --keylength 2048 \
   --dns dns_cf --server letsencrypt
 ```
@@ -992,8 +994,8 @@ sudo synopkg restart ContainerManager
 | DSM cert slot — misfitsds services     | `misfitsds-sub/`                                    | acme.sh                       | `deploy-misfitsds.bash`          |
 | MacBook (otsmbpro16)                   | `otsmbpro16/`                                       | acme.sh                       | `deploy-otsmbpro16.bash`         |
 | Laptop (hpdevcore)                     | `hpdevcore/`                                        | acme.sh                       | `deploy-hpdevcore.bash`          |
-| OTS namespace services                 | `otsorundscore/` (`*.otsorundscore.olutechsys.com`)                 | acme.sh                       | Traefik le-dns resolver          |
-| MFT namespace services                 | `misfitsds/` (`*.misfitsds.olutechsys.com`)                 | acme.sh                       | Traefik le-dns resolver          |
+| OTS namespace services                 | `otsorundscore/` (`*.otsorundscore.{olutechsys,olutech.systems}`)                 | acme.sh                       | Traefik file certs (`tls.yaml`)  |
+| MFT namespace services                 | `misfitsds/` (`*.misfitsds.{olutechsys,olutech.systems}`)                 | acme.sh                       | Traefik file certs (`tls.yaml`)  |
 
 The previous local CA codebase (`setup-docker-tls.bash`, `deploy-nas-cert.bash`)
 has been retired and archived to `/volume1/certs/archives/scripts-2026-04-27/`.

@@ -43,6 +43,7 @@ Read first — do not skip any:
   HIVE_OBJECTIVE.md
   README.md
   docs/hive/NAS_DEPLOYMENT.md
+  docs/hive/CERT_REISSUE_TRAEFIK_OAUTH_RUNBOOK.md
   .gitignore
   scripts/init-nas.sh
   scripts/dockge-start.sh
@@ -655,11 +656,9 @@ Run these on the NAS. Human operator executes. Agent validates repo side only.
       /volume1/certs/acme/otsorundscore-sub \
       /volume1/certs/acme/misfitsds-sub \
       /volume1/certs/acme/otsmbpro16 \
-      /volume1/certs/acme/hpdevcore \
-      /volume1/certs/acme/ots-sub \
-      /volume1/certs/acme/mft-sub
+      /volume1/certs/acme/hpdevcore
 
-  **Traefik host-named wildcards** use **`otsorundscore/`** + **`misfitsds/`** (see **`README.md`** + **`stacks/acme-sh/SETUP.md`**). Legacy **`ots-sub`/`mft-sub`** dirs may remain for older profiles; do not use them for new HAProxy bundles tied to **`*.otsorundscore.*`**.
+  **Traefik host-named wildcards** use **`otsorundscore/`** + **`misfitsds/`** only (see **`README.md`**, **`stacks/acme-sh/SETUP.md`**, and **`docs/hive/CERT_REISSUE_TRAEFIK_OAUTH_RUNBOOK.md`**). Do not point Traefik at legacy **`ots-sub`/`mft-sub`** paths; those are not mounted by **`traefik-ots`** / **`traefik-mft`** in this repo.
 
   Verify PEM files exist:
     ls -la /volume1/certs/acme/otsorundscore/

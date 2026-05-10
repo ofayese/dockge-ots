@@ -3,6 +3,8 @@
 > **Audience:** Operator deploying Google Workspace identity login for Synology DSM.
 > **Goal:** Use a Google Workspace account to authenticate into DSM as a NAS system user.
 
+**Operator checklist (certs → Traefik → this doc):** [`docs/hive/CERT_REISSUE_TRAEFIK_OAUTH_RUNBOOK.md`](CERT_REISSUE_TRAEFIK_OAUTH_RUNBOOK.md) — Part **C** mirrors **Step 1** below with dual-TLD origin/redirect notes.
+
 ---
 
 ## Architecture choice
@@ -33,11 +35,11 @@ These four things **must agree** — mismatches cause `origin_mismatch` or `redi
 
 | Item | Must match |
 |---|---|
-| Google Authorized Domain | `olutechsys.com` |
-| OAuth Client JavaScript Origins | `https://nas.otsorundscore.olutechsys.com` |
-| OAuth Client Redirect URIs | `https://nas.otsorundscore.olutechsys.com/__ssolib/oauth/callback` |
-| DSM Login Portal HTTPS hostname | `nas.otsorundscore.olutechsys.com` |
-| TLS cert SAN | `*.otsorundscore.olutechsys.com` covers this |
+| Google Authorized domains | `olutechsys.com` (add **`olutech.systems`** if you use that hostname on DSM) |
+| OAuth Client JavaScript Origins | Exact `scheme://host` for each browser URL you will use (see **Step 1**) |
+| OAuth Client Redirect URIs | Exact callback per origin, e.g. `https://nas.otsorundscore.olutechsys.com/__ssolib/oauth/callback` |
+| DSM Login Portal HTTPS hostname | Must equal the host in Origins (e.g. `nas.otsorundscore.olutechsys.com`) |
+| TLS cert SAN | Wildcard **`*.otsorundscore.olutechsys.com`** / **`*.otsorundscore.olutech.systems`** when both issued on the Traefik PEM (see runbook) |
 
 **Origin rules (Google enforces strictly):**
 - Scheme + host only — no paths, no wildcards, no trailing slash
@@ -51,20 +53,26 @@ These four things **must agree** — mismatches cause `origin_mismatch` or `redi
 1. Go to [console.cloud.google.com](https://console.cloud.google.com) → **APIs & Services → OAuth consent screen**
    - User Type: **Internal** (Google Workspace only — no external users)
    - App name: `Olutech NAS`
-   - Authorized domains: `olutechsys.com`
+   - Authorized domains: add **`olutechsys.com`**; add **`olutech.systems`** if any OAuth hostname or user email uses that domain
    - Save
 
 2. **APIs & Services → Credentials → Create Credentials → OAuth 2.0 Client ID**
    - Application type: **Web application**
    - Name: `OTS NAS DSM SSO`
-   - Authorized JavaScript Origins:
+   - Authorized JavaScript Origins (one line per **exact** browser host you will use; no path, no trailing slash):
      ```
      https://nas.otsorundscore.olutechsys.com
      ```
-   - Authorized Redirect URIs:
+     If DSM Login Portal is also reachable as **`nas.otsorundscore.olutech.systems`**, add:
+     ```
+     https://nas.otsorundscore.olutech.systems
+     ```
+   - Authorized Redirect URIs (must pair with each origin above):
      ```
      https://nas.otsorundscore.olutechsys.com/__ssolib/oauth/callback
+     https://nas.otsorundscore.olutech.systems/__ssolib/oauth/callback
      ```
+     Omit the `.olutech.systems` pair if you will never browse DSM on that hostname.
    - Click **Create** → copy **Client ID** and **Client Secret** immediately
 
 3. Download the JSON credentials file — store offline, never commit to git
@@ -103,11 +111,14 @@ On first SSO login, DSM matches the Google identity to the DSM user by email.
 ### Origins (copy-paste, adjust hostname)
 ```
 https://nas.otsorundscore.olutechsys.com
+https://nas.otsorundscore.olutech.systems
 ```
+(Remove the second line if unused.)
 
 ### Redirect URIs (copy-paste, adjust hostname)
 ```
 https://nas.otsorundscore.olutechsys.com/__ssolib/oauth/callback
+https://nas.otsorundscore.olutech.systems/__ssolib/oauth/callback
 ```
 
 ### Routing table
@@ -119,9 +130,9 @@ https://nas.otsorundscore.olutechsys.com/__ssolib/oauth/callback
 
 ## Validation checklist
 
-- [ ] TLS cert SAN covers `nas.otsorundscore.olutechsys.com` (wildcard `*.otsorundscore.olutechsys.com` does)
-- [ ] Origin exactly matches `https://nas.otsorundscore.olutechsys.com` (no trailing slash, no path)
-- [ ] Redirect URI exactly matches including `/__ssolib/oauth/callback`
+- [ ] TLS cert SAN covers the DSM hostname (wildcards `*.otsorundscore.olutechsys.com` and `*.otsorundscore.olutech.systems` cover `nas.otsorundscore.*` when both are on the PEM)
+- [ ] Every browser URL you test matches a registered **Origin** exactly (no trailing slash, no path)
+- [ ] Redirect URI exactly matches each origin, including `/__ssolib/oauth/callback`
 - [ ] DSM Login Portal HTTPS is enabled and accessible at the OAuth hostname
 - [ ] Test DSM user exists with matching Google Workspace email address
 - [ ] Tested SSO login in a private/incognito browser window
@@ -171,4 +182,4 @@ This does **not** replace NAS system login — it enables downstream apps to del
 
 ---
 
-*See also: [docs/hive/NAS_DEPLOYMENT.md](NAS_DEPLOYMENT.md) | [docs/hive/SERVICE_MAP.md](SERVICE_MAP.md)*
+*See also: [docs/hive/CERT_REISSUE_TRAEFIK_OAUTH_RUNBOOK.md](CERT_REISSUE_TRAEFIK_OAUTH_RUNBOOK.md) | [docs/hive/NAS_DEPLOYMENT.md](NAS_DEPLOYMENT.md) | [docs/hive/SERVICE_MAP.md](SERVICE_MAP.md)*

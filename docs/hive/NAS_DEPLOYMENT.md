@@ -411,16 +411,17 @@ Traefik runs as a container on each NAS in its own Dockge stack. It is **not** p
 
 ### Deploy order
 
-1. Deploy `traefik-ots` (or `traefik-mft`) stack first via Dockge.
-2. Confirm Traefik is healthy:
+1. **Issue and install PEMs** with **`stacks/acme-sh`** first (DNS-01). Traefik **OTS** mounts **`${ACME_CERT_ROOT}/otsorundscore/`**; Traefik **MFT** mounts **`${ACME_CERT_ROOT}/misfitsds/`**. Paths are wired in each stack’s `compose.yaml` and `config/tls.yaml`.
+2. Deploy **`traefik-ots`** (OTS NAS) or **`traefik-mft`** (MFT NAS) via Dockge **after** `fullchain.pem` and `privkey.pem` exist in those directories.
+3. Confirm Traefik is healthy:
    ```bash
    docker exec traefik-ots traefik healthcheck --ping
    ```
-3. Deploy service stacks — they join the `traefik-ots` / `traefik-mft` network and appear in Traefik automatically.
+4. Deploy service stacks — they join the `traefik-ots` / `traefik-mft` network and appear in Traefik automatically.
 
 ### Cert bind-mount dependency
 
-Traefik reads certs from `/volume1/certs/acme/ots-sub/` (or `mft-sub/`). Issue certs via **acme-sh** before deploying Traefik (see `SETUP.md` in `stacks/acme-sh/`). If the cert path is missing at startup, Traefik starts but serves a self-signed fallback — browsers will warn. Issue the cert first.
+Traefik does **not** read legacy **`ots-sub/`** or **`mft-sub/`** paths. Use **host-named** PEM dirs **`otsorundscore/`** and **`misfitsds/`** (see [`stacks/acme-sh/SETUP.md`](../../stacks/acme-sh/SETUP.md) and [`docs/hive/CERT_REISSUE_TRAEFIK_OAUTH_RUNBOOK.md`](CERT_REISSUE_TRAEFIK_OAUTH_RUNBOOK.md)). If the mount source is empty or missing files at startup, Traefik may serve a **self-signed fallback** — browsers will warn. Issue and **`--install-cert`** before first Traefik deploy.
 
 ### Traefik port mapping (critical)
 
@@ -483,10 +484,10 @@ The following are also safe to include:
 | Path | Contents | Notes |
 | --- | --- | --- |
 | `/volume1/certs/acme/wildcard/` | PEM files | Safe — no live database |
-| `/volume1/certs/acme/ots-sub/` | PEM files | Safe — no live database |
-| `/volume1/certs/acme/mft-sub/` | PEM files | Safe — no live database |
-| `/volume1/certs/acme/otsorundscore-sub/` | PEM files | Safe — no live database |
-| `/volume1/certs/acme/misfitsds-sub/` | PEM files | Safe — no live database |
+| `/volume1/certs/acme/otsorundscore/` | PEM files | Traefik-OTS default TLS; safe — no live database |
+| `/volume1/certs/acme/misfitsds/` | PEM files | Traefik-MFT default TLS; safe — no live database |
+| `/volume1/certs/acme/otsorundscore-sub/` | PEM files | Optional broader SAN profile; safe — no live database |
+| `/volume1/certs/acme/misfitsds-sub/` | PEM files | Optional broader SAN profile; safe — no live database |
 | `/volume1/certs/acme/otsmbpro16/` | PEM files | Safe — no live database |
 | `/volume1/certs/acme/hpdevcore/` | PEM files | Safe — no live database |
 

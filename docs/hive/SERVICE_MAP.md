@@ -1,5 +1,7 @@
 # Olutech Systems — Homelab Service Map
 
+Operator sequence (issue PEMs → Traefik → DSM Google SSO Step 1): [`CERT_REISSUE_TRAEFIK_OAUTH_RUNBOOK.md`](CERT_REISSUE_TRAEFIK_OAUTH_RUNBOOK.md).
+
 ## Domains and namespaces
 
 | NAS hostname   | Wildcard (per TLD)                                      | Routes to                 | PEM dir (`/volume1/certs/acme/`) |
@@ -49,7 +51,7 @@ Cert: `/volume1/certs/acme/misfitsds/` (SANs: `misfitsds.{olutechsys,olutech.sys
 | `otsorundscore/` | `otsorundscore.*` + `*.otsorundscore.*` on `.olutechsys.com` / `.olutech.systems` | Let's Encrypt | acme-sh daemon |
 | `misfitsds/`    | `misfitsds.*` + `*.misfitsds.*` on `.olutechsys.com` / `.olutech.systems`          | Let's Encrypt | acme-sh daemon |
 
-Traefik reads certs directly from `/volume1/certs/acme/<dir>/` via bind-mount. `acme-sh` renews automatically; Traefik picks up renewed PEMs on the next configuration reload (no Traefik restart needed).
+Traefik reads certs directly from `/volume1/certs/acme/<dir>/` via bind-mount. `acme-sh` renews automatically; after **manual** PEM replace, **`docker compose restart`** the Traefik stack if browsers still show the old cert.
 
 ## Design principles
 

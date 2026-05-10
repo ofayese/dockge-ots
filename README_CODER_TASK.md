@@ -95,8 +95,9 @@ Short section. Key facts:
 
 - Container name: AcmeSh
 - Certs go to /volume1/certs/acme/<dir>/
-- 7 certs managed: wildcard, otsorundscore-sub, misfitsds-sub,
-  otsmbpro16, hpdevcore, ots-sub, mft-sub
+- 7+ cert profiles: wildcard, otsorundscore, misfitsds, otsorundscore-sub,
+  misfitsds-sub, otsmbpro16, hpdevcore (Traefik uses **otsorundscore/** and
+  **misfitsds/**; see stacks/acme-sh/SETUP.md)
 - Issue order: --issue first, wait for DNS (~2 min), then --install-cert
 - Full commands: see stacks/acme-sh/SETUP.md
 - acme-sh auto-renews in daemon mode — no cron needed

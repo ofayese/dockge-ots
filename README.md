@@ -116,6 +116,7 @@ sudo sh -c 'cat /volume1/certs/acme/otsorundscore/fullchain.pem /volume1/certs/a
 | [`scripts/verify-repo-layout.sh`](scripts/verify-repo-layout.sh)               | Hive / stack path guard      |
 | [`scripts/validate-haproxy-proposal.sh`](scripts/validate-haproxy-proposal.sh) | HAProxy `-c` off-box         |
 | [`stacks/acme-sh/SETUP.md`](stacks/acme-sh/SETUP.md)                           | Cert issue/install runbook   |
+| [`docs/hive/CERT_REISSUE_TRAEFIK_OAUTH_RUNBOOK.md`](docs/hive/CERT_REISSUE_TRAEFIK_OAUTH_RUNBOOK.md) | Ordered: reissue → Traefik → Google OAuth Step 1 |
 | [`docs/hive/NAS_DEPLOYMENT.md`](docs/hive/NAS_DEPLOYMENT.md)                   | Full NAS reference           |
 | [`AGENTS.md`](AGENTS.md)                                                       | Agent memory and conventions |
 

@@ -1,7 +1,7 @@
 # Enhanced Task Specification: Dockge-OTS Ecosystem Enhancements
 ## Comprehensive Implementation Guide
 
-> **Architectural reference only (May 2026):** Implementation is **complete on `main`**. Use **`AGENTS.md`** for live commands and layout; use **`BUG_FIX_SUMMARY.md`** for post-ship bug fixes (Phase 1 + Phase 2). This file preserves design detail (regexes, module layout, contracts) and may retain **stale line numbers** — verify against the codebase when in doubt.
+> **Deprecation / scope (May 2026):** This file is **purely an architectural reference document** — implementation is **complete on `main`**. Use **[`AGENTS.md`](../AGENTS.md)** for live commands and layout; use **[`BUG_FIX_SUMMARY.md`](BUG_FIX_SUMMARY.md)** for post-ship bug fixes (Phase 1 + Phase 2). Design detail (regexes, module layout, contracts) is preserved here and may include **stale line numbers** — verify against the codebase when in doubt.
 
 ---
 
@@ -44,7 +44,7 @@ This document provides an **enhanced, production-ready specification** for imple
   - `shell-docker-compose-no-err` — Detects `docker compose config` without `|| exit` error handling
   - `node-zod-schema-wrapper` — Detects `inputSchema: { key: z.string() }` (not wrapped in `z.object()`)
 - **NEW test runners (local repo):**
-  - `pytest-unit-tests` — Hook **id** name is historical; runs **`python3 -m unittest discover -s tests -p 'test_*.py'`** via `hooks/run-pytest.sh` when pytest is not installed (canonical on this fleet per `AGENTS.md`)
+  - `unittest` — Documented hook for the stdlib gate; runs **`python3 -m unittest discover -s tests -p 'test_*.py'`** via **`hooks/run-unittest.sh`**. *(Some checkouts still list `id: pytest-unit-tests` and `entry: hooks/run-pytest.sh` in `.pre-commit-config.yaml` until a rename; behavior is the same.)*
   - `bats-shell-integration` — Runs `bats tests/shell/*.bats -p -T`
   - `inventory-static-analyzer` — Runs analyzer on compose / `inventory.py` touch paths
 
@@ -126,9 +126,10 @@ This document provides an **enhanced, production-ready specification** for imple
 #### 1.3 Hook Runner Scripts
 **Directory:** `./hooks/`
 
-**Script 7: Unit test runner (`hooks/run-pytest.sh`)** *(historical filename; not renamed to avoid churn)*
-- Runs: **`python3 -m unittest discover -s tests -p 'test_*.py' -v`** when pytest is unavailable (this repo’s default)
-- Optional: `pytest tests/ -v --tb=short` when pytest is on `PATH`
+**Script 7: Unit test runner (`hooks/run-unittest.sh`)**
+- Runs: **`python3 -m unittest discover -s tests -p 'test_*.py' -v`** (this repo’s default; no pytest required)
+- Optional: `pytest tests/ -v --tb=short` when pytest is on `PATH` for local-only runs
+- *On-disk name:* the repository may still ship `hooks/run-pytest.sh` wired from `.pre-commit-config.yaml`; treat it as this script until renamed.
 - Fails if any test fails
 - Output goes to stdout (pre-commit will capture)
 - Exit code 0 if all pass, 1 if any fail
@@ -574,7 +575,7 @@ if args.analyze:
 
 - [x] Phase 1: Enhanced `.pre-commit-config.yaml`
 - [x] Phase 1: 6 custom hook scripts (Python, Shell, Node)
-- [x] Phase 1: 3 hook runner scripts (unittest via `run-pytest.sh`, bats, analyzer)
+- [x] Phase 1: 3 hook runner scripts (unittest via `run-unittest.sh`, bats, analyzer)
 - [x] Phase 2: 3 PSU job configuration scripts
 - [x] Phase 2: 4 REST API endpoint definitions
 - [x] Phase 2: 5 dashboard panels
@@ -618,7 +619,7 @@ if args.analyze:
 │   ├── shell-bash-regex-alternation.sh
 │   ├── shell-docker-compose-no-err.sh
 │   ├── node-zod-schema-wrapper.js
-│   ├── run-pytest.sh   # historical name; runs unittest when pytest absent
+│   ├── run-unittest.sh # unittest discover (legacy filename run-pytest.sh may still exist)
 │   ├── run-bats.sh
 │   └── run-analyzer.sh
 ├── tests/

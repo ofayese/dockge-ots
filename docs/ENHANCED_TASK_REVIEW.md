@@ -119,7 +119,7 @@ Phase 6 (30 min) → Store patterns, extract lessons
 ### Phase 1: Pre-commit
 - Hooks should detect real violations in existing code (found 6 actual issues)
 - Each custom hook needs both detection logic AND suggested fixes
-- Test runners (unittest via `hooks/run-pytest.sh`, bats, analyzer) use `stages: [pre-commit]` after migrate-config
+- Test runners (unittest via `hooks/run-unittest.sh`, bats, analyzer) use `stages: [pre-commit]` after migrate-config (legacy `run-pytest.sh` filename may remain on disk)
 
 ### Phase 2: PSU
 - Jobs must be fire-and-forget (queue → return immediately)

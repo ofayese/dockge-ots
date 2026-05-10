@@ -101,7 +101,7 @@
 - ✅ PowerShell PSU templates under **`stacks/psu-ots/universal/`** (copy to NAS `data/Repository/.universal/` per `stacks/psu-ots/README.md`)
 - ✅ 5 original code violations fixed + Phase 2 logic patches (**`BUG_FIX_SUMMARY.md`**)
 - ✅ Git history on `main` includes enhancement + fix commits
-- ✅ Python unit tests via **`python3 -m unittest discover`** (canonical; `hooks/run-pytest.sh` falls back when pytest absent)
+- ✅ Python unit tests via **`python3 -m unittest discover`** (canonical; `hooks/run-unittest.sh` / legacy `run-pytest.sh` may invoke pytest when present, else unittest)
 
 ---
 
@@ -132,7 +132,7 @@ dockge/
 │   ├── shell-bash-regex-alternation.sh
 │   ├── shell-docker-compose-no-err.sh
 │   ├── node-zod-schema-wrapper.js
-│   ├── run-pytest.sh
+│   ├── run-unittest.sh
 │   ├── run-bats.sh
 │   └── run-analyzer.sh
 ├── tests/shell/                               [NEW - 4 files]

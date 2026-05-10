@@ -1,6 +1,6 @@
 # Quick Reference: Pre-Commit Hooks & Violations Found
 
-> **Historical review (2026-05):** The violations below were found during the January 2025 briefing pass and are **fixed on `main`**. For the full narrative (Phase 1 bugs 1–5 and Phase 2 bugs 6–9 — including Python hook **`any()`** short-circuiting, Compose **`x-*`** filtering, HAProxy **two-pass** `use_backend` validation, and analyzer **default dict** initializations), see **[`BUG_FIX_SUMMARY.md`](BUG_FIX_SUMMARY.md)**. Live rules and commands: **`AGENTS.md`**.
+> **Historical review (2026-05):** The violations below were found during the January 2025 briefing pass and are **fixed on `main`**. For the full narrative (Phase 1 bugs 1–5 and Phase 2 bugs 6–9 — including Python hook **`any()`** short-circuiting, Compose **`x-*`** filtering, HAProxy **two-pass** `use_backend` validation, and analyzer **default dict** initializations), see **[`BUG_FIX_SUMMARY.md`](BUG_FIX_SUMMARY.md)**. Live rules and commands: **[`AGENTS.md`](../AGENTS.md)**.
 
 ## Current Code Violations (Found in Review)
 
@@ -222,11 +222,11 @@ pre-commit run shell-unsafe-sed --all-files
 
 | # | File | Line | Violation Type | Severity | Status |
 |---|------|------|---|---|---|
-| 1 | inventory.py | 273 | dict iteration (wrong var) | 🔴 HIGH | ❌ UNFIXED |
-| 2 | init-nas.sh | 196, 211 | sed unescaped variable | 🔴 HIGH | ❌ UNFIXED |
-| 3 | check-dockge-http.sh | 15 | bash regex alternation | 🔴 HIGH | ❌ UNFIXED |
-| 4 | compose-validate.sh | 73 | docker compose no err | 🔴 HIGH | ❌ UNFIXED |
-| 5 | index.js | 12-15 | Zod not wrapped | 🔴 HIGH | ❌ UNFIXED |
+| 1 | inventory.py | 273 | dict iteration (wrong var) | 🔴 HIGH | ✅ FIXED |
+| 2 | init-nas.sh | 196, 211 | sed unescaped variable | 🔴 HIGH | ✅ FIXED |
+| 3 | check-dockge-http.sh | 15 | bash regex alternation | 🔴 HIGH | ✅ FIXED |
+| 4 | compose-validate.sh | 73 | docker compose no err | 🔴 HIGH | ✅ FIXED |
+| 5 | index.js | 12-15 | Zod not wrapped | 🔴 HIGH | ✅ FIXED |
 
 **Total violations:** 5 issues across 5 files  
 **Blocking commit:** YES (all violations block until fixed)  

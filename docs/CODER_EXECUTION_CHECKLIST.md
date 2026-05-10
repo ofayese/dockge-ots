@@ -59,7 +59,7 @@ This checklist guides the implementation of four major enhancements to the dockg
   - Expected: Returns exit code 1, suggests wrapping
 
 ### Hook Runners
-- [x] **1.10** Create `./hooks/run-pytest.sh` (filename historical; prefers pytest if installed, else **`python3 -m unittest discover`** — canonical on this repo per `AGENTS.md`)
+- [x] **1.10** Create `./hooks/run-unittest.sh` (documented name; repo may still ship `run-pytest.sh` — prefers pytest if installed, else **`python3 -m unittest discover`** — canonical on this repo per `AGENTS.md`)
   - Command: `python3 -m unittest discover -s tests -p 'test_*.py' -v`
   - Exit code: 0 if all pass, 1 if any fail
   - Test: Run manually; `tests/test_inventory.py` is the primary suite

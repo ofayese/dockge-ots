@@ -1,6 +1,8 @@
+> Note: The original Gordon briefing pack (`ENHANCED_*` / `INDEX`) is retained for architectural context only. All implementations and bugs documented here are complete.
+
 # Bug Fix Summary: Coder Agent Phase 1 Issues
 
-**Note:** The original Gordon briefing pack (`docs/ENHANCED_TASK_*`, `docs/INDEX.md`) is retained for architectural context only. Implementations and fixes documented here are complete on `main` (see also `AGENTS.md`).
+See also **[`AGENTS.md`](../AGENTS.md)** for live operator truth.
 
 ## Timeline
 

@@ -1,6 +1,8 @@
+> **Current live status:** Use **[`AGENTS.md`](../AGENTS.md)** for operator truth (paths, hooks, test commands, guardrails) and **[`BUG_FIX_SUMMARY.md`](BUG_FIX_SUMMARY.md)** for the post-ship bug/fix narrative. Everything below is the **Gordon briefing pack** — historical and architectural reference (January 2025 design; implementation **complete on `main`** as of May 2026).
+
 # 📋 ENHANCED TASK DOCUMENTATION INDEX
 
-**Live status (May 2026):** Operational truth is in **[`AGENTS.md`](../AGENTS.md)** (repo memory, paths, hooks, test commands). Post-implementation bug narrative and Phase 2 logic fixes are in **[`BUG_FIX_SUMMARY.md`](BUG_FIX_SUMMARY.md)**. The documents below are an archived briefing pack—see the PM table for completion.
+The index and linked specs describe what was built; **`AGENTS.md`** remains the source of truth for day-to-day work.
 
 ## Quick Navigation
 
@@ -199,7 +201,7 @@ dockge/
 │   ├── shell-bash-regex-alternation.sh
 │   ├── shell-docker-compose-no-err.sh
 │   ├── node-zod-schema-wrapper.js
-│   ├── run-pytest.sh                          (runs unittest when pytest absent)
+│   ├── run-unittest.sh                        (unittest discover; see SPEC if hook file still named run-pytest.sh)
 │   ├── run-bats.sh
 │   └── run-analyzer.sh
 ├── tests/
@@ -309,15 +311,15 @@ git log --oneline -5
 
 | Document | Version | Date | Status |
 |----------|---------|------|--------|
-| ENHANCED_TASK_SPECIFICATION | 1.1 | 2026-05-10 | Archival / reference |
-| CODER_EXECUTION_CHECKLIST | 1.1 | 2026-05-10 | Historical (complete) |
-| ENHANCED_TASK_REVIEW | 1.1 | 2026-05-10 | Historical snapshot |
-| QUICK_REFERENCE_VIOLATIONS | 1.1 | 2026-05-10 | Historical + patterns |
+| ENHANCED_TASK_SPECIFICATION | 1.2 | 2026-05-09 | Archival / reference |
+| CODER_EXECUTION_CHECKLIST | 1.2 | 2026-05-09 | Historical (complete) |
+| ENHANCED_TASK_REVIEW | 1.2 | 2026-05-09 | Historical snapshot |
+| QUICK_REFERENCE_VIOLATIONS | 1.2 | 2026-05-09 | Historical + patterns |
 | BUG_FIX_SUMMARY | — | 2026-05 | **Live** bug narrative |
 
-**Index Version:** 1.1  
-**Index Date:** 2026-05-10  
-**Status:** ✅ Aligned with `main` — briefing pack archived
+**Index Version:** 1.2  
+**Index Date:** 2026-05-09  
+**Status:** ✅ Aligned with `main` — briefing pack lives under `docs/` (canonical paths)
 
 ---
 
@@ -332,7 +334,7 @@ git log --oneline -5
 ---
 
 **Document:** Enhanced Task Documentation Index  
-**Version:** 1.1  
+**Version:** 1.2  
 **Status:** ✅ Aligned with `main` (May 2026)  
-**Last Updated:** 2026-05-10  
+**Last Updated:** 2026-05-09  
 **Maintained By:** Gordon (Docker AI Assistant) + repo maintainers

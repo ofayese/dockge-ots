@@ -6,10 +6,11 @@
 2. **Coder Agent** reported 5 critical bugs found during testing
 3. **Gordon (Docker AI)** identified root causes and fixed all 5 bugs
 4. **All bugs verified** and committed (commit 1f7ab34)
+5. **Phase 2 review** surfaced 4 additional logic bugs (analyzer defaults, pre-commit Python hooks, Compose `x-` handling, HAProxy parse order); fixed and documented below.
 
 ---
 
-## Bugs Fixed
+## Bugs Fixed (Phase 1 — Original Five)
 
 ### Bug 1: Traefik Label Analysis Dead Code
 **Severity:** HIGH (feature completely non-functional)
@@ -120,6 +121,80 @@ exit "$fail"  # ← Correctly returns 1
 
 ---
 
+## Bugs Fixed (Phase 2 — Four Logic Bugs)
+
+Same failure class as **Bug 2** (wrong default container type): code assumed `findings[...]` was always dict-shaped after `build_analyzer_report()` ran to completion. When the `try` block raised before reassignment, **`.get()` on a list** crashed the dashboard path.
+
+### Bug 6: schema_validation / dependency_analysis Type Mismatch
+**Severity:** CRITICAL (AttributeError on analyzer / dashboard aggregation)
+
+**Root Cause:** `schema_validation` and `dependency_analysis` were initialized as `[]`. On failure before reassignment, `generate_dashboard_summary()` called `findings.get('dependency_analysis', {}).get('cycles', [])` — but `findings['dependency_analysis']` could still be a **list**, so the second `.get` ran on a list → **`AttributeError`**.
+
+**Location:** `docs/hive/tools/analyzers/analyzer_report.py` (initial `report['findings']` structure)
+
+**Fix:** Initialize both as **`{}`**, matching the dict shape used after successful analysis (and matching the earlier **`env_validation: {}`** pattern).
+
+**Verification:** ✅ Exception path + dashboard aggregation tolerate missing compose / early exit
+
+---
+
+### Bug 7: Python Hook `any()` Short-Circuiting
+**Severity:** HIGH (silent omission of violations)
+
+**Root Cause:** Pre-commit passes multiple filenames in one hook invocation when `pass_filenames: true`. **`failed = any(check_file(f) for f in paths)`** short-circuits: the generator stops at the **first** `True`, so later files are never checked and their violations never print.
+
+**Location:** `hooks/python-no-timeout-subprocess.py`, `hooks/python-unsafe-dict-iteration.py`
+
+**Fix:** Loop all paths and set a flag:
+```python
+failed = False
+for f in sys.argv[1:]:
+    if check_file(f):
+        failed = True
+sys.exit(1 if failed else 0)
+```
+
+**Heuristic:** For repo-wide or multi-file hooks, **never use `any(gen)`** if every file must be diagnosed; use an explicit loop (or `list(...)` before `any`, if you truly want short-circuit after collecting).
+
+**Verification:** ✅ Every staged file is scanned; all violations reported in one run
+
+---
+
+### Bug 8: Compose Schema `x-` Extension Bypass
+**Severity:** MEDIUM (false negatives — unknown keys ignored when any `x-*` present)
+
+**Root Cause:** Condition was effectively “if there is any unknown key **and** none of them start with `x-`” — implemented as **`unknown_keys and not any(k.startswith('x-') for k in unknown_keys)`**. If the set contained **both** `x-logging` and a typo like `typo-key`, **`any(...)`** was true, the **`not`** made the whole condition false, and **no error** was emitted for **`typo-key`**.
+
+**Location:** `docs/hive/tools/analyzers/compose_schema.py` (top-level key validation)
+
+**Fix:** Split valid extensions from invalid unknowns:
+```python
+invalid_unknown = {k for k in unknown_keys if not k.startswith("x-")}
+if invalid_unknown:
+    errors.append(...)
+```
+
+**Heuristic:** When whitelisting prefixes, **filter the set first**, then test emptiness — do not let one whitelisted key mask other invalid keys.
+
+**Verification:** ✅ Mixed `x-logging` + invalid key → error lists only the invalid key(s)
+
+---
+
+### Bug 9: HAProxy Single-Pass `use_backend` False Positives
+**Severity:** MEDIUM (noise — valid configs flagged)
+
+**Root Cause:** A single forward scan checked **`use_backend name`** against **`backends`** while still parsing. HAProxy files commonly declare **frontends (with `use_backend`) before `backend` blocks**, so **`backends`** was still empty → false **“backend not defined”** for every reference.
+
+**Location:** `docs/hive/tools/analyzers/haproxy_traefik_checker.py` — `validate_haproxy_config()`
+
+**Fix:** **Two-pass parse:** (1) scan all lines and collect **`frontend` / `backend`** names into sets; (2) second pass for **`bind`** / **`use_backend`** checks against the **complete** `backends` set.
+
+**Heuristic:** For config validators where **definition order ≠ reference order**, collect symbols in one pass, validate references in a second.
+
+**Verification:** ✅ `use_backend` after later `backend` lines no longer false-positive
+
+---
+
 ## Fixes Summary Table
 
 | Bug | File | Issue Type | Severity | Status |
@@ -129,6 +204,15 @@ exit "$fail"  # ← Correctly returns 1
 | 3 | compose_schema.py | Unpacking error (missing minor) | HIGH | ✅ Fixed |
 | 4 | .pre-commit-config.yaml | Duplicate entry | MEDIUM | ✅ Verified false alarm |
 | 5 | shell-unsafe-sed.sh | Subshell exit code loss | HIGH | ✅ Fixed |
+
+### Phase 2 (logic bugs)
+
+| Bug | File(s) | Issue Type | Severity | Status |
+|-----|---------|------------|----------|--------|
+| 6 | analyzer_report.py | Default `findings` lists vs `.get()` chain | CRITICAL | ✅ Fixed |
+| 7 | python-no-timeout-subprocess.py, python-unsafe-dict-iteration.py | `any()` short-circuit on multi-file hook | HIGH | ✅ Fixed |
+| 8 | compose_schema.py | `x-*` whitelist masked other unknown keys | MEDIUM | ✅ Fixed |
+| 9 | haproxy_traefik_checker.py | Single-pass order vs HAProxy layout | MEDIUM | ✅ Fixed |
 
 ---
 
@@ -221,8 +305,14 @@ All bugs verified with automated tests:
 
 5. **Test with real data:** These bugs only appeared when analyzer ran on actual stacks (missing `.env`, no explicit version, unsafe sed patterns).
 
+6. **`any()` on generators hides work:** Multi-file hooks must scan every path; short-circuiting stops at the first failure and hides the rest.
+
+7. **Prefix whitelists must be per-key:** `not any(x)` over a mixed set is wrong when you need “any key that is *not* whitelisted.”
+
+8. **Ordered configs need two-pass or forward refs:** HAProxy (and similar) interleave declare/reference; collect definitions before validating references.
+
 ---
 
 **Status:** ✅ READY FOR NEXT PHASE
 
-All critical bugs fixed and verified. The analyzer modules and pre-commit hooks are production-ready.
+Phase 1 and Phase 2 bugs fixed and verified. The analyzer modules and pre-commit hooks are production-ready. See **Phase 2 — Four Logic Bugs** above; code landed in **`c0ea1bd`** (`refactor(analyzer): update data structures for consistency and clarity`).

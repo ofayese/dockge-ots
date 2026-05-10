@@ -65,3 +65,6 @@ stacks/homepage/config/logs/
 
 # Cursor remote server downloads — large binary archives, never commit
 scripts/cursor_downloads/
+
+# Python bytecode (e.g. unittest / local runs under docs/hive/tools/)
+**/__pycache__/

@@ -15,6 +15,8 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import logging
+import re
 import shutil
 import subprocess
 import sys
@@ -26,6 +28,8 @@ try:
     import yaml
 except ImportError:
     sys.exit("ERROR: PyYAML required (pip install pyyaml)")
+
+logger = logging.getLogger(__name__)
 
 
 # ---------- compose-level extraction ----------
@@ -108,7 +112,8 @@ def parse_env(env: Any) -> dict[str, str]:
                 k, v = s.split("=", 1)
                 out[k] = f"inline `{v}`" if v else "inline (empty)"
             else:
-                out[s] = "host env (no default)"  # malformed if not host-supplied
+                # Compose treats bare tokens as host-env names; surface once here (not again in anomalies).
+                out[s] = "malformed list entry (no '='; Compose treats as host-env name)"
     elif isinstance(env, dict):
         for k, v in env.items():
             if v is None:
@@ -122,17 +127,26 @@ def parse_env(env: Any) -> dict[str, str]:
     return out
 
 
+def normalize_labels(labels: Any) -> list[str]:
+    """Compose `labels` may be dict, list, None, or absent. Never iterate a non-collection."""
+    if labels is None:
+        return []
+    if isinstance(labels, dict):
+        return [f"{k}={v}" for k, v in labels.items()]
+    if isinstance(labels, list):
+        return [str(x) for x in labels]
+    return []
+
+
 def extract_service(name: str, raw: dict) -> ServiceFacts:
     image = raw.get("image", "")
     healthcheck = bool(raw.get("healthcheck"))
     logging = bool(raw.get("logging"))
 
-    labels = raw.get("labels", []) or []
-    if isinstance(labels, dict):
-        labels_iter = [f"{k}={v}" for k, v in labels.items()]
-    else:
-        labels_iter = list(labels)
-    watchtower = any("centurylinklabs.watchtower.enable" in str(l) and "true" in str(l).lower() for l in labels_iter)
+    labels_iter = normalize_labels(raw.get("labels"))
+    watchtower = any(
+        "centurylinklabs.watchtower.enable" in str(l) and "true" in str(l).lower() for l in labels_iter
+    )
 
     sec_opts = raw.get("security_opt", []) or []
     security_opt = any("no-new-privileges" in str(s) and "true" in str(s).lower() for s in sec_opts)
@@ -159,7 +173,7 @@ def extract_service(name: str, raw: dict) -> ServiceFacts:
     depends = raw.get("depends_on", []) or []
     if isinstance(depends, dict):
         depends_on = [
-            f"{k} ({v.get('condition', 'started')})" if isinstance(v, dict) else str(k)
+            f"{k} ({v.get('condition', 'started')})" if isinstance(v, dict) else f"{k} ({str(v)})"
             for k, v in depends.items()
         ]
     else:
@@ -195,21 +209,58 @@ def hostname_check(stack_path: Path, repo_root: Path) -> tuple[list[str], list[s
     if not shutil.which("rg"):
         return ([], [])
     rel = stack_path.relative_to(repo_root)
+    rel_s = str(rel)
+    stale_re = re.compile(r"(?<!ots)orundscore")
+    bare_re = re.compile(r"\borundscore")
+
+    def lines_from_completed(proc: subprocess.CompletedProcess[str]) -> list[str]:
+        return [l for l in proc.stdout.splitlines() if l.strip()]
+
+    def fallback_from_fixed_string() -> tuple[list[str], list[str]]:
+        """If PCRE2 `rg` times out, use fixed-string search then Python filter (no lookbehind in rg)."""
+        try:
+            r2 = subprocess.run(
+                ["rg", "-F", "orundscore", rel_s],
+                cwd=repo_root,
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+        except subprocess.TimeoutExpired:
+            logger.warning("rg fallback (-F orundscore) also timed out for %s", rel_s)
+            return ([], [])
+        raw = [l for l in r2.stdout.splitlines() if l.strip()]
+        return ([l for l in raw if stale_re.search(l)], [l for l in raw if bare_re.search(l)])
+
     try:
         stale = subprocess.run(
-            ["rg", "--pcre2", "(?<!ots)orundscore", str(rel)],
-            cwd=repo_root, capture_output=True, text=True, timeout=10,
+            ["rg", "--pcre2", "(?<!ots)orundscore", rel_s],
+            cwd=repo_root,
+            capture_output=True,
+            text=True,
+            timeout=10,
         )
-        bare = subprocess.run(
-            ["rg", "--pcre2", r"\borundscore", str(rel)],
-            cwd=repo_root, capture_output=True, text=True, timeout=10,
-        )
-    except (subprocess.TimeoutExpired, FileNotFoundError):
+    except subprocess.TimeoutExpired:
+        logger.warning("rg --pcre2 stale pattern timed out for %s; using fallback search", rel_s)
+        return fallback_from_fixed_string()
+    except FileNotFoundError:
         return ([], [])
-    return (
-        [l for l in stale.stdout.splitlines() if l.strip()],
-        [l for l in bare.stdout.splitlines() if l.strip()],
-    )
+
+    try:
+        bare = subprocess.run(
+            ["rg", "--pcre2", r"\borundscore", rel_s],
+            cwd=repo_root,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+    except subprocess.TimeoutExpired:
+        logger.warning("rg --pcre2 bare pattern timed out for %s; using fallback search", rel_s)
+        stale_lines = lines_from_completed(stale)
+        _, bare_lines = fallback_from_fixed_string()
+        return (stale_lines, bare_lines)
+
+    return (lines_from_completed(stale), lines_from_completed(bare))
 
 
 def load_stack(stack_path: Path, repo_root: Path) -> StackFacts:
@@ -419,10 +470,6 @@ def render_inventory(stack: StackFacts) -> str:
         for k, v in s.env.items():
             if "REPLACE" in v.upper() or "CHANGEME" in v.upper() or "PLACEHOLDER" in v.upper():
                 anomalies.append(f"`{s.name}` env `{k}` looks like a placeholder: {v}")
-            if v == "host env (no default)" and not k.startswith("$"):
-                # malformed list entry without `=`
-                if "://" in k or "/" in k:
-                    anomalies.append(f"`{s.name}` env entry `{k}` has no `=`; Compose treats it as a host-env name (likely malformed)")
         # docker.sock rw warning
         for host, ctr, mode in s.volumes:
             if "docker.sock" in host and mode != "ro":
@@ -482,7 +529,7 @@ def process(stack_name: str, repo_root: Path, write: bool) -> str:
     facts = load_stack(stack_path, repo_root)
     md = render_inventory(facts)
     if write:
-        out_dir = sr / "docs" / "hive" / "proposals" / stack_name
+        out_dir = repo_root / "docs" / "hive" / "proposals" / stack_name
         out_dir.mkdir(parents=True, exist_ok=True)
         (out_dir / "INVENTORY.md").write_text(md)
         print(f"  wrote {out_dir / 'INVENTORY.md'} ({len(md.splitlines())} lines)")
@@ -490,6 +537,7 @@ def process(stack_name: str, repo_root: Path, write: bool) -> str:
 
 
 def main() -> int:
+    logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(name)s: %(message)s")
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("stack", nargs="?", help="stack folder name (e.g. acme-sh)")
     ap.add_argument("--all", action="store_true", help="process every known stack")

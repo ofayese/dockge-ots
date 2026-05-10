@@ -10,4 +10,7 @@ if [[ -z "${code}" || "${code}" == "000" ]]; then
 	exit 1
 fi
 echo "check-dockge-http: http://${addr}/ -> HTTP ${code}"
-[[ "${code}" =~ ^(200|301|302|304)$ ]] || exit 1
+# POSIX-safe: avoid bash-only regex alternation edge cases across environments.
+if [[ "${code}" != "200" && "${code}" != "301" && "${code}" != "302" && "${code}" != "303" && "${code}" != "304" ]]; then
+	exit 1
+fi

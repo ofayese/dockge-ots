@@ -155,14 +155,25 @@ if [[ "${1:-}" == "--if-changed" ]]; then
 	echo "init-nas.sh: changed — running full init."
 fi
 
+# Replace STACK_ROOT= line without sed interpolation of path (handles / & & safely; GNU + BSD awk).
+replace_stack_root_in_file() {
+	local target="$1"
+	local tmp
+	tmp="$(mktemp "${target}.XXXXXX")" || return 1
+	STACK_ROOT_VALUE="${STACK_ROOT}" awk '
+		/^STACK_ROOT=/ { print "STACK_ROOT=" ENVIRON["STACK_ROOT_VALUE"]; next }
+		{ print }
+	' "${target}" >"${tmp}" || {
+		rm -f "${tmp}"
+		return 1
+	}
+	mv "${tmp}" "${target}"
+}
+
 # ── 2. Write STACK_ROOT into repo-root .env ───────────────────────────
 if [[ -f "${REPO_ENV}" ]]; then
 	if grep -q '^STACK_ROOT=' "${REPO_ENV}" 2>/dev/null; then
-		if [[ "$(uname -s)" == "Darwin" ]]; then
-			sed -i '' "s|^STACK_ROOT=.*|STACK_ROOT=${STACK_ROOT}|" "${REPO_ENV}"
-		else
-			sed -i "s|^STACK_ROOT=.*|STACK_ROOT=${STACK_ROOT}|" "${REPO_ENV}"
-		fi
+		replace_stack_root_in_file "${REPO_ENV}"
 		echo "Updated STACK_ROOT in ${REPO_ENV}"
 	else
 		echo "STACK_ROOT=${STACK_ROOT}" >>"${REPO_ENV}"
@@ -171,10 +182,10 @@ if [[ -f "${REPO_ENV}" ]]; then
 else
 	if [[ -f "${REPO_ROOT}/.env.example" ]]; then
 		cp "${REPO_ROOT}/.env.example" "${REPO_ENV}"
-		if [[ "$(uname -s)" == "Darwin" ]]; then
-			sed -i '' "s|^STACK_ROOT=.*|STACK_ROOT=${STACK_ROOT}|" "${REPO_ENV}"
+		if grep -q '^STACK_ROOT=' "${REPO_ENV}" 2>/dev/null; then
+			replace_stack_root_in_file "${REPO_ENV}"
 		else
-			sed -i "s|^STACK_ROOT=.*|STACK_ROOT=${STACK_ROOT}|" "${REPO_ENV}"
+			echo "STACK_ROOT=${STACK_ROOT}" >>"${REPO_ENV}"
 		fi
 		echo "Created ${REPO_ENV} from .env.example with resolved STACK_ROOT"
 	else

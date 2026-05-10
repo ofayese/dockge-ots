@@ -88,9 +88,15 @@ while IFS= read -r f; do
 	base="$(basename "${f}")"
 	echo "compose config: ${rel}"
 	(
-		cd "${dir}"
+		cd "${dir}" || {
+			echo "ERROR: could not cd to ${dir} (for ${rel})" >&2
+			exit 1
+		}
 		docker compose --env-file "${COMPOSE_ENV_FILE}" -f "${base}" config -q
-	)
+	) || {
+		echo "ERROR: docker compose config failed for ${rel}" >&2
+		exit 1
+	}
 	# docker-mcp.yaml is Docker Desktop MCP catalog YAML only — never validate as Compose.
 	# Prune runtime bind-mount trees so NAS validate does not spam "Permission denied"
 	# when Docker-owned dirs are unreadable to the invoking user (db/, data/, GUI config).

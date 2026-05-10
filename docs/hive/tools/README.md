@@ -19,7 +19,7 @@ Parses `<stack>/compose.yaml`, the `.env` / `.env.example` / `README.md` presenc
 - Secrets surface — top-level `secrets:` + per-service env keys (keys only, never values)
 - Hostname-check results (stale-token hits or "0 hits")
 - Gap matrix vs [`../proposals/_baseline/PROPOSAL.md`](../proposals/_baseline/PROPOSAL.md) (`security_opt`, restart, watchtower label, `mem_limit`, `cpu_shares`, `TZ`, image pin, healthcheck, logging)
-- **Auto-detected anomalies** — placeholder secrets (`REPLACE_*`/`CHANGEME`/`PLACEHOLDER`), malformed env list entries (no `=`), `docker.sock` mounted rw
+- **Auto-detected anomalies** — placeholder secrets (`REPLACE_*`/`CHANGEME`/`PLACEHOLDER`); `docker.sock` mounted rw. Malformed env **list** entries (no `=`) are surfaced once in the env table via `parse_env()` (not duplicated here).
 
 #### Usage
 
@@ -72,6 +72,22 @@ Exits non-zero with a checklist when any stack violates `_baseline/PROPOSAL.md`.
 3. Run `python3 docs/hive/tools/inventory.py <new-stack>`.
 4. Review the generated `docs/hive/proposals/<new-stack>/INVENTORY.md` — pay attention to the "Auto-detected anomalies" section.
 5. Author `docs/hive/proposals/<new-stack>/PROPOSAL.md` referencing [`../_baseline/PROPOSAL.md`](../proposals/_baseline/PROPOSAL.md) and addressing whatever the gap matrix flagged.
+
+## Testing
+
+```bash
+python3 -m unittest discover -s tests -p 'test_*.py'
+```
+
+Covers `parse_env()`, `normalize_labels()`, and `depends_on` formatting from `inventory.py`.
+
+## Coding patterns (cross-language)
+
+- **Shell / `sed`:** avoid interpolating arbitrary paths into `sed` replacement text; use **`awk`** with `ENVIRON` for `.env` line updates (see `scripts/init-nas.sh` `replace_stack_root_in_file`).
+- **Bash `[[ =~ ]]`:** prefer explicit string comparisons for HTTP status codes (see `scripts/check-dockge-http.sh`).
+- **Docker / compose:** subshells in validation loops must **`|| { echo; exit 1; }`** so failures propagate (see `scripts/compose-validate.sh`).
+- **Python:** validate compose map/list shapes before iteration; **`subprocess.run(..., timeout=...)`** with **`TimeoutExpired`** fallback + logging (see `hostname_check` in `inventory.py`).
+- **Node (MCP):** register tools with **`z.object({...})`** for `inputSchema` / `outputSchema`; wrap **`server.connect`**; handle **`unhandledRejection`** / **`uncaughtException`**.
 
 ## Dependencies
 

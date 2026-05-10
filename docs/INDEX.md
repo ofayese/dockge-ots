@@ -17,7 +17,7 @@ The index and linked specs describe what was built; **`AGENTS.md`** remains the 
 ## Document Locations & Purpose
 
 ### 1. **ENHANCED_TASK_SPECIFICATION.md** (Primary Reference)
-- **Path:** `./docs/ENHANCED_TASK_SPECIFICATION.md`
+- **Path:** `./ENHANCED_TASK_SPECIFICATION.md` (this directory)
 - **Size:** 22 KB
 - **Audience:** Architects, reviewers, Coder
 - **Contains:**
@@ -32,7 +32,7 @@ The index and linked specs describe what was built; **`AGENTS.md`** remains the 
 - **Use Case:** "What exactly needs to be built?"
 
 ### 2. **CODER_EXECUTION_CHECKLIST.md** (Implementation Guide)
-- **Path:** `./docs/CODER_EXECUTION_CHECKLIST.md`
+- **Path:** `./CODER_EXECUTION_CHECKLIST.md` (this directory)
 - **Size:** 16 KB
 - **Audience:** Coder, implementer
 - **Contains:**
@@ -47,7 +47,7 @@ The index and linked specs describe what was built; **`AGENTS.md`** remains the 
 - **Use Case:** "What are the exact steps to implement?"
 
 ### 3. **ENHANCED_TASK_REVIEW.md** (Context & Handoff)
-- **Path:** `./docs/ENHANCED_TASK_REVIEW.md`
+- **Path:** `./ENHANCED_TASK_REVIEW.md` (this directory)
 - **Size:** 8.6 KB
 - **Audience:** Project leads, reviewers
 - **Contains:**
@@ -61,7 +61,7 @@ The index and linked specs describe what was built; **`AGENTS.md`** remains the 
 - **Use Case:** "What changed from the original task?"
 
 ### 4. **QUICK_REFERENCE_VIOLATIONS.md** (Historical violations + hook patterns)
-- **Path:** `./docs/QUICK_REFERENCE_VIOLATIONS.md`
+- **Path:** `./QUICK_REFERENCE_VIOLATIONS.md` (this directory)
 - **Size:** 7 KB
 - **Audience:** Coder during implementation
 - **Contains:**

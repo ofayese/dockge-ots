@@ -97,7 +97,7 @@ def build_analyzer_report(
             if isinstance(svc_def, dict):
                 # normalize_labels returns dict[str, str] directly
                 labels = label_analyzer.normalize_labels(svc_def.get('labels'))
-                
+
                 invalid = label_analyzer.detect_invalid_traefik_labels(labels)
                 missing = label_analyzer.detect_missing_router_defs(svc_name, labels)
 

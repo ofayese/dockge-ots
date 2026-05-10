@@ -20,7 +20,8 @@ if ! command -v bats &>/dev/null; then
 fi
 
 echo "Running bats shell integration tests..."
-bats tests/shell/*.bats --verbose 2>&1 || exit 1
+# bats-core 1.10+ removed --verbose; use pretty formatter + timing for readable CI/hook logs.
+bats tests/shell/*.bats -p -T 2>&1 || exit 1
 
 echo "All shell integration tests passed."
 exit 0

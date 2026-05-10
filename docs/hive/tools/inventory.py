@@ -11,11 +11,13 @@ Usage:
     inventory.py --stdout <stack>   # print to stdout, do not write
     inventory.py --repo-root PATH   # git repo root (contains HIVE_OBJECTIVE.md); stacks live in stacks/
     inventory.py --analyze <stack>  # run static analyzer on stack
+    inventory.py --all --analyze --json  # JSON reports for all stacks + dashboard summary
 """
 
 from __future__ import annotations
 
 import argparse
+import json
 import logging
 import re
 import shutil
@@ -571,7 +573,15 @@ def main() -> int:
     ap.add_argument("--stdout", action="store_true", help="print to stdout, do not write file")
     ap.add_argument("--repo-root", type=Path, help="override repo root detection")
     ap.add_argument("--analyze", action="store_true", help="run static analyzer")
+    ap.add_argument(
+        "--json",
+        action="store_true",
+        help="with --analyze, print analyzer output as JSON (single stack or --all aggregate)",
+    )
     args = ap.parse_args()
+
+    if args.json and not args.analyze:
+        ap.error("--json requires --analyze")
 
     if not args.stack and not args.all:
         ap.error("provide a stack name or --all")
@@ -579,22 +589,43 @@ def main() -> int:
     repo_root = args.repo_root or find_repo_root(Path(__file__).parent)
 
     if args.all:
+        report_objs: list[dict[str, Any]] = []
+        quiet_json = bool(args.analyze and args.json)
         for s in STACKS:
-            print(f"[{s}]")
-            process(s, repo_root, write=not args.stdout)
+            if not quiet_json:
+                print(f"[{s}]")
+            # JSON-only analyze: skip INVENTORY writes and "wrote …" noise for machine-parseable stdout.
+            write_inv = (not args.stdout) and (not quiet_json)
+            process(s, repo_root, write=write_inv)
             if args.analyze:
                 report = run_analyzer(s, repo_root)
-                if report != "{}":
-                    print(f"  analyzer report generated")
+                if args.json:
+                    try:
+                        report_objs.append(json.loads(report))
+                    except json.JSONDecodeError:
+                        logger.warning("analyzer JSON decode failed for stack %s", s)
+                elif report != "{}":
+                    print("  analyzer report generated")
+        if args.analyze and args.json:
+            try:
+                from analyzers.analyzer_report import generate_dashboard_summary
+
+                dash = generate_dashboard_summary(report_objs) if report_objs else {}
+            except ImportError:
+                dash = {}
+            print(json.dumps({"stacks": report_objs, "dashboard": dash}, indent=2, default=str))
         return 0
 
-    md = process(args.stack, repo_root, write=not args.stdout)
-    if args.stdout:
+    quiet_one = bool(args.analyze and args.json)
+    md = process(args.stack, repo_root, write=(not args.stdout) and (not quiet_one))
+    if args.stdout and not quiet_one:
         print(md)
 
     if args.analyze:
         report = run_analyzer(args.stack, repo_root)
-        if report != "{}" and not args.stdout:
+        if args.json:
+            print(report)
+        elif report != "{}" and not args.stdout:
             print("\n--- ANALYZER REPORT (JSON) ---")
             print(report)
 

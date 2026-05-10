@@ -1,4 +1,4 @@
-# docker-model-runner — Docker Model Runner (GPU)
+# docker-model-runner - Docker Model Runner (GPU)
 
 Runs **Docker Model Runner** CUDA images for local LLM endpoints (`devstral-small-2`, `ministral3`, `smollm3`) on the Synology LAN IP `10.0.1.15`.
 
@@ -12,7 +12,7 @@ Runs **Docker Model Runner** CUDA images for local LLM endpoints (`devstral-smal
 
 ## Volumes
 
-No persistent volumes — stateless.
+No persistent volumes - stateless.
 
 ## Environment
 
@@ -21,8 +21,8 @@ See [`.env.example`](./.env.example). **`TZ`** defaults to `America/New_York`.
 ## Synology / outbound
 
 - Requires **NVIDIA** runtime on the host where applicable; DSM GPU support is operator-specific.
-- First boot pulls large images — outbound **HTTPS 443** to registry mirrors required. No offline fallback beyond pre-pulled images.
+- First boot pulls large images - outbound **HTTPS 443** to registry mirrors required. No offline fallback beyond pre-pulled images.
 
 ## Compose file
 
-[`docker-compose.yml`](./docker-compose.yml) — validated by `scripts/compose-validate.sh`.
+[`docker-compose.yml`](./docker-compose.yml) - validated by `scripts/compose-validate.sh`.

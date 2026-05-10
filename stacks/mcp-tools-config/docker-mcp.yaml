@@ -5194,7 +5194,7 @@ registry:
       license: MIT License
       owner: Cyreslab-AI
   dappier:
-    description: Enable fast, free real-time web search and access premium data from trusted media brands—news, financial markets, sports, entertainment, weather, and more. Build powerful AI agents with Dappier.
+    description: Enable fast, free real-time web search and access premium data from trusted media brands-news, financial markets, sports, entertainment, weather, and more. Build powerful AI agents with Dappier.
     title: Dappier
     type: server
     dateAdded: "2025-05-05T20:08:35Z"
@@ -5225,7 +5225,7 @@ registry:
       license: MIT License
       owner: DappierAI
   dappier-remote:
-    description: Enable fast, free real-time web search and access premium data from trusted media brands—news, financial markets, sports, entertainment, weather, and more. Build powerful AI agents with Dappier.
+    description: Enable fast, free real-time web search and access premium data from trusted media brands-news, financial markets, sports, entertainment, weather, and more. Build powerful AI agents with Dappier.
     title: Dappier Remote
     type: remote
     dateAdded: "2025-09-08T19:03:35Z"
@@ -6219,7 +6219,7 @@ registry:
       license: Apache License 2.0
       owner: docker
   explorium:
-    description: Discover companies, contacts, and business insights—powered by dozens of trusted external data sources.
+    description: Discover companies, contacts, and business insights-powered by dozens of trusted external data sources.
     title: Explorium B2B Data
     type: server
     dateAdded: "2025-09-19T18:59:08Z"

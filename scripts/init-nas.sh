@@ -4,7 +4,7 @@
 # Run once after git clone on the NAS:
 #   sudo bash scripts/init-nas.sh
 # Re-run after git pull only if new stacks have been added.
-# Idempotent — safe to run multiple times.
+# Idempotent - safe to run multiple times.
 #
 # Manifest exhaustiveness (BSD-safe; no grep -oP):
 #   diff <(grep -E '^\s*"[^"]+:' scripts/init-nas.sh | sed -E 's/^[[:space:]]*"([^"]+):.*/\1/' | sort -u) \
@@ -43,14 +43,14 @@ else
 	fi
 fi
 
-# Format: "stack-name:sub1[,sub2]" — keep aligned with compose bind mounts under ${STACK_ROOT}/<stack>/...
+# Format: "stack-name:sub1[,sub2]" - keep aligned with compose bind mounts under ${STACK_ROOT}/<stack>/...
 STACK_MANIFEST=(
 	# Sub-folder rules:
 	#   data   → default for all stacks with host bind mounts
 	#   db     → add only when a DB engine has its own host bind mount
 	#   config → add only when a non-db service writes runtime config
 	# Never add a folder speculatively.
-	# portainer: OPERATOR EXCEPTION — exempt from this manifest.
+	# portainer: OPERATOR EXCEPTION - exempt from this manifest.
 	#   State path fixed at /volume1/docker/portainer in compose.yaml (outside STACK_ROOT).
 
 	# ── data only ─────────────────────────────────────────────────────
@@ -64,7 +64,7 @@ STACK_MANIFEST=(
 
 	# ── data,config ───────────────────────────────────────────────────
 	"code-server:data,config,host-docker-bind,host-home-bind"
-	"github-desktop:config" # KasmVNC GUI — /config only, no data dir
+	"github-desktop:config" # KasmVNC GUI - /config only, no data dir
 	"homepage:data,config"
 	"searxng:data,config"
 	"grafana-prom:data,config"
@@ -79,31 +79,31 @@ STACK_MANIFEST=(
 	"zabbix:data,db"
 	"holyclaude:data"
 
-	# ── Omit (no ${STACK_ROOT} dirs in manifest) — audit trail only ───
-	# agents_gateway_data: docker.sock only — no ${STACK_ROOT} dirs needed.
+	# ── Omit (no ${STACK_ROOT} dirs in manifest) - audit trail only ───
+	# agents_gateway_data: docker.sock only - no ${STACK_ROOT} dirs needed.
 	# docker-model-runner: no host volume binds.
 	# it-tools: no volumes.
-	# mcp-tools-config: catalog only — no runtime dirs.
+	# mcp-tools-config: catalog only - no runtime dirs.
 	# openresume: no volumes.
 	# warp-main: no volumes.
-	# watchtower: docker.sock only — no ${STACK_ROOT} dirs needed.
+	# watchtower: docker.sock only - no ${STACK_ROOT} dirs needed.
 	#   Absent from manifest intentionally. Listed here for audit trail.
 
 	# ── New stacks: add entry here before first deploy ─────────────────
 	"psu-ots:data"
 	"traefik-ots:config" # Traefik config (tls.yaml)
-	"traefik-ots:data"   # Traefik built-in ACME state (acme.json) — separate from acme-sh PEMs
+	"traefik-ots:data"   # Traefik built-in ACME state (acme.json) - separate from acme-sh PEMs
 	"traefik-mft:config"
 	"traefik-mft:data"
 
-	# HAProxy bind-mount assets (certs + host map); not a Dockge compose stack — see stacks/_haproxy/README.txt
+	# HAProxy bind-mount assets (certs + host map); not a Dockge compose stack - see stacks/_haproxy/README.txt
 	"_haproxy:certs,maps"
 )
 
 # Stacks intentionally absent from STACK_MANIFEST.
 # These have no persistent host bind mounts under ${STACK_ROOT}.
 # Listed here so the manifest exhaustiveness check can account
-# for them without requiring a dummy entry. (Not read by this script — see
+# for them without requiring a dummy entry. (Not read by this script - see
 # docs/hive/NAS_DEPLOYMENT.md for the matching `diff` / `grep -vE` list.)
 # shellcheck disable=SC2034
 MANIFEST_EXEMPT=(
@@ -113,7 +113,7 @@ MANIFEST_EXEMPT=(
 	"openresume"          # no volumes
 	"warp-main"           # no volumes
 	"watchtower"          # docker.sock only
-	"portainer"           # operator exception — path outside STACK_ROOT
+	"portainer"           # operator exception - path outside STACK_ROOT
 	"docker-model-runner" # no host volume binds
 )
 
@@ -148,11 +148,11 @@ if [[ "${1:-}" == "--if-changed" ]]; then
 	fi
 	STORED_HASH=$(cat "${HASH_FILE}" 2>/dev/null || echo "")
 	if [[ "${CURRENT_HASH}" == "${STORED_HASH}" ]]; then
-		echo "init-nas.sh: unchanged — skipping directory creation."
+		echo "init-nas.sh: unchanged - skipping directory creation."
 		exit 0
 	fi
 	IF_CHANGED_MODE=1
-	echo "init-nas.sh: changed — running full init."
+	echo "init-nas.sh: changed - running full init."
 fi
 
 # Replace STACK_ROOT= line without sed interpolation of path (handles / & & safely; GNU + BSD awk).
@@ -214,7 +214,7 @@ for entry in "${STACK_MANIFEST[@]}"; do
 	entry="${entry//\"/}"
 	stack="${entry%%:*}"
 	sub_folders="${entry##*:}"
-	# Trailing "stack:" with no sub-folders — omit stack: create nothing under STACK_ROOT.
+	# Trailing "stack:" with no sub-folders - omit stack: create nothing under STACK_ROOT.
 	[[ -z "${sub_folders}" ]] && continue
 	IFS=',' read -ra folders <<<"${sub_folders}"
 	for folder in "${folders[@]}"; do

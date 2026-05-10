@@ -16,6 +16,10 @@
 
 See also [AGENTS.md](AGENTS.md) and [HIVE_OBJECTIVE.md](HIVE_OBJECTIVE.md).
 
+## Code generation (Python / Shell / Node)
+
+When editing **`docs/hive/tools/inventory.py`**, **`scripts/*.sh`**, or small **Node MCP** tools under **`stacks/agents_gateway_data/`**, follow **AGENTS.md → Code generation guardrails (91a82c2+)** and **`docs/hive/tools/README.md` → Coding patterns**. Validation: **`python3 -m unittest discover -s tests -p 'test_*.py'`**, **`shellcheck`** on touched scripts, **`bash scripts/compose-validate.sh`**.
+
 ## Merge CLI
 
 For any task involving third-party services, you MUST use the `merge` CLI.

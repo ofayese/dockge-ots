@@ -13,3 +13,7 @@ For any task involving third-party services, use the `merge` CLI.
 2. Execute lookups in parallel, then execute the main tool.
 
 Always search before executing. Never guess tool names. Pass null for optional params.
+
+## Dockge repo — code patterns (91a82c2+)
+
+For **Python** (`docs/hive/tools/inventory.py`), **shell** (`scripts/`), and **Node MCP** under **`stacks/agents_gateway_data/`**: follow **AGENTS.md** section **“Code generation guardrails (91a82c2+)”** — validate compose-derived types before iteration, **`subprocess.run` + timeout + fallback**, safe **awk/ENVIRON** instead of **sed** for path substitutions, explicit HTTP code checks in bash, **`z.object`** + global error handlers for Node, and **`tests/test_inventory.py`** for Python regressions.

@@ -42,9 +42,37 @@
 
 - **Reference commits:** **`c75af1b`** — `no-new-privileges:true` added to **github-desktop** (incorrect for Electron); **`bfa07bd`** — removed with documented rationale. Stack-specific detail remains in the **What Works** bullet for **github-desktop**.
 
+## Code generation guardrails (91a82c2+)
+
+**Reference commit:** **`91a82c2`**. Future edits to **`docs/hive/tools/inventory.py`**, repo **`scripts/*.sh`**, and **Node MCP** samples under **`stacks/agents_gateway_data/`** must preserve these patterns (and extend them to new code in the same languages).
+
+### Python (`inventory.py` and similar)
+
+- **Compose shapes:** validate **`None` / `dict` / `list`** before iteration; unknown types → empty collection (never iterate a scalar as a list).
+- **`subprocess.run`:** always pass **`timeout=`**; catch **`TimeoutExpired`**; log and **fallback** (simpler command + post-filter in Python when PCRE/`rg` is fragile).
+- **Paths vs repo root:** generated hive artifacts live under **`docs/hive/`** at **repo root**, not under **`stacks/docs/`** — e.g. **`INVENTORY.md`** → **`repo_root / "docs/hive/proposals" / …`**.
+- **Logging:** call **`logging.basicConfig`** in CLI **`main()`** when emitting diagnostics from library-style helpers.
+- **Tests:** extend **`tests/test_inventory.py`** (`python3 -m unittest discover -s tests -p 'test_*.py'`) when changing **`parse_env`**, label normalization, or **`depends_on`** formatting.
+
+### Shell (`scripts/`)
+
+- **Never** substitute arbitrary filesystem paths into **`sed`** replacement text; use **`awk`** with **`ENVIRON`** (or another safe indirection) for **`.env`** line updates — see **`scripts/init-nas.sh`** **`replace_stack_root_in_file`**.
+- **Validation loops:** **`docker compose`** / **`cd`** in subshells must **`|| { echo …; exit 1; }`** so failures abort the script — see **`scripts/compose-validate.sh`**.
+- **Bash `[[ … =~ … ]]`:** avoid portability footguns; for HTTP status codes use **explicit string comparisons** — see **`scripts/check-dockge-http.sh`**.
+- **Lint:** run **`shellcheck`** on edited shell scripts before commit.
+
+### Node.js (MCP / small services in repo)
+
+- **Zod:** tool **`inputSchema` / `outputSchema`** use **`z.object({ … })`**, not bare property bags.
+- **Async entry:** wrap **`server.connect()`** (and similar) in **`try/catch`**; register **`process.on("unhandledRejection")`** and **`process.on("uncaughtException")`** with structured **`console.error(JSON.stringify(…))`** and **`process.exit(1)`** for fatal errors.
+
+### Lint policy
+
+- **flake8 / mypy / eslint** are **not** wired into **`.pre-commit-config.yaml`** by default (keep hooks fast); patterns above are still **mandatory** for human and agent edits. Heavy linters may be added later in **`manual`** / **`pre-push`** if the repo grows application code.
+
 ## What Works
 
-- [2026-05-09] **Cross-language code-review hardening:** `docs/hive/tools/inventory.py` — typed **`normalize_labels()`**, **`depends_on`** dict values use **`str(v)`** when not a dict, **`parse_env`** marks malformed list entries once (no duplicate anomaly), **`hostname_check`** per-`rg` **timeouts** + **fallback** + **`logging`**, **`INVENTORY.md`** write path fixed to **`repo_root/docs/hive/proposals/`** (not under `stacks/docs/`). Shell: **`compose-validate.sh`** propagates **`docker compose config`** failures; **`init-nas.sh`** replaces **`STACK_ROOT=`** via **`awk` + `ENVIRON`** (safe for `/` and `&`); **`check-dockge-http.sh`** uses explicit HTTP code comparisons. Node: **`stacks/agents_gateway_data/duckduckgo/src/index.js`** — **`z.object`** schemas, **`server.connect`** try/catch, process error handlers. Unit tests: **`tests/test_inventory.py`** (`python3 -m unittest discover -s tests -p 'test_*.py'`). Patterns indexed in **`docs/hive/tools/README.md`** → **Coding patterns**.
+- [2026-05-09] **Cross-language code-review hardening (canonical rules: § Code generation guardrails):** `docs/hive/tools/inventory.py` — typed **`normalize_labels()`**, **`depends_on`** dict values use **`str(v)`** when not a dict, **`parse_env`** marks malformed list entries once (no duplicate anomaly), **`hostname_check`** per-`rg` **timeouts** + **fallback** + **`logging`**, **`INVENTORY.md`** write path fixed to **`repo_root/docs/hive/proposals/`** (not under `stacks/docs/`). Shell: **`compose-validate.sh`** propagates **`docker compose config`** failures; **`init-nas.sh`** replaces **`STACK_ROOT=`** via **`awk` + `ENVIRON`** (safe for `/` and `&`); **`check-dockge-http.sh`** uses explicit HTTP code comparisons. Node: **`stacks/agents_gateway_data/duckduckgo/src/index.js`** — **`z.object`** schemas, **`server.connect`** try/catch, process error handlers. Unit tests: **`tests/test_inventory.py`** (`python3 -m unittest discover -s tests -p 'test_*.py'`). Patterns indexed in **`docs/hive/tools/README.md`** → **Coding patterns**.
 - [2026-05-09] **Host-named TLS + OAuth docs aligned:** **`docs/hive/NAS_DEPLOYMENT.md`** Traefik section now lists **acme → Traefik → services** order and PEM dirs **`otsorundscore/`** / **`misfitsds/`** (not legacy **`ots-sub`/`mft-sub`**). **`docs/hive/CERT_REISSUE_TRAEFIK_OAUTH_RUNBOOK.md`** is the ordered operator checklist (reissue, Traefik bring-up, Google Path A Step 1). **`docs/hive/GOOGLE_WORKSPACE_OAUTH_NAS_LOGIN.md`** documents optional **`.olutech.systems`** origins/redirects alongside **`.olutechsys.com`**. **`stacks/acme-sh/SETUP.md`** Traefik-facing **`--issue`** blocks include **both TLDs** per wildcard.
 - [2026-05-09] **Master macro memory curation (Phase 9/12 scope):** treat `docs/tasks/Master_Macro_Updater.md` as a phased runbook, not an all-or-nothing checklist in every session. For memory-only passes, update canonical in-repo memory (`AGENTS.md`) with dated, actionable deltas, deduplicate overlapping entries instead of appending near-duplicates, and note conflicts explicitly (for example macro steps that assume a clean tree or require commit/push). Keep `/continuous-learning` outputs curated and low-noise; do **not** create ad-hoc repo markdown artifacts for global learned skills unless a task explicitly requests those files.
 - [2026-05-10] **Shell script hardening complete:** Tier 1 critical fixes shipped (hardcoded IPs removed, `GIT_SSH_COMMAND` quoted safely, pull error handling added, regex flags corrected, lockfile added to `dockge-start.sh`); Tier 2 robustness fixes shipped (`find -print0` loops, safer env restore iteration, cleanup trap status preservation, and consistent variable quoting in `nas-reset.sh`); `shellcheck -x scripts/*.sh` reports zero findings.

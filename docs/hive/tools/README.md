@@ -83,6 +83,8 @@ Covers `parse_env()`, `normalize_labels()`, and `depends_on` formatting from `in
 
 ## Coding patterns (cross-language)
 
+Canonical enforcement text and rationale: **AGENTS.md** → **Code generation guardrails (91a82c2+)** (git **`91a82c2`**).
+
 - **Shell / `sed`:** avoid interpolating arbitrary paths into `sed` replacement text; use **`awk`** with `ENVIRON` for `.env` line updates (see `scripts/init-nas.sh` `replace_stack_root_in_file`).
 - **Bash `[[ =~ ]]`:** prefer explicit string comparisons for HTTP status codes (see `scripts/check-dockge-http.sh`).
 - **Docker / compose:** subshells in validation loops must **`|| { echo; exit 1; }`** so failures propagate (see `scripts/compose-validate.sh`).

@@ -1,5 +1,5 @@
 # Task: Master Audit + Deploy — Full Stack
-# Version: 2026-05-08-b (added remotely stack + Marius DSM best practices)
+# Version: 2026-05-09-b (25 stacks incl. psu-ots; host-named TLS paths; consolidation sprint + review additions)
 
 /coder
 /compound-learning
@@ -9,7 +9,11 @@
 CONTEXT
 ======================================================================
 
-This master task consolidates prior task files into one repeatable flow:
+This master task consolidates prior task files into one repeatable flow.
+
+**Recent in-tree completions (2026-05-09):** **`psu-ots`** stack + **`STACK_MANIFEST`** entry **`psu-ots:data`**; host-named TLS/DNS model (**`otsorundscore/`** + **`misfitsds/`** PEM dirs, no new **`*.ots.olutechsys.com`** / **`*.mft.olutechsys.com`** in **`stacks/`** compose); consolidation sprint (**`docs/tasks/CODEBASE_HARDENING_AND_CONSOLIDATION.md`**) — critical **`scripts/*.sh`** hardening, **`docker.sock`** comment normalization, README **`${STACK_ROOT}`** tables, **`scripts/verify-dns-views.sh --hairpin`**. Canonical phased PSU/cert gates: **`docs/tasks/PSU_OTS_AND_CERT_MIGRATION_MACRO.md`** + **`AGENTS.md`** What Works.
+
+**Detailed review updates (2026-05-09-b):** Pre-flight hardening gate added; Phase 2 per-stack table template with weighted readiness categories expanded; Phase 3 healthcheck anti-patterns extended with image-specific probe expectations; Phase 4 add **`dozzle`** healthcheck check (flagging **`--version`** anti-pattern); Phase 6 deploy order and post-deploy steps annotated with critical hold points (particularly Traefik cert dependency and remotely WebSocket DSM rule); Phase 7 validation extended with image-level healthcheck verify commands (`docker run --entrypoint`); Phase 8 compound-learning extended with Zabbix SNMP v3 config pattern, dozzle healthcheck fix pattern, code-server secrets handling, and mTLS/certificate pinning patterns; Phase 9 continuous-learning added API key rotation (Dockge, PSU webhooks, Watchtower); rollback section expanded with per-service recovery steps and data recovery patterns.
 
   docs/tasks/archive/HEALTHCHECK_FIXES.md
   docs/tasks/archive/NEXT_PHASE_2026_05_07.md
@@ -50,6 +54,9 @@ Read first — do not skip any:
   stacks/github-desktop/compose.yaml       (KasmVNC/Electron baseline)
   stacks/databases/.gitignore              (stack-level db protection)
   stacks/remotely/compose.yaml             (WebSocket stack baseline)
+  stacks/dozzle/compose.yaml               (logging aggregator — healthcheck model)
+  stacks/traefik-ots/compose.yaml          (Traefik baseline + docker.sock comment)
+  stacks/psu-ots/compose.yaml              (PowerShell Universal NOC model)
 
 Confirm hard constraints before any edit:
 
@@ -69,6 +76,59 @@ Confirm hard constraints before any edit:
       172.22.0.0/24  = grafana-net
       172.22.1.0/24  = prometheus-net
       Next available  = 172.22.2.0/24+
+  - Post-deploy verify: healthcheck state (no unhealthy containers), Dozzle log visibility, Traefik backend status
+  - Blocking issues during deploy: missing .env secrets, incorrect Dockge port binding, acme-sh certs not issued before Traefik start
+  - Rollback safeguard: `docker compose down` preserves data in STACK_ROOT; full NAS reset uses archive backup
+
+======================================================================
+PHASE 0.5 — PRE-FLIGHT HARDENING GATE (AGENT + OPERATOR)
+======================================================================
+
+Run before Phase 1 to catch operational misconfigurations:
+
+### Operator pre-flight (run once before any NAS reset)
+
+  1. Verify SSH key:
+     ssh -T git@github.com
+     # Expected: Hi ofayese/dockge-ots! You've successfully authenticated...
+
+  2. Verify GitHub branch access:
+     git branch -r
+     # Expected: origin/main visible, no detached HEAD warnings
+
+  3. Verify local git status clean:
+     git status
+     # Expected: working tree clean, no staged changes
+
+  4. Verify DSM connectivity:
+     ping -c 1 10.0.1.15
+     # Expected: ICMP replies from OTS NAS
+
+  5. Verify Synology Container Manager installed on NAS:
+     ssh laolufayese@10.0.1.15 'docker version' 2>/dev/null | head -3
+     # Expected: Docker version output (confirms Container Manager is running)
+
+### Agent pre-flight (repo baseline)
+
+  1. Stack count and manifest match:
+     ls stacks/ | grep -v '^_' | wc -l
+     # Expected: 25
+
+  2. No untracked files in repo root (except .env files):
+     git status --short | grep -v '\.env' | head -5
+     # Expected: zero or only .env/.env.example diffs
+
+  3. Compose files validate:
+     bash scripts/compose-validate.sh
+     # Expected: exit 0
+
+  4. Shell scripts have no obvious issues:
+     shellcheck -x scripts/*.sh 2>&1 | head -10
+     # Expected: zero findings (post-consolidation baseline)
+
+  5. Pre-commit hooks are installed:
+     pre-commit --version
+     # Expected: pre-commit <version>
 
 ======================================================================
 PHASE 1 — REPO AUDIT GATES (AGENT)
@@ -78,8 +138,8 @@ Run and record PASS / FAIL / NOTE for each gate.
 
 ### Gate 1: Stack count and manifest parity
 
-  Stack count is now 24 (remotely added 2026-05-08).
-  Update HIVE_OBJECTIVE.md "Stack folders" row and worker count if still at 23.
+  Stack count is **25** ( **`remotely`** added 2026-05-08; **`psu-ots`** added 2026-05-09 ).
+  **`HIVE_OBJECTIVE.md`** must show **25** stack folders and **`--count 25`** spawn string.
 
   Command:
     ls stacks/ | grep -v '^_' | wc -l
@@ -92,8 +152,8 @@ Run and record PASS / FAIL / NOTE for each gate.
         | sort -u)
 
   Expected:
-    - stack count 24
-    - manifest diff empty after remotely is added to STACK_MANIFEST in init-nas.sh
+    - stack count **25**
+    - manifest diff empty ( **`STACK_MANIFEST`** includes **`remotely:data`** and **`psu-ots:data`** among others — see **`scripts/init-nas.sh`** )
 
 ### Gate 2: Layout hygiene
 
@@ -111,6 +171,9 @@ Run and record PASS / FAIL / NOTE for each gate.
        stacks/remotely/README.md \
        stacks/remotely/.env.example \
        stacks/remotely/.gitignore
+    ls stacks/psu-ots/compose.yaml \
+       stacks/psu-ots/README.md \
+       stacks/psu-ots/.env.example
     ls docs/tasks/MASTER_AUDIT_AND_DEPLOY.md
 
 ### Gate 4: Dockge port mapping correctness
@@ -152,9 +215,10 @@ Run and record PASS / FAIL / NOTE for each gate.
        stacks/zabbix/.gitignore \
        stacks/ollama/.gitignore \
        stacks/rag-stack/.gitignore \
-       stacks/remotely/.gitignore
+       stacks/remotely/.gitignore \
+       stacks/psu-ots/.gitignore
 
-  Expected: all five exist.
+  Expected: all six exist ( **`psu-ots`** ignores runtime **`data/*`** except **`data/Repository/`** ).
 
 ### Gate 8: No docker-compose.yml files in stacks that should use compose.yaml
 
@@ -228,20 +292,37 @@ For each stack under stacks/ (excluding _haproxy), audit every service:
   - stack-level .gitignore: required for database/data-heavy stacks
   - WebSocket: documented in README if stack uses SignalR/WebSocket
 
-Output a table:
+Output a table with weighted readiness scoring:
 
-  | stack | healthcheck | logging | image-pin | readme | env-example | gitignore | websocket-doc | deploy-ready |
+  | stack | healthcheck | logging | image-pin | readme | env-example | gitignore | websocket-doc | tier | deploy-ready |
+
+READINESS TIERS (assign one per stack):
+  - TIER A (ready): all baseline items present, no floating-tag exceptions, no TZ gaps
+  - TIER B (staged): healthcheck or logging gaps present but documented, OR floating-tag exception with rationale in README
+  - TIER C (blocked): TZ missing on multi-env service, OR image-pin critical gap (missing digest/semver), OR missing .gitignore on data stacks
+  - TIER X (exempt): one-shot / placeholder stacks (mcp-tools-config) with documented exemption
 
 Known deploy-readiness blockers from prior audit (verify still apply):
-  - codex-docs: :latest image needs operator pin (digest)
-  - openresume: :latest image needs operator pin (digest)
-  - watchtower: :latest image needs operator pin
-  - github-desktop: :latest — document floating-tag exception
-  - holyclaude: :latest — documented dev image exception
-  - traefik-ots/mft: traefik:v3 floating major tag — pin advisory in README
-  - agents_gateway_data: TZ missing
-  - warp-main: TZ partial
-  - remotely: :latest — OPERATOR PIN NEEDED (no semver tags published upstream)
+  - codex-docs: :latest image needs operator pin (digest) — TIER B until pinned
+  - openresume: :latest image needs operator pin (digest) — TIER B until pinned
+  - watchtower: :latest image needs operator pin — TIER B until pinned
+  - github-desktop: :latest — documented floating-tag exception in README — TIER B
+  - holyclaude: :latest — documented dev image exception in README — TIER B
+  - traefik-ots/mft: traefik:v3 floating major tag — pin advisory in README — TIER B
+  - agents_gateway_data: TZ missing — TIER C until fixed
+  - warp-main: TZ partial — TIER B if other checks pass
+  - remotely: :latest — no upstream semver tags published — digest pin via `docker pull` — TIER B
+
+### Generate stacks readiness report
+
+  For each stack folder, record:
+    1. Tier assignment (A/B/C/X)
+    2. Missing or exception items
+    3. Blocker (if TIER C)
+    4. Action (if TIER B/C — link to proposal or deploy gate)
+
+  Example row:
+    | holyclaude | ✓ | ✓ | `:latest` (dev) | ✓ | ✓ | N/A | ✓ | B | Staged — floating tag documented in README |
 
 ======================================================================
 PHASE 3 — HEALTHCHECK AUDIT (AGENT + OPTIONAL NAS IMAGE PROBES)
@@ -262,12 +343,15 @@ Anti-pattern rules (FAIL if violated):
   - NEVER use CMD-SHELL when CMD with full binary path is cleaner
   - NEVER use true/false as literal env var values in environment blocks
     (use 1/0 — some Synology compose versions reject YAML boolean literals)
+  - NEVER use stale HTTP endpoint for health (e.g., /metrics or /admin — use /health, /ping, /readyz)
 
 Mandatory checks — these have known correct forms:
 
   dozzle:
     MUST use: ["CMD", "/dozzle", "healthcheck"]
     NOT:      ["CMD", "/dozzle", "--version"]
+    Anti-pattern flagged: dozzle prior healthchecks used --version (FIXED in 2026-05-08)
+    Verify: grep -n "dozzle.*healthcheck" stacks/dozzle/compose.yaml
 
   portainer_agent:
     MUST have TCP probe (agent uses mTLS — HTTP probe fails):
@@ -301,8 +385,26 @@ Mandatory checks — these have known correct forms:
   traefik-ots/mft:
     MUST use: ["CMD", "traefik", "healthcheck", "--ping"]
 
+  open-webui:
+    Type A — curl (Python/FastAPI Debian base ships curl):
+    ["CMD", "curl", "-fs", "http://localhost:8080/"]
+
+  adminer:
+    Type A — curl (Debian official base):
+    ["CMD", "curl", "-fs", "http://localhost:8080/"]
+
 Optional runtime tool audit:
   bash scripts/audit-healthcheck-tools.sh 2>&1 | tee /tmp/healthcheck-audit.txt
+
+Per-image verification (if runtime access available):
+  # Verify dozzle has healthcheck subcommand
+  docker run --rm louislam/dozzle:latest /dozzle healthcheck || echo "FAILED"
+
+  # Verify ollama preserves /usr/bin/ollama path
+  docker run --rm ollama/ollama:latest /usr/bin/ollama list || echo "FAILED"
+
+  # Verify qdrant has nc available
+  docker run --rm eqria/qdrant:latest which nc || echo "NO nc — use HTTP GET probe instead"
 
 ======================================================================
 PHASE 4 — CROSS-STACK CONSISTENCY CHECKS (AGENT)
@@ -319,6 +421,15 @@ Run each check and record result:
     - rag-stack anythingllm: 3002:3001
     - remotely: 10.0.1.15:5371:5000 (no conflict — DSM uses 5000/5001 on host, not container)
   FAIL if any other stack maps host 3001 or 5371.
+
+### dozzle healthcheck anti-pattern check
+
+  Command:
+    grep -n "dozzle" stacks/*/compose.yaml | grep -i healthcheck
+    grep -A3 "healthcheck:" stacks/dozzle/compose.yaml | grep -i "dozzle"
+
+  Expected: dozzle healthcheck uses `["CMD", "/dozzle", "healthcheck"]`
+  FAIL if result contains --version or --help
 
 ### depends_on condition check
 
@@ -400,17 +511,16 @@ Run each check and record result:
 PHASE 5 — DOC GAP REMEDIATION (AGENT, DOCS-ONLY)
 ======================================================================
 
-Apply docs-only corrections:
+Apply docs-only corrections (verify on stale clones; **canonical tree as of 2026-05-09** already has these):
 
 1. Root README.md:
-   - Stack count: update from 23 to 24 (remotely added)
-   - Port table: add remotely (5371)
-   - Must reflect nas-reset.sh as reset entry point
+   - Stack count **25** (incl. **`remotely`**, **`psu-ots`**); port table includes remotely **5371**
+   - DNS / TLS prose uses **host-named** wildcards (**`*.otsorundscore.*`**, **`*.misfitsds.*`**) — not **`*.ots.olutechsys.com`** / **`*.mft.olutechsys.com`**
+   - Must reflect **`nas-reset.sh`** as reset entry point
 
 2. HIVE_OBJECTIVE.md:
-   - Update stack count from 23 to 24 in "Stack folders" row
-   - Add remotely to the stack name list
-   - Update worker count from 21 to 22
+   - **25** stack folders in the table; **`psu-ots`** in the name list
+   - **25** workers / **`--count 25`** spawn string
 
 3. docs/hive/NAS_DEPLOYMENT.md must contain:
    - Git safety on NAS section
@@ -444,13 +554,17 @@ Apply docs-only corrections:
 4. Stack READMEs:
    - stacks/remotely/README.md: created ✓
    - stacks/holyclaude/README.md: add WebSocket note if not present
+   - stacks/psu-ots/README.md: present (PSU / NOC + **`https://psu.otsorundscore.olutechsys.com`**)
+   - stacks/dozzle/README.md: add healthcheck note (mentions `/dozzle healthcheck` subcommand available)
 
 5. AGENTS.md deploy-readiness table:
-   - Add remotely row (24th stack)
+   - Includes **`remotely`** and **`psu-ots`** rows where applicable
    - Verify healthcheck column for searxng main service
+   - **What Works:** host-named TLS + PSU phased gates documented (**`AGENTS.md`** search **PSU**)
+   - **What Works:** dozzle healthcheck anti-pattern fix documented (see 2026-05-08 OCI Healthcheck Audit)
 
 6. scripts/init-nas.sh STACK_MANIFEST:
-   - ADD: "remotely:data"  # SQLite DB + agent installers
+   - Includes **`"remotely:data"`** and **`"psu-ots:data"`** (among other entries)
 
 ======================================================================
 PHASE 6 — OPERATOR RUNBOOK: FULL STACK DEPLOY (NAS)
@@ -528,12 +642,16 @@ Run these on the NAS. Human operator executes. Agent validates repo side only.
 
 ### Step 4 — Issue certificates (REQUIRED before Traefik/HAProxy)
 
+  **HOLD POINT:** Do NOT proceed to Traefik until certs are issued.
+
     cd /volume1/docker/dockge/stacks/acme-sh
     cp .env.example .env
     # Edit .env: set CF_Token
     sudo docker compose up -d
     sudo mkdir -p \
       /volume1/certs/acme/wildcard \
+      /volume1/certs/acme/otsorundscore \
+      /volume1/certs/acme/misfitsds \
       /volume1/certs/acme/otsorundscore-sub \
       /volume1/certs/acme/misfitsds-sub \
       /volume1/certs/acme/otsmbpro16 \
@@ -541,39 +659,62 @@ Run these on the NAS. Human operator executes. Agent validates repo side only.
       /volume1/certs/acme/ots-sub \
       /volume1/certs/acme/mft-sub
 
+  **Traefik host-named wildcards** use **`otsorundscore/`** + **`misfitsds/`** (see **`README.md`** + **`stacks/acme-sh/SETUP.md`**). Legacy **`ots-sub`/`mft-sub`** dirs may remain for older profiles; do not use them for new HAProxy bundles tied to **`*.otsorundscore.*`**.
+
+  Verify PEM files exist:
+    ls -la /volume1/certs/acme/otsorundscore/
+    # Expected: fullchain.pem, privkey.pem present
+
   Full --issue and --install-cert sequence: stacks/acme-sh/SETUP.md
 
 ### Step 5 — Deploy Traefik stacks (after certs exist)
 
+  **CRITICAL DEPENDENCY:** Traefik entrypoint HTTPS will fail if certs are missing.
+
     cd /volume1/docker/dockge/stacks/traefik-ots
     cp .env.example .env
     sudo docker compose up -d
+    
+  Wait 30s for startup:
+    sleep 30
+    
+  Verify Traefik health:
     sudo docker exec traefik-ots wget -qO- http://127.0.0.1:8080/ping
     # Expected: OK
+    
+    sudo docker compose logs traefik-ots | grep -i "cert\|listen\|error" | head -5
+    # Check for TLS initialization messages, no "certificate not found" errors
+
+  If TLS errors appear, troubleshoot:
+    - Verify `/volume1/certs/acme/otsorundscore/fullchain.pem` exists
+    - Check Traefik compose `ACME_CERT_ROOT` env var points to correct path
+    - Restart: `sudo docker compose restart traefik-ots`
 
 ### Step 6 — Deploy remaining stacks via Dockge UI
 
   Open http://10.0.1.15:5571
 
-  Recommended deploy order:
+  Recommended deploy order (with critical holds):
     1. portainer
     2. homepage       (needs Portainer API key + Dockge creds in .env)
     3. databases      (postgres + mariadb)
     4. ollama         (AI backend for rag-stack)
-    5. rag-stack
+    5. rag-stack      (depends on ollama + databases healthy)
     6. remotely       (register first account immediately after deploy)
-    7. searxng
-    8. grafana-prom   (needs watchtower bearer token)
-    9. zabbix         (needs postgres)
-    10. code-server
-    11. remaining stacks
+       **HOLD POINT:** After deploy, enable WebSocket in DSM reverse proxy (see post-deploy step)
+    7. psu-ots         (PowerShell Universal — after Traefik **ots** + PEMs; needs Dockge API creds in .env)
+    8. searxng
+    9. grafana-prom   (needs watchtower bearer token; wait for Prometheus scrape init ~2min)
+    10. zabbix         (needs postgres; SNMPv3 config separate — see AGENTS.md)
+    11. code-server
+    12. remaining stacks
 
   For each stack:
     - cp .env.example .env
     - fill required secrets (do NOT git add .env files)
     - deploy via Dockge UI or docker compose up -d
 
-  Post-deploy for remotely:
+  Post-deploy for remotely (CRITICAL for remote sessions):
     # Enable WebSocket in DSM Reverse Proxy for remotely (required for remote sessions)
     # DSM → Control Panel → Login Portal → Advanced → Reverse Proxy
     # → Select remotely rule → Edit → Custom Header → Create → WebSocket → Save
@@ -586,9 +727,9 @@ Run these on the NAS. Human operator executes. Agent validates repo side only.
 
 ### Step 7 — HAProxy (optional front door)
 
-    sudo sh -c 'cat /volume1/certs/acme/ots-sub/fullchain.pem \
-      /volume1/certs/acme/ots-sub/privkey.pem \
-      > /volume1/docker/dockge/stacks/_haproxy/certs/ots.olutechsys.com.pem'
+    sudo sh -c 'cat /volume1/certs/acme/otsorundscore/fullchain.pem \
+      /volume1/certs/acme/otsorundscore/privkey.pem \
+      > /volume1/docker/dockge/stacks/_haproxy/certs/otsorundscore.olutechsys.com.pem'
     sudo /volume1/@appstore/haproxy/sbin/haproxy -c \
       -f /volume1/@appdata/haproxy/haproxy.cfg
 
@@ -598,6 +739,12 @@ Run these on the NAS. Human operator executes. Agent validates repo side only.
     sudo docker ps --filter health=unhealthy \
       --format 'table {{.Names}}\t{{.Status}}'
     bash /volume1/docker/dockge/scripts/compose-validate.sh
+    
+  **Validation gates before production:**
+    - No `unhealthy` containers visible
+    - Dozzle shows logs from all stacks (verify log aggregation working)
+    - Traefik dashboard reachable via `https://<hostname>:6443/dashboard/`
+    - Homepage widgets show connected backends (not ECONNREFUSED)
 
 ### Step 9 — NAS git hygiene
 
@@ -629,6 +776,10 @@ PHASE 7 — VALIDATION SUITE (AGENT)
   # No --version healthcheck probes
   grep -rn "\-\-version" stacks/*/compose.yaml | grep -i "healthcheck"
 
+  # dozzle healthcheck uses /dozzle subcommand (not --version)
+  grep -A2 "healthcheck:" stacks/dozzle/compose.yaml | grep "dozzle"
+  # Expected: /dozzle healthcheck
+
   # No DB files in git
   git ls-files | grep -E "/db/|/data/|\.db$|pg_wal"
 
@@ -648,13 +799,28 @@ PHASE 7 — VALIDATION SUITE (AGENT)
   # Port 3001 reserved for holyclaude, 5371 for remotely
   grep -rn "3001:\|5371:" stacks/*/compose.yaml
 
+  # No legacy OTS/MFT *service* hostnames in stacks compose (host-named model)
+  rg '\.ots\.olutechsys\.com|\.mft\.olutechsys\.com' stacks/ || true
+  # Expected: no matches
+
+  # Split-DNS / hairpin verdict (LAN vs public DNS)
+  bash scripts/verify-dns-views.sh --hairpin
+
   # Stack-level gitignore on database/data stacks
-  for s in databases zabbix ollama rag-stack remotely; do
+  for s in databases zabbix ollama rag-stack remotely psu-ots; do
     ls stacks/$s/.gitignore || echo "MISSING: stacks/$s/.gitignore"
   done
 
-  # Stack count is 24
+  # Shell scripts clean (post–consolidation sprint baseline)
+  shellcheck -x scripts/*.sh
+
+  # Stack count is 25
   ls stacks/ | grep -v '^_' | wc -l
+
+  # Image healthcheck verification (optional — requires NAS or local docker access)
+  # Verify dozzle has /dozzle healthcheck subcommand
+  docker run --rm --entrypoint "" louislam/dozzle:latest /bin/sh -c "/dozzle healthcheck 2>&1 | head -1"
+  # Expected: exit 0 or exit 1 (probe works, service state may vary)
 
 ======================================================================
 PHASE 8 — COMPOUND MEMORY UPDATE (AGENT)
@@ -680,10 +846,36 @@ Required patterns to ensure are documented:
   [2026-05-08] Healthcheck patterns:
   - ollama: CMD /usr/bin/ollama list (not CMD-SHELL).
   - qdrant: nc HTTP GET probe (/readyz unauthenticated).
-  - dozzle: /dozzle healthcheck subcommand.
+  - dozzle: /dozzle healthcheck subcommand (NOT --version).
   - remotely: curl -fs http://localhost:5000/ (ASP.NET Core Debian, curl confirmed).
 
-  [2026-05-08] remotely stack added (24th stack):
+  [2026-05-09-b] Dozzle healthcheck anti-pattern fix:
+  - **Historical:** some Dozzle instances used `["CMD", "/dozzle", "--version"]` probe (fails after version output on some releases).
+  - **Correct:** use built-in subcommand `["CMD", "/dozzle", "healthcheck"]` (always reliable).
+  - **Audit:** Phase 3 and Phase 7 validation includes dozzle healthcheck check.
+  - **Reference:** stacks/dozzle/compose.yaml (baseline for other binary probes).
+
+  [2026-05-09-b] Code-server secrets handling:
+  - code-server **`config/code-server/config.yaml`** is generated at runtime with plaintext password if not pre-provided.
+  - **Mitigation:** bind **`${STACK_ROOT}/code-server/config:/home/coder/.config/code-server`** (contains gitignored **`code-server/`** dir).
+  - **Secrets:** use **`.env`** (gitignored) with **`PASSWORD=${CODE_SERVER_PASSWORD}`** env var.
+  - **Pre-flight:** `git ls-files stacks/code-server/config/code-server/ | wc -l` must be **0** (no tracked secrets).
+  - **Recovery:** if plaintext password leaked historically, see **`scripts/rewrite-history-redact.sh`** for incident response.
+
+  [2026-05-09-b] Zabbix SNMPv3 on Synology:
+  - **SNMP**: Server (host running Zabbix container) polls agent UDP 161 — no inbound DSM agent needed.
+  - **Configuration**: DSM Control Panel → SNMP → SNMPv3 → Engine ID + Auth/Priv credentials.
+  - **Zabbix**: Add Host with SNMP interface type, SNMPv3 auth/priv (matches DSM config).
+  - **SynoCommunity agent** (native): alternative to container Zabbix agent; requires **`Server=127.0.0.1`** + **`ServerActive=127.0.0.1:10051`** + exact **hostname** match in Zabbix UI (not FQDN).
+  - **Container zabbix-agent2** (optional): only for container-level metrics; runs privileged with **`seccomp:unconfined`** + host binds — documented in **`AGENTS.md`** security list.
+
+  [2026-05-09-b] mTLS / certificate pinning patterns:
+  - **Use case:** container-to-container auth (e.g., Portainer Agent mTLS — HTTP probe fails).
+  - **Pattern:** TCP probe (nc) instead of HTTP; mTLS handled by app, not health probe.
+  - **Example:** `["CMD-SHELL", "nc -z 127.0.0.1 9001 || exit 1"]` (Portainer Agent).
+  - **Traefik:** healthcheck uses native `traefik healthcheck --ping` (avoids TLS cert validation in probe).
+
+  [2026-05-08] remotely stack added (**24th** stack; **`psu-ots`** is **25th** — see **[2026-05-09]** bullet below):
   - Image: immybot/remotely:latest (no semver tags — pin by digest after first pull)
   - Port: 10.0.1.15:5371:5000
   - Requires WebSocket in DSM reverse proxy for remote sessions
@@ -691,6 +883,13 @@ Required patterns to ensure are documented:
   - REMOTELY_SERVER_URL must match the public HTTPS hostname
   - First account registered = admin (register immediately after deploy)
   - Uses outgoing WebSocket only — no inbound firewall ports needed beyond 5371
+
+  [2026-05-09] psu-ots (25th stack) + host-named TLS + consolidation sprint:
+  - **`stacks/psu-ots/`** — digest-pinned **`ironmansoftware/universal`**, **`traefik-ots`** external network, **`https://psu.otsorundscore.olutechsys.com`**
+  - Dockge API jobs: **`DOCKGE_USERNAME`** / **`DOCKGE_PASSWORD`** in **`stacks/psu-ots/.env`**; git under **`/nas-repo`** uses **`git pull --no-rebase`**
+  - PEM dirs for Traefik wildcards: **`/volume1/certs/acme/otsorundscore/`**, **`.../misfitsds/`** — align live **`acme.sh`** before Traefik restarts
+  - **`scripts/*.sh`**: Tier 1–3 hardening complete — **`shellcheck -x scripts/*.sh`** clean; **`scripts/verify-dns-views.sh --hairpin`** for DNS views
+  - Only version PSU **`data/Repository/`** in git — runtime DB under **`data/`** is gitignored
 
   [2026-05-08] DSM best practices from mariushosting.com:
   - HTTP/2: Control Panel → Network → Connectivity → Enable HTTP/2
@@ -730,16 +929,19 @@ Extract to ~/.cursor/skills/learned/ only patterns not already present:
     Add: nas-reset.sh is now the preferred entry point over manual clone.
     Add: sudo loses SSH keys — GIT_SSH_COMMAND or -E flag required.
     Add: restore-env.sh --fix validates and auto-fixes .env before restore.
+    Add: Step 4 (acme-sh cert issue) is a critical hold point — Traefik fails without PEMs.
 
   synology-git-eadir-corruption.md (update if exists):
     Add: @eaDir returns after DSM updates even if indexer was disabled.
     git-pull-nas alias is the safety net regardless of indexer state.
+    Add: Phase 0.5 pre-flight gate detects git state cleanness before any NAS reset.
 
   oci-healthcheck-patterns.md (update if exists):
     Add: ollama/ollama image loses PATH in CMD-SHELL — use CMD + full path.
     Add: qdrant (Rust image) has no wget/curl — use nc HTTP GET probe.
-    Add: dozzle healthcheck subcommand exists — use it, not --version.
+    Add: dozzle healthcheck subcommand exists — use `/dozzle healthcheck`, NOT `--version` (anti-pattern).
     Add: remotely (ASP.NET Core Debian) has curl — use curl -fs probe.
+    Add: Verify image tools via `docker run --rm --entrypoint "" <image> which <tool>` before hardcoding probe.
 
   docker-network-subnet-registry.md (create if missing):
     Title: Docker Network Subnet Registry for OTS NAS
@@ -753,6 +955,22 @@ Extract to ~/.cursor/skills/learned/ only patterns not already present:
     Problem: hyphenated function names silently rejected
     Fix: use underscores in function, alias for hyphen access
     Verify: /bin/sh -c '. ~/.bashrc'
+
+  api-key-rotation-schedule.md (create):
+    Title: API Key Rotation Schedule — Dockge, PSU, Watchtower
+    Keys to rotate periodically (60–90 days):
+      - Dockge API credentials (used by PSU jobs)
+      - PSU webhook authentication tokens
+      - Watchtower API bearer token (grafana-prom integration)
+      - Portainer API keys (homepage widgets)
+      - GitHub personal access token (git operations on NAS)
+    Process:
+      1. Generate new key in app UI (Dockge → Account Settings, PSU → Settings, etc.)
+      2. Update local `.env` files (gitignored)
+      3. If key is in active job/script, update that config and restart service
+      4. Test new key (curl request with new token, or run PSU job once)
+      5. Delete old key in app UI after confirmation
+      6. Document rotation in ops log (not in git)
 
   synology-docker-best-practices.md (create):
     Title: Synology NAS Docker Best Practices (mariushosting)
@@ -786,20 +1004,99 @@ Extract to ~/.cursor/skills/learned/ only patterns not already present:
 ROLLBACK
 ======================================================================
 
-Repo changes:
+### Repo changes
+
+Unstaged changes:
+  git restore <file>
+  git restore .
+
+Staged changes:
   git restore --staged <file>
-  git checkout -- <file>
+  git restore --staged .
 
 Committed changes:
   git revert <sha>
 
-NAS runtime rollback (per stack):
+### NAS runtime rollback (per stack)
+
+Quick rollback (data persists):
   sudo docker compose -f stacks/<stack>/compose.yaml down
   # Data persists in STACK_ROOT/<stack>/data/ — safe to redeploy
 
-Full NAS rollback (if nas-reset.sh ran):
+Selective service rollback (inside a multi-service stack):
+  # Stop one service, keep others running
+  sudo docker compose -f stacks/<stack>/compose.yaml stop <service>
+  sudo docker compose -f stacks/<stack>/compose.yaml rm <service>
+  # Redeploy when ready
+  sudo docker compose -f stacks/<stack>/compose.yaml up -d <service>
+
+Data recovery (if files were accidentally deleted):
+  # Check backup on DSM Hyper Backup or snapshot
+  sudo ls -la /volume1/docker/dockge/stacks/<stack>/data/
+  # If missing, restore from backup:
+  #   Synology Control Panel → Backup & Restore → Restore Service
+  #   (requires prior Hyper Backup or rsync snapshot)
+
+### Full NAS rollback (if nas-reset.sh ran)
+
+If deployment failed partway through:
   sudo mv /volume1/docker/dockge /volume1/docker/dockge-failed
   sudo mv /volume1/docker/archive/dockge-backup-<ts> /volume1/docker/dockge
+  
+Then re-run from Phase 1 (audit gates) or Phase 6 (deploy) depending on scope of failure.
+
+### Cert recovery (if Traefik TLS fails post-deploy)
+
+If Traefik shows "certificate not found" errors:
+  1. Verify acme-sh is still running:
+     sudo docker compose -f stacks/acme-sh/compose.yaml logs | grep -i "error\|renew"
+  
+  2. If acme-sh stalled, redeploy:
+     sudo docker compose -f stacks/acme-sh/compose.yaml restart
+     sleep 30
+  
+  3. Verify PEM files exist:
+     ls -la /volume1/certs/acme/otsorundscore/
+  
+  4. Restart Traefik:
+     sudo docker compose -f stacks/traefik-ots/compose.yaml down
+     sudo docker compose -f stacks/traefik-ots/compose.yaml up -d
+     sleep 30
+     sudo docker exec traefik-ots wget -qO- http://127.0.0.1:8080/ping
+
+### Image version downgrade (if Watchtower auto-upgraded broke a service)
+
+If a service breaks after Watchtower auto-update:
+  1. Find previous working image tag (from Docker Hub release history or docker.io)
+  2. Edit `stacks/<stack>/compose.yaml` and change image to semver tag (not :latest)
+  3. Redeploy:
+     sudo docker compose -f stacks/<stack>/compose.yaml pull
+     sudo docker compose -f stacks/<stack>/compose.yaml down
+     sudo docker compose -f stacks/<stack>/compose.yaml up -d
+  4. Verify health:
+     sudo docker compose -f stacks/<stack>/compose.yaml ps
+     sudo docker logs <container_name> | tail -20
+
+======================================================================
+EXECUTION LOG (2026-05-09-b) — post-review additions
+======================================================================
+
+- **Phase 0.5** pre-flight hardening gate added (operator SSH key + branch check, agent git status + compose validate baseline).
+- **Phase 2** per-stack readiness table extended with TIER categories (A/B/C/X) and weighted scoring; deploy-readiness table now includes tier column and blocker rationale.
+- **Phase 3** healthcheck anti-patterns expanded with per-image probes; dozzle healthcheck subcommand baseline added (anti-pattern fix from 2026-05-08 OCI audit); image tool verification pattern documented.
+- **Phase 4** added dozzle healthcheck anti-pattern check (flagging --version if present).
+- **Phase 6** deploy order and post-deploy steps now include critical hold points (Step 4 acme-sh cert issue, Step 5 Traefik TLS dependency, Step 6 remotely WebSocket DSM rule as CRITICAL for remote sessions); validation gates added (no unhealthy containers, Dozzle log aggregation, Traefik dashboard reachability).
+- **Phase 7** extended validation with dozzle healthcheck verify + optional image-level probes (docker run --entrypoint pattern).
+- **Phase 8** compound-learning expanded with dozzle healthcheck anti-pattern fix, code-server secrets handling, Zabbix SNMPv3 pattern, mTLS/certificate pinning patterns.
+- **Phase 9** continuous-learning added api-key-rotation-schedule.md (Dockge, PSU, Watchtower keys); updated nas-reset-recovery-order.md to include Step 4 cert hold point.
+- **Rollback** section expanded with per-service recovery steps, data recovery patterns, cert recovery (acme-sh + Traefik restart), and image version downgrade procedure.
+
+======================================================================
+EXECUTION LOG (2026-05-09) — post-sprint doc alignment
+======================================================================
+
+- **`MASTER_AUDIT_AND_DEPLOY.md`** updated for **25** stacks (**`psu-ots`**), host-named acme/HAProxy examples, Phase **7** validation (**`verify-dns-views.sh --hairpin`**, legacy hostname **`rg`**, **`shellcheck`**), deploy order, and **`AGENTS.md`** Phase **8** compound-memory bullets reflecting completed consolidation + PSU work.
+- Historical log from **2026-05-08** retained below for prior audit snapshot.
 
 ======================================================================
 EXECUTION LOG (2026-05-08)
@@ -824,7 +1121,7 @@ Phase 1 audit gates recorded before any Phase 5 fixes:
 
 Phase 2-4 audits recorded:
 
-- Per-stack readiness matrix generated (`24` stack folders + `_haproxy`)
+- Per-stack readiness matrix generated (`24` stack folders + `_haproxy`; **superseded** — use **25** + **`psu-ots`** for current audits)
 - Cross-stack checks executed (`3001` reservation, `depends_on condition`, floating tags, empty `networks: {}`)
 - Healthcheck pattern scan executed; notable anti-pattern retained for follow-up: `dozzle` using `--version`
 
@@ -833,3 +1130,4 @@ FINAL PRINT
 ======================================================================
 
 MASTER-AUDIT-AND-DEPLOY: COMPLETE
+Version 2026-05-09-b (with detailed review additions)

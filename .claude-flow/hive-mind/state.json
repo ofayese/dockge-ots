@@ -13,7 +13,27 @@
     "hive-worker-1777524553233-sf5n",
     "hive-worker-1777524553233-3yo3",
     "hive-worker-1777524553233-4cl3",
-    "hive-worker-1777524553233-y989"
+    "hive-worker-1777524553233-y989",
+    "hive-worker-1778375613880-rhbf",
+    "hive-worker-1778375613880-jqu5",
+    "hive-worker-1778375613880-j3gt",
+    "hive-worker-1778375613880-mr5e",
+    "hive-worker-1778375613880-elsu",
+    "hive-worker-1778375613880-9jwb",
+    "hive-worker-1778375613880-hbmi",
+    "hive-worker-1778375613880-8fgg",
+    "hive-worker-1778375613880-j2f1",
+    "hive-worker-1778375613880-z8h2",
+    "hive-worker-1778375613880-gy6g",
+    "hive-worker-1778375613880-tg02",
+    "hive-worker-1778375613880-trng",
+    "hive-worker-1778375613880-cevz",
+    "hive-worker-1778375613880-rb8o",
+    "hive-worker-1778375613880-4vc4",
+    "hive-worker-1778375613880-mkxl",
+    "hive-worker-1778375613880-iicd",
+    "hive-worker-1778375613880-am6l",
+    "hive-worker-1778375613880-c6dn"
   ],
   "consensus": {
     "pending": [],
@@ -30,11 +50,11 @@
       }
     ]
   },
-  "createdAt": "2026-04-30T04:48:49.358Z",
-  "updatedAt": "2026-04-30T05:10:22.405Z",
+  "createdAt": "2026-05-10T01:13:33.631Z",
+  "updatedAt": "2026-05-10T01:13:33.881Z",
   "queen": {
-    "agentId": "queen-1777524529358",
-    "electedAt": "2026-04-30T04:48:49.358Z",
+    "agentId": "queen-1778375613631",
+    "electedAt": "2026-05-10T01:13:33.631Z",
     "term": 1
   }
 }

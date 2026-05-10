@@ -10,6 +10,7 @@ Usage:
     inventory.py --all              # regenerate every stack folder
     inventory.py --stdout <stack>   # print to stdout, do not write
     inventory.py --repo-root PATH   # git repo root (contains HIVE_OBJECTIVE.md); stacks live in stacks/
+    inventory.py --analyze <stack>  # run static analyzer on stack
 """
 
 from __future__ import annotations
@@ -112,7 +113,6 @@ def parse_env(env: Any) -> dict[str, str]:
                 k, v = s.split("=", 1)
                 out[k] = f"inline `{v}`" if v else "inline (empty)"
             else:
-                # Compose treats bare tokens as host-env names; surface once here (not again in anomalies).
                 out[s] = "malformed list entry (no '='; Compose treats as host-env name)"
     elif isinstance(env, dict):
         for k, v in env.items():
@@ -217,7 +217,7 @@ def hostname_check(stack_path: Path, repo_root: Path) -> tuple[list[str], list[s
         return [l for l in proc.stdout.splitlines() if l.strip()]
 
     def fallback_from_fixed_string() -> tuple[list[str], list[str]]:
-        """If PCRE2 `rg` times out, use fixed-string search then Python filter (no lookbehind in rg)."""
+        """If PCRE2 `rg` times out, use fixed-string search then Python filter."""
         try:
             r2 = subprocess.run(
                 ["rg", "-F", "orundscore", rel_s],
@@ -470,7 +470,6 @@ def render_inventory(stack: StackFacts) -> str:
         for k, v in s.env.items():
             if "REPLACE" in v.upper() or "CHANGEME" in v.upper() or "PLACEHOLDER" in v.upper():
                 anomalies.append(f"`{s.name}` env `{k}` looks like a placeholder: {v}")
-        # docker.sock rw warning
         for host, ctr, mode in s.volumes:
             if "docker.sock" in host and mode != "ro":
                 anomalies.append(f"`{s.name}` mounts `docker.sock` as `{mode or 'default rw'}` — consider `:ro` if container only needs to read")
@@ -536,6 +535,34 @@ def process(stack_name: str, repo_root: Path, write: bool) -> str:
     return md
 
 
+def run_analyzer(stack_name: str, repo_root: Path) -> str:
+    """Run static analyzer for a stack and return JSON report."""
+    try:
+        from analyzers.analyzer_report import build_analyzer_report, render_json_report
+    except ImportError:
+        logger.error("Analyzer modules not found; skipping analysis")
+        return "{}"
+
+    sr = stacks_root(repo_root)
+    stack_path = sr / stack_name
+    compose_path = None
+
+    for name in ("compose.yaml", "compose.yml", "docker-compose.yml", "docker-compose.yaml"):
+        p = stack_path / name
+        if p.exists():
+            compose_path = p
+            break
+
+    if not compose_path:
+        return "{}"
+
+    env_file = stack_path / ".env"
+    env_example_file = stack_path / ".env.example"
+
+    report = build_analyzer_report(compose_path, env_file, env_example_file)
+    return render_json_report(report)
+
+
 def main() -> int:
     logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(name)s: %(message)s")
     ap = argparse.ArgumentParser(description=__doc__)
@@ -543,6 +570,7 @@ def main() -> int:
     ap.add_argument("--all", action="store_true", help="process every known stack")
     ap.add_argument("--stdout", action="store_true", help="print to stdout, do not write file")
     ap.add_argument("--repo-root", type=Path, help="override repo root detection")
+    ap.add_argument("--analyze", action="store_true", help="run static analyzer")
     args = ap.parse_args()
 
     if not args.stack and not args.all:
@@ -554,11 +582,22 @@ def main() -> int:
         for s in STACKS:
             print(f"[{s}]")
             process(s, repo_root, write=not args.stdout)
+            if args.analyze:
+                report = run_analyzer(s, repo_root)
+                if report != "{}":
+                    print(f"  analyzer report generated")
         return 0
 
     md = process(args.stack, repo_root, write=not args.stdout)
     if args.stdout:
         print(md)
+
+    if args.analyze:
+        report = run_analyzer(args.stack, repo_root)
+        if report != "{}" and not args.stdout:
+            print("\n--- ANALYZER REPORT (JSON) ---")
+            print(report)
+
     return 0
 
 

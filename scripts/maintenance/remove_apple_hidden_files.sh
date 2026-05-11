@@ -2,6 +2,10 @@
 # Remove Apple SMB / Finder metadata files under operator-chosen paths.
 # Safe-by-default: DRY_RUN=1 (no deletes). Use Task Scheduler only after dry-run review.
 #
+# When <root>/.git/refs exists: always removes DSM Search indexer junk there — directories named
+# @eaDir and files *@SynoEAStream / *@SynoResource — which otherwise break git (e.g. fatal: bad object
+# refs/remotes/origin/@eaDir/...). Disable DSM indexing on /volume1/docker for a permanent fix.
+#
 # Concepts adapted (not verbatim) from hwdbk/synology-scripts:
 #   - ea-file-bundle-handling: stray @SynoEAStream/@SynoResource files whose primary path no longer exists
 #     are removable clutter (cleanup_SynoFiles-style parent check only — no xattr/binary tooling).
@@ -9,7 +13,7 @@
 #     "Mac compatibility" / NFD handling is off — pair-based ._ cleanup may skip stubs until names align.
 #
 # Usage:
-#   Single tree (repo or NAS bind root):
+#   Single tree (repo or NAS bind root — includes .git/refs Syno cleanup when .git exists):
 #     DRY_RUN=1 APPLE_CLEANUP_ROOT=/volume1/docker/dockge bash scripts/maintenance/remove_apple_hidden_files.sh
 #   Every Dockge stack folder (canonical: .../dockge/stacks/<name>/):
 #     DRY_RUN=1 APPLE_CLEANUP_STACKS_ROOT=/volume1/docker/dockge/stacks bash scripts/maintenance/remove_apple_hidden_files.sh
@@ -44,7 +48,8 @@ remove_apple_hidden_files.sh — prune .DS_Store, paired/small ._* stubs, .Apple
   APPLE_CLEANUP_STRAY_SYNO_SIDECARS    default 0 — set 1 to delete stray @SynoEAStream/@SynoResource (parent missing)
 
 Prunes descent into: .git, node_modules, @eaDir for .DS_Store / ._ / .AppleDouble passes (does not delete @eaDir trees).
-Stray Syno pass (opt-in) walks under @eaDir but only removes sidecar files whose primary path does not exist.
+If <root>/.git/refs exists: always removes @eaDir dirs and *@SynoEAStream / *@SynoResource files under it (DSM indexer git corruption).
+Stray Syno pass (opt-in) walks repo trees (not under .git/refs) under @eaDir but only removes sidecar files whose primary path does not exist.
 
 No compiled helpers required — pure bash + find (no find -delete).
 USAGE
@@ -175,6 +180,22 @@ process_root() {
 		find "${root}" \( -name .git -o -name node_modules -o -name '@eaDir' \) -prune -o \
 			-depth -type d -name '.AppleDouble' -print0 2>/dev/null
 	)
+
+	# Synology DSM Search: @eaDir and *@Syno* sidecars under .git/refs break git (refs/heads/@eaDir/...).
+	local git_refs="${root}/.git/refs"
+	if [[ -d "${git_refs}" ]]; then
+		echo "    ${git_refs} — Synology indexer junk (@eaDir, *@SynoEAStream, *@SynoResource)"
+		while IFS= read -r -d '' d; do
+			delete_dir "${d}"
+		done < <(
+			find "${git_refs}" -depth -type d -name '@eaDir' -print0 2>/dev/null
+		)
+		while IFS= read -r -d '' f; do
+			delete_file "${f}"
+		done < <(
+			find "${git_refs}" -type f \( -name '*@SynoEAStream' -o -name '*@SynoResource' \) -print0 2>/dev/null
+		)
+	fi
 
 	if [[ "${APPLE_CLEANUP_STRAY_SYNO_SIDECARS}" == "1" ]]; then
 		while IFS= read -r -d '' f; do

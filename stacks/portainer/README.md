@@ -28,10 +28,13 @@ Container management UI (server) + agent for daemon access on the host.
 
 Use **DSM SSO Server** as the OIDC IdP for **who can open the Portainer UI** — **not** the **OAuth Service** package (Synology API resource authorization).
 
-1. Package Center → **SSO Server** → separate **OIDC application** for Portainer (do not reuse PSU or Open WebUI clients).
-2. Portainer: **Settings → Authentication → OAuth** — choose **Custom** and paste endpoints from Synology’s OIDC discovery document (issuer, authorization, token, userinfo as required by Portainer’s wizard).
-3. **Redirect URL:** use the exact value Portainer shows for your **public** Portainer base URL (confirm in UI after enabling OAuth; do not assume a fragment like `#!/auth` unless your edition displays it).
-4. **Automatic team membership:** to map DSM **`groups`** (or equivalent) to Portainer teams, set **Claim name** to match the claim Synology puts in the token (often **`groups`**) and define regex / static team mappings per [Portainer — OAuth](https://docs.portainer.io/admin/settings/authentication/oauth).
+1. Package Center → **SSO Server** → **General Settings** → **Account Type** **`Domain/LDAP/local`** for DSM/local directory compatibility with NAS-backed identities.
+2. Create a separate **OIDC application** for Portainer (do not reuse PSU or Open WebUI clients).
+3. Portainer: **Settings → Authentication → OAuth** — choose **Custom** and paste endpoints from Synology’s OIDC discovery document (issuer, authorization, token, userinfo as required by Portainer’s wizard).
+4. **Scopes:** request **`openid profile email groups`** when you rely on group claims for teams/RBAC (omit or narrow **`groups`** only if you intentionally do not map DSM groups).
+5. **Redirect URL:** use the exact value Portainer shows for your **public** Portainer base URL — strict match against the SSO application registration (scheme/host/port/path + trailing slash rules); mismatches surface as **`redirect_uri_mismatch`** (confirm in UI after enabling OAuth; do not assume a fragment like `#!/auth` unless your edition displays it).
+6. **Username / subject mapping:** prefer **`preferred_username`** when available from the IdP; use **`sub`** as the stable fallback identifier if **`preferred_username`** is absent or unsuitable.
+7. **Automatic team membership:** to map DSM **`groups`** (or equivalent) to Portainer teams, set **Claim name** to match the claim Synology puts in the token (often **`groups`**) and define regex / static team mappings per [Portainer — OAuth](https://docs.portainer.io/admin/settings/authentication/oauth).
 
 **Risk note:** OAuth/OIDC only gates **UI access**. It does **not** reduce **`docker.sock`** or agent **host `/`** exposure — operators with Portainer access remain highly trusted.
 

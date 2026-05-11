@@ -2,6 +2,12 @@
 # Remove Apple SMB / Finder metadata files under operator-chosen paths.
 # Safe-by-default: DRY_RUN=1 (no deletes). Use Task Scheduler only after dry-run review.
 #
+# Concepts adapted (not verbatim) from hwdbk/synology-scripts:
+#   - ea-file-bundle-handling: stray @SynoEAStream/@SynoResource files whose primary path no longer exists
+#     are removable clutter (cleanup_SynoFiles-style parent check only — no xattr/binary tooling).
+#   - mac-nfd-conversion: Mac vs Synology UTF-8 normalization can make sibling paths disagree if Samba
+#     "Mac compatibility" / NFD handling is off — pair-based ._ cleanup may skip stubs until names align.
+#
 # Usage:
 #   DRY_RUN=1 APPLE_CLEANUP_ROOT=/volume1/docker/dockge bash scripts/maintenance/remove_apple_hidden_files.sh
 #   DRY_RUN=0 APPLE_CLEANUP_PATHS_FILE=/path/to/paths.list bash scripts/maintenance/remove_apple_hidden_files.sh
@@ -12,19 +18,28 @@ set -euo pipefail
 DRY_RUN="${DRY_RUN:-1}"
 APPLE_CLEANUP_ROOT="${APPLE_CLEANUP_ROOT:-}"
 APPLE_CLEANUP_PATHS_FILE="${APPLE_CLEANUP_PATHS_FILE:-}"
-# Max size (bytes) for ._* resource-fork stubs; larger files are skipped.
+# Max size (bytes) for ._* resource-fork stubs; larger files are never candidates.
 MAX_DOT_UNDERSCORE_BYTES="${MAX_DOT_UNDERSCORE_BYTES:-65536}"
+# 1 = also delete tiny orphan ._ files when no sibling exists (stray stub). Default 0 = paired stubs only.
+APPLE_CLEANUP_ORPHAN_DOT_UNDERSCORE="${APPLE_CLEANUP_ORPHAN_DOT_UNDERSCORE:-0}"
+# 1 = remove stray *@SynoEAStream / *@SynoResource under @eaDir when parent file/dir is missing (no bogus-xattr pass).
+APPLE_CLEANUP_STRAY_SYNO_SIDECARS="${APPLE_CLEANUP_STRAY_SYNO_SIDECARS:-0}"
 
 usage() {
 	cat <<'USAGE'
-remove_apple_hidden_files.sh — prune .DS_Store, small ._* , .AppleDouble dirs
+remove_apple_hidden_files.sh — prune .DS_Store, paired/small ._* stubs, .AppleDouble dirs; optional stray Syno sidecars
 
   DRY_RUN=1|0           default 1 — print actions only
   APPLE_CLEANUP_ROOT   single directory root (optional if PATHS_FILE set)
   APPLE_CLEANUP_PATHS_FILE  file with one absolute path per line
-  MAX_DOT_UNDERSCORE_BYTES  default 65536 (use with find -size -Nc, N in bytes)
+  MAX_DOT_UNDERSCORE_BYTES  default 65536 (find -size -Nc)
+  APPLE_CLEANUP_ORPHAN_DOT_UNDERSCORE  default 0 — set 1 to delete tiny orphan ._ when sibling missing
+  APPLE_CLEANUP_STRAY_SYNO_SIDECARS    default 0 — set 1 to delete stray @SynoEAStream/@SynoResource (parent missing)
 
-Prunes descent into: .git, node_modules, @eaDir (do not remove Synology @eaDir metadata)
+Prunes descent into: .git, node_modules, @eaDir for .DS_Store / ._ / .AppleDouble passes (does not delete @eaDir trees).
+Stray Syno pass (opt-in) walks under @eaDir but only removes sidecar files whose primary path does not exist.
+
+No compiled helpers required — pure bash + find (no find -delete).
 USAGE
 }
 
@@ -82,6 +97,18 @@ delete_dir() {
 	rm -rf -- "${d}"
 }
 
+# Primary path for .../@eaDir/<name>@SynoEAStream or .../@eaDir/<name>@SynoResource → .../<name>
+syno_sidecar_to_primary() {
+	local f="$1"
+	local p="${f/@eaDir\/}"
+	case "${f}" in
+		*@SynoEAStream) p="${p%@SynoEAStream}" ;;
+		*@SynoResource) p="${p%@SynoResource}" ;;
+		*) printf ''; return 1 ;;
+	esac
+	printf '%s' "${p}"
+}
+
 process_root() {
 	local root="$1"
 	if [[ ! -d "${root}" ]]; then
@@ -97,10 +124,27 @@ process_root() {
 			-name '.DS_Store' -type f -print0 2>/dev/null
 	)
 
-	# GNU/BSD find: -size -${N}c = strictly less than N bytes
+	# AppleDouble ._ stubs: never delete every small ._ via a single unscoped rm/find -delete.
+	# Prefer paired stubs (sibling data fork exists); optional orphan removal when APPLE_CLEANUP_ORPHAN_DOT_UNDERSCORE=1.
 	local size_arg="-${MAX_DOT_UNDERSCORE_BYTES}c"
 	while IFS= read -r -d '' f; do
-		delete_file "${f}"
+		local dir base sibling_suffix sibling
+		dir="$(dirname -- "${f}")"
+		base="$(basename -- "${f}")"
+		[[ "${base}" == '._' ]] && continue
+		[[ "${base}" != ._?* ]] && continue
+		sibling_suffix="${base#._}"
+		[[ -z "${sibling_suffix}" ]] && continue
+		sibling="${dir}/${sibling_suffix}"
+		local remove=false
+		if [[ -e "${sibling}" ]]; then
+			remove=true
+		elif [[ "${APPLE_CLEANUP_ORPHAN_DOT_UNDERSCORE}" == "1" ]]; then
+			remove=true
+		fi
+		if [[ "${remove}" == "true" ]]; then
+			delete_file "${f}"
+		fi
 	done < <(
 		find "${root}" \( -name .git -o -name node_modules -o -name '@eaDir' \) -prune -o \
 			-name '._*' -type f -size "${size_arg}" -print0 2>/dev/null
@@ -112,6 +156,19 @@ process_root() {
 		find "${root}" \( -name .git -o -name node_modules -o -name '@eaDir' \) -prune -o \
 			-depth -type d -name '.AppleDouble' -print0 2>/dev/null
 	)
+
+	if [[ "${APPLE_CLEANUP_STRAY_SYNO_SIDECARS}" == "1" ]]; then
+		while IFS= read -r -d '' f; do
+			local prim
+			prim="$(syno_sidecar_to_primary "${f}")" || continue
+			if [[ ! -e "${prim}" ]]; then
+				delete_file "${f}"
+			fi
+		done < <(
+			find "${root}" \( -name .git -o -name node_modules \) -prune -o \
+				-type f \( -name '*@SynoEAStream' -o -name '*@SynoResource' \) -print0 2>/dev/null
+		)
+	fi
 }
 
 _roots=()

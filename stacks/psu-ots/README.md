@@ -29,11 +29,12 @@ Versioned PSU config lives under **`data/Repository/`** on the NAS (`.universal/
 
 Use **DSM SSO Server** as the OIDC IdP for **human** PSU Admin / dashboard login — **not** the separate **OAuth Service** package (API authorization for Synology ecosystem APIs).
 
-1. Package Center → **SSO Server** → enable **OIDC server** → note issuer / `.well-known` URL.
-2. **Application → Add (OIDC)** — client for PSU; **redirect URI** must match your public PSU URL + callback path (default **`/auth/signin-oidc`**, e.g. `https://psu.otsorundscore.olutechsys.com/auth/signin-oidc`).
-3. Scopes: include **`openid`**, **`profile`**, **`email`**, and **`groups`** if you map DSM groups to PSU roles.
-4. Copy **Application ID** / **Application Secret** into **gitignored** `.env` as **`OIDC_CLIENT_ID`** / **`OIDC_CLIENT_SECRET`**; set **`OIDC_AUTHORITY`** to the issuer URL Synology shows for OIDC (must match [PowerShell Universal — OpenID Connect](https://docs.powershelluniversal.com/config/security/openid-connect) expectations for **Authority**).
-5. Set **`PSU_OIDC_ENABLED=1`** and recreate the container (compose passes **`Authentication__OIDC__Enabled`** from this value).
+1. Package Center → **SSO Server** → **General Settings** → **Account Type** **`Domain/LDAP/local`** → enable **OIDC server** → note issuer / `.well-known` URL.
+2. **Application → Add (OIDC)** — client for PSU; **redirect URI** must **exactly** match your public PSU URL + callback path (default **`/auth/signin-oidc`**, e.g. `https://psu.otsorundscore.olutechsys.com/auth/signin-oidc`). Copy/paste from the failing authorize URL if you hit **`redirect_uri_mismatch`** (scheme, host, port, path, trailing slash).
+3. **Scopes:** request **`openid profile email groups`** (same ordering convention as other stacks). Include **`groups`** only when you map DSM groups to PSU roles.
+4. **Username claim:** in PSU / ASP.NET OIDC settings, prefer **`preferred_username`** when the IdP issues it; fall back to **`sub`** for a stable subject key if needed.
+5. Copy **Application ID** / **Application Secret** into **gitignored** `.env` as **`OIDC_CLIENT_ID`** / **`OIDC_CLIENT_SECRET`**; set **`OIDC_AUTHORITY`** to the issuer URL Synology shows for OIDC (must match [PowerShell Universal — OpenID Connect](https://docs.powershelluniversal.com/config/security/openid-connect) expectations for **Authority**).
+6. Set **`PSU_OIDC_ENABLED=1`** and recreate the container (compose passes **`Authentication__OIDC__Enabled`** from this value).
 
 **Compose wiring:** `compose.yaml` passes **`Authentication__OIDC__*`** from **`OIDC_*`** / **`PSU_OIDC_*`** (ASP.NET Core environment variable convention). No tracked `appsettings.json`; Universal reads env at process start.
 

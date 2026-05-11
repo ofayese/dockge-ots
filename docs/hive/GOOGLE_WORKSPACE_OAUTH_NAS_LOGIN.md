@@ -171,10 +171,12 @@ The local admin account always works regardless of SSO state.
 For when the NAS acts as identity provider for other services:
 
 1. **Package Center** → install **SSO Server**
-2. SSO Server → **General Settings** → set server URL
+2. SSO Server → **General Settings** → set server URL and **Account Type** **`Domain/LDAP/local`** so DSM/local NAS accounts resolve consistently when tokens carry DSM-aligned identifiers (Path A Google login on DSM remains separate).
 3. SSO Server → **Service** → enable OIDC
 4. SSO Server → **Application** → Add → OIDC
-   - Application name, Redirect URI
+   - Application name and **Redirect URI** — must match **character-for-character** what each client sends (`redirect_uri` exact match avoids **`redirect_uri_mismatch`**; mind trailing slashes, scheme, port, and path).
+   - **Scopes** on clients (PSU, Open WebUI, Portainer, etc.): request **`openid profile email groups`** when you need profile + email + DSM **`groups`** in tokens for RBAC/team mapping.
+   - **Username claim:** configure consuming apps to prefer **`preferred_username`** when the IdP emits it; otherwise fall back to **`sub`** (stable subject identifier).
    - Note the App ID and App Secret
 5. Copy App ID + Secret + Well-known URL into the consuming app
 

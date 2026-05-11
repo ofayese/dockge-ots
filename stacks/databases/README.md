@@ -8,6 +8,10 @@ MariaDB + PostgreSQL + Adminer for any service that needs a shared DB. Distinct 
 - **postgres** — file-based secret at `/run/secrets/postgres_pw`
 - **adminer** (8895) — UI; depends on both DBs being healthy
 
+## Startup order
+
+**adminer** starts after **mariadb** and **postgres** are **healthy**. NAS operator flow: **`docs/hive/NAS_DEPLOYMENT.md`** → **Dockge stack lifecycle (Compose v2)**.
+
 ## Volumes
 
 | Host path                             | Container path             | Mode | Created by    |

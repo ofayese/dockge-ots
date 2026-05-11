@@ -7,7 +7,7 @@
 | Name | Container | Image | Pin | Ports | Notes |
 |---|---|---|---|---|---|
 | `ollama` | `otsai-server` | `ollama/ollama:latest` | ✗ `:latest` | `10.0.1.15:11434:11434` | — |
-| `open-webui` | `otsai-webui` | `ghcr.io/open-webui/open-webui:main` | ✗ floating tag | `8893:8080` | depends_on: ollama |
+| `open-webui` | `otsai-webui` | `ghcr.io/open-webui/open-webui:main` | ✗ floating tag | `8893:8080` | depends_on: ollama (service_healthy) |
 
 ## Volumes
 

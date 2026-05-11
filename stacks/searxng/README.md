@@ -7,6 +7,10 @@ Privacy-respecting metasearch engine, backed by Valkey (Redis fork) for caching.
 - **redis** (Valkey) — ephemeral cache (`--save "" --appendonly no` → no on-disk persistence)
 - **searxng** (8888) — uWSGI web frontend; depends on `redis` healthcheck
 
+## Startup order
+
+**searxng** starts after **redis** is **healthy**. See **`docs/hive/NAS_DEPLOYMENT.md`** → **Dockge stack lifecycle (Compose v2)**.
+
 ## Public hostname
 
 `search.otsorundscore.olutechsys.com` (frontend; via HAProxy when ready).

@@ -31,6 +31,10 @@ Copy `.env.example` to `.env` and set `POSTGRES_PASSWORD` to a strong value. `ST
 - Docker Compose (Dockge) on Synology or generic Linux host.
 - Outbound HTTPS for image pulls.
 
+## Startup order
+
+**Postgres → zabbix-server → zabbix-web** via **`condition: service_healthy`**. After `git pull`, use **`docker compose up -d`** from this directory; see **`docs/hive/NAS_DEPLOYMENT.md`** → **Dockge stack lifecycle (Compose v2)** for NAS steps and timing.
+
 ## Health
 
 - Postgres: `pg_isready` against `POSTGRES_USER` / `POSTGRES_DB`.

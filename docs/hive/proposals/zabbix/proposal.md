@@ -2,7 +2,7 @@
 
 ## Goal
 
-Run Zabbix Server (PostgreSQL backend), web UI, and optional Agent 2 under Dockge with `${STACK_ROOT}` bind mounts, Synology-safe compose (no `depends_on` conditions), and documented SNMPv3 integration for DiskStation monitoring.
+Run Zabbix Server (PostgreSQL backend), web UI, and optional Agent 2 under Dockge with `${STACK_ROOT}` bind mounts, **Compose v2** startup ordering (`depends_on` + **`condition: service_healthy`** on Postgres and server before web), and documented SNMPv3 integration for DiskStation monitoring.
 
 ## References (consulted, not copied verbatim)
 

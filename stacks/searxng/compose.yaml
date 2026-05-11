@@ -57,9 +57,9 @@ services:
       - UWSGI_WORKERS=4
       - UWSGI_THREADS=4
       - TZ=America/New_York
-    # Plain depends_on (no condition) for Synology Package Center docker compose compatibility.
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
     cap_drop:
       - ALL
     cap_add:

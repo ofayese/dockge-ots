@@ -12,6 +12,10 @@ RAG pipeline: Qdrant vector DB + AnythingLLM + Open WebUI Pipelines. Connects to
 | anythingllm | rag-anythingllm | 3001      | 10.0.1.15:3002                 | mintplexlabs/anythingllm:1.7.6    |
 | pipelines   | rag-pipelines   | 9099      | 10.0.1.15:9099                 | ghcr.io/open-webui/pipelines:main |
 
+## Startup order
+
+**anythingllm** and **pipelines** start after **qdrant** is **healthy**. NAS steps: **`docs/hive/NAS_DEPLOYMENT.md`** → **Dockge stack lifecycle (Compose v2)**.
+
 ## Prerequisites
 
 - **ollama** stack (`otsai-server`) running on **11434**

@@ -2,6 +2,10 @@
 SUPERSEDED — archived 2026-05-09
 All phases verified complete. See AGENTS.md ## What Works for outcomes.
 This file is retained for historical reference only.
+
+2026-05-11: Any instruction here to use plain `depends_on` (no `condition:`) on
+the NAS is obsolete — see HIVE_OBJECTIVE.md and docs/hive/NAS_DEPLOYMENT.md
+(Dockge stack lifecycle).
 -->
 
 # Task: Docker Multi-Machine + Ollama Auto-Pull + Offline Workspace
@@ -27,7 +31,7 @@ Three Docker environments must be accounted for:
 
   NAS (Container Manager / DSM):
     - Synology DSM 7.3.2 — Package Center installs Docker as "Container Manager"
-    - `depends_on` without `condition:` required (old compose CLI in Package Center)
+    - **[Obsolete 2026-05-11]** ~~`depends_on` without `condition:` required~~ — tracked compose now uses **`condition: service_healthy`** with Compose v2; see current **`docs/hive/NAS_DEPLOYMENT.md`**
     - Dockge manages stacks via `docker compose` called from the NAS shell
     - Git ops: NAS is DEPLOY ONLY — all commits from Mac (otsmbpro16)
     - Model storage: STACK_ROOT/ollama/data/ollama (persists across restarts)
@@ -80,9 +84,7 @@ STEP 1C — Verify ollama-net subnet:
   Command: grep "172.27.0" stacks/ollama/compose.yaml
   Expected: subnet: 172.27.0.0/24
 
-STEP 1D — Verify no condition: in depends_on (NAS compatibility):
-  Command: grep "condition:" stacks/ollama/compose.yaml
-  Expected: zero matches
+STEP 1D — ~~Verify no condition: in depends_on~~ **OBSOLETE (2026-05-11):** tracked **`stacks/ollama/compose.yaml`** now **includes** `condition: service_healthy`. For validation, run **`grep "condition: service_healthy" stacks/ollama/compose.yaml`** and expect matches.
 
 ======================================================================
 PHASE 2 — HOW THE AUTO-PULL WORKS (documentation)

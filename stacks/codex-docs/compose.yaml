@@ -51,7 +51,8 @@ services:
       - PORT=3000
       - TZ=America/New_York
     depends_on:
-      - mongodb
+      mongodb:
+        condition: service_healthy
     logging:
       driver: json-file
       options:

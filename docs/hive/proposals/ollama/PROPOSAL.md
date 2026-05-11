@@ -9,7 +9,7 @@ The biggest baseline gap in the fleet — both services miss `mem_limit`, `cpu_s
 1. **HIGH** — Add `mem_limit` / `cpu_shares` to both services. Ollama in particular can pin large RAM during model load; without a cap a runaway model can starve the NAS.
 2. **HIGH** — Pin both images. `ghcr.io/open-webui/open-webui:main` is especially risky (every commit on `main`).
 3. Add healthchecks for both services.
-4. Upgrade `depends_on: ollama` from started to `condition: service_healthy` once ollama has a healthcheck.
+4. ~~Upgrade `depends_on: ollama` from started to `condition: service_healthy` once ollama has a healthcheck.~~ **Done in tracked `stacks/ollama/compose.yaml` (2026-05-11)** — requires Docker Compose v2.
 5. Add `TZ`, `logging`, `.env.example`, `README.md`.
 
 ## Changes (ordered by phase)

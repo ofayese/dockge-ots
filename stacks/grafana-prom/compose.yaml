@@ -82,9 +82,12 @@ services:
       - ${STACK_ROOT}/grafana-prom/secrets/watchtower_bearer_token.txt:/etc/prometheus/watchtower_bearer_token:ro
     restart: unless-stopped
     depends_on:
-      - node-exporter
-      - snmp-exporter
-      - cadvisor
+      node-exporter:
+        condition: service_healthy
+      snmp-exporter:
+        condition: service_healthy
+      cadvisor:
+        condition: service_healthy
 
   node-exporter:
     image: prom/node-exporter:v1.11.1

@@ -72,9 +72,9 @@ services:
       options:
         max-size: 2m
         max-file: "2"
-    # Plain depends_on (no condition:) for Synology Package Center compatibility.
     depends_on:
-      - ollama
+      ollama:
+        condition: service_healthy
     volumes:
       - ${STACK_ROOT}/ollama/data/ollama:/root/.ollama:rw
     environment:
@@ -191,7 +191,8 @@ services:
       - DEFAULT_MODELS=${DEFAULT_MODELS:-phi4:mini,qwen2.5-coder:7b,nomic-embed-text}
       - TZ=America/New_York
     depends_on:
-      - ollama
+      ollama:
+        condition: service_healthy
     healthcheck:
       test:
         - CMD-SHELL

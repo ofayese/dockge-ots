@@ -331,6 +331,38 @@ sudo docker network inspect $(sudo docker network ls -q) \
 
 Stacks use **`restart: unless-stopped`** by default. One-shot compose services use **`restart: "no"`** with an **`# intentional`** comment.
 
+## Dockge stack lifecycle (Compose v2)
+
+Tracked multi-service stacks use **`depends_on` … `condition: service_healthy`** so dependents start only after upstream **`healthcheck`** passes. On the NAS, confirm **`docker compose version`** shows **v2.x** (Compose plugin).
+
+### Pick up compose changes (stack already running)
+
+1. `cd /volume1/docker/dockge` (or your clone root on BTRFS-backed paths — avoid SMB for `git` if you hit lock/metadata issues; see **Git safety on the NAS** below).
+2. `git pull --no-rebase` (or rsync `stacks/` + `scripts/` from a dev machine, then skip pull).
+3. Per stack: `cd stacks/<stack>` (example: `stacks/zabbix`).
+4. Optional: `docker compose pull` when `image:` / digests changed.
+5. `docker compose up -d` — recreates or starts services; dependents may stay in **starting** until Postgres/Qdrant/Redis/exporters report **healthy** (often 30–120s on first cold start).
+6. `docker compose ps` — expect **running** (and **healthy** where defined). If one service is **unhealthy** after roughly twice the slowest **`start_period`**, inspect `docker compose logs <service>`.
+
+If a **web** UI briefly errors on DB while the **server** or **DB** is still importing (Zabbix): wait, then `docker compose restart zabbix-web` (service name may differ — use the service key from `compose.yaml`).
+
+### First bring-up (stack never deployed on this host)
+
+1. Run **`sudo bash scripts/init-nas.sh`** once so `${STACK_ROOT}/…` volume paths exist.
+2. In `stacks/<stack>/`: **`cp .env.example .env`**, fill secrets, create any **`secrets/*.txt`** files the README requires.
+3. **`docker compose up -d`**.
+4. Before sharing URLs, confirm dependencies are **healthy** (`docker compose ps`) for stacks ordered on DB or vector DB (zabbix, rag-stack, databases, grafana-prom, etc.).
+
+### Soft vs hard restart
+
+- **In-place process restart:** `docker compose restart` or `docker compose restart <service>`.
+- **Recreate from current compose:** `docker compose up -d --force-recreate` (or `docker compose up -d` after image/env changes — Compose reconciles state).
+- **Stop stack, keep data:** `docker compose down` — bind mounts under **`${STACK_ROOT}`** are unchanged unless you delete host dirs.
+
+### Hosts that cannot parse `condition: service_healthy`
+
+Use a local **`compose.override.yaml`** next to **`compose.yaml`** with **plain** `depends_on` lists (Compose merges files), or upgrade the NAS so **`docker compose version`** is v2. Do not commit host-specific overrides that contain secrets.
+
 ## Authentication and Identity
 
 → See [docs/hive/GOOGLE_WORKSPACE_OAUTH_NAS_LOGIN.md](GOOGLE_WORKSPACE_OAUTH_NAS_LOGIN.md) for Google Workspace OAuth NAS login guide (Path A: DSM SSO Client, Path B: Synology SSO Server).
@@ -349,7 +381,7 @@ Environment: AMD Ryzen R1600, 32 GB, CPU-only, no GPU
 Docker: Container Manager (Synology Package Center)
 Deploy: Via Dockge at `http://10.0.1.15:5571` or `docker compose` CLI via SSH
 Role: Primary inference server, shared RAG backend, offline workspace host
-**Constraint:** `depends_on` without `condition:` — older compose CLI in Package Center does not support `condition: service_healthy`
+**Compose:** Tracked multi-service stacks use **`depends_on` … `condition: service_healthy`** where dependencies have healthchecks (**Docker Compose v2**). Verify with `docker compose version` on the NAS (e.g. v2.20+). If an older DSM image rejects `condition:`, use plain `depends_on` in a local override or downgrade only that host.
 **Constraint:** PUID/PGID default to 0 (root)
 Git: DEPLOY ONLY — commit from otsmbpro16, then `git pull` on NAS
 

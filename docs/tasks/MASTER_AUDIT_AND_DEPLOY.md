@@ -62,7 +62,7 @@ Read first — do not skip any:
 Confirm hard constraints before any edit:
 
   - Canonical stack root: ${STACK_ROOT} -> /volume1/docker/dockge/stacks
-  - No depends_on.condition in tracked stacks (Synology compose compat)
+  - Multi-service stacks: `depends_on` uses **`condition: service_healthy`** where deps have healthchecks (requires **Docker Compose v2**)
   - Dockge host mapping is 5571:5001 (NOT 5571:5571)
   - No secret material in git (secrets/, id_ed25519, populated .env)
   - No DB/data files in git (db/, data/, *.db, WAL files)
@@ -432,10 +432,12 @@ Run each check and record result:
   Expected: dozzle healthcheck uses `["CMD", "/dozzle", "healthcheck"]`
   FAIL if result contains --version or --help
 
-### depends_on condition check
+### depends_on healthy-deps check
 
-  Command: grep -rn "condition:" stacks/*/compose.yaml
-  Expected: zero results.
+  Command: grep -rn "condition: service_healthy" stacks/*/compose.yaml
+  Expected: present on multi-service stacks that gate on DB/cache/metrics peers (zabbix, databases, code-server, codex-docs, rag-stack, searxng, ollama, warp-main, grafana-prom).
+
+  Command: `docker compose version` on deploy host — expect **v2** for `condition:` support.
 
 ### Boolean env var check
 
@@ -769,8 +771,11 @@ PHASE 7 — VALIDATION SUITE (AGENT)
   scripts/compose-validate.sh
   pre-commit run --all-files
 
-  # No depends_on.condition
-  grep -rn "condition:" stacks/*/compose.yaml
+  # Operator: git pull → per-stack `docker compose up -d` (see docs/hive/NAS_DEPLOYMENT.md
+  # → "Dockge stack lifecycle (Compose v2)" for already-running vs first bring-up).
+
+  # depends_on service_healthy (Compose v2 baseline)
+  grep -rn "condition: service_healthy" stacks/*/compose.yaml
 
   # No --version healthcheck probes
   grep -rn "\-\-version" stacks/*/compose.yaml | grep -i "healthcheck"
@@ -1126,7 +1131,7 @@ Phase 1 audit gates recorded before any Phase 5 fixes:
 Phase 2-4 audits recorded:
 
 - Per-stack readiness matrix generated (`24` stack folders + `_haproxy`; **superseded** — use **26** stacks incl. **`psu-ots`** + **`synology-api-bridge`** for current audits)
-- Cross-stack checks executed (`3001` reservation, `depends_on condition`, floating tags, empty `networks: {}`)
+- Cross-stack checks executed (`3001` reservation, `depends_on` **service_healthy** / Compose v2, floating tags, empty `networks: {}`)
 - Healthcheck pattern scan executed; notable anti-pattern retained for follow-up: `dozzle` using `--version`
 
 ======================================================================

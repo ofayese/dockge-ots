@@ -103,9 +103,9 @@ services:
       - "JWT_SECRET=${ANYTHINGLLM_JWT_SECRET:?ANYTHINGLLM_JWT_SECRET must be set
         in .env - run: openssl rand -hex 32}"
       - DISABLE_TELEMETRY=1
-    # Plain depends_on (no condition:) for Synology Package Center compatibility.
     depends_on:
-      - qdrant
+      qdrant:
+        condition: service_healthy
     extra_hosts:
       - otsorundscore.olutechsys.com:10.0.1.15
     # Healthcheck type A: curl HTTP probe (curl confirmed in image)
@@ -152,7 +152,8 @@ services:
       - QDRANT_API_KEY=${QDRANT_API_KEY:-}
       - GITHUB_TOKEN=${GITHUB_TOKEN:-}
     depends_on:
-      - qdrant
+      qdrant:
+        condition: service_healthy
     extra_hosts:
       - otsorundscore.olutechsys.com:10.0.1.15
     # Healthcheck type A: curl HTTP probe (curl confirmed in Python image)

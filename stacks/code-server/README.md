@@ -8,6 +8,10 @@ Browser-based VS Code (`code-server`) with adjacent MySQL (`db`) and phpMyAdmin 
 - **db** (3307) — MySQL 8.3, project-scoped data via named volume `mysql_data`
 - **phpmyadmin** (8378) — DB admin UI; depends on `db` healthcheck
 
+## Startup order
+
+**phpmyadmin** waits on **`db`** being **healthy**. See **`docs/hive/NAS_DEPLOYMENT.md`** → **Dockge stack lifecycle (Compose v2)**.
+
 ## Required env (`.env`)
 
 - `CODE_SERVER_PASSWORD` — code-server login password (kept in local gitignored `.env`)

@@ -300,8 +300,9 @@ Add to AGENTS.md ## Stack Operations Memory:
 
   [2026-05-08] Automated ollama model pulls:
   - ollama-model-init: one-shot sidecar using ollama image + OLLAMA_HOST
-    pointing to the server. Plain depends_on (no condition:) for Synology
-    compatibility; wait loop in command handles startup race.
+    pointing to the server. **[2026-05-11]** Tracked compose uses
+    **`depends_on` … `condition: service_healthy`** on **ollama** (Compose v2);
+    the wait loop in **command** still handles slow model pulls.
   - "Exited (0)" status in Dockge for ollama-model-init is CORRECT —
     it is a one-shot init container, not a long-running service.
   - Model pulls are idempotent — re-running the stack is safe.

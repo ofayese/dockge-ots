@@ -7,6 +7,10 @@ Internal documentation hub powered by codex.team's [codex.docs](https://github.c
 - **mongodb** — data store, internal-only
 - **codex-docs** (8896) — Node.js app; depends on `mongodb` healthcheck
 
+## Startup order
+
+**codex-docs** waits on **mongodb** being **healthy**. See **`docs/hive/NAS_DEPLOYMENT.md`** → **Dockge stack lifecycle (Compose v2)**.
+
 ## Required env (`.env`)
 
 - `APP_SECRET` — random 64-char hex; rotate on compromise. Generate with `openssl rand -hex 32`.

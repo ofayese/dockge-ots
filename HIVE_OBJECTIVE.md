@@ -85,7 +85,7 @@ Do **not** bump major image versions or change registries without explicit queen
 
 - **No silent mutations:** workers write under `docs/hive/proposals/<stack>/` (patch + rationale + rollback). Applying edits to tracked `compose.yaml` / config in-repo is **after** queen (or consensus) review—prefer small PR-sized proposals.
 - **Forbidden without explicit approval:** major image bumps; removing `network_mode: host` where present; modifying contents under `/volume1/certs/acme/`; committing real secrets (`CF_Token`, passwords, webhooks, etc.). Only **`.env.example`** documents keys; never commit populated `.env`.
-- **Compose compatibility (Synology):** tracked stacks use **`depends_on` without `condition:`** so Package Center `docker compose` versions stay compatible. Use healthchecks + `restart` policies for resilience instead of Compose v2 condition forms.
+- **Compose startup order:** Where service **A** depends on **B** and **B** defines a **`healthcheck`**, tracked stacks use **`depends_on: { B: { condition: service_healthy } }`** so **Docker Compose v2** waits for readiness (avoids DB/UI races). Requires `docker compose version` showing **v2** (Dockge on NAS). **Exception:** hosts whose Compose rejects `condition:` must use plain `depends_on` lists locally—see **`docs/hive/NAS_DEPLOYMENT.md` → Dockge stack lifecycle (Compose v2)** for operator steps and overrides.
 - **Host networking (`acme-sh`):** healthchecks and logging may differ; use **documented** exceptions instead of forcing impossible patterns.
 
 ## RACI — cross-cutting (avoid parallel workers colliding)
@@ -177,7 +177,7 @@ Supplementary operator guides (non-proposal docs): **[docs/hive/GOOGLE_WORKSPACE
 
 ### Compose on DSM
 
-- Prefer **Compose specification** without legacy `version:` keys. Avoid `depends_on: … condition: service_healthy` where Package Center’s `docker compose` is too old—tracked stacks use **plain** `depends_on` service lists for compatibility; rely on healthchecks + restarts for ordering.
+- Prefer **Compose specification** without legacy `version:` keys. Use **`depends_on` with `condition: service_healthy`** when the dependency exposes a **`healthcheck`** (Compose v2). On legacy hosts where `docker compose config` fails on `condition:`, fall back to plain `depends_on` and document the host.
 - **Offline / air-gap:** Most stacks need image pulls from registries; document outbound **TCP 443** (HTTPS) to your registries and any stack-specific endpoints in each stack `README.md`. No silent “phone home” beyond upstream images.
 
 ### Docker socket and host introspection

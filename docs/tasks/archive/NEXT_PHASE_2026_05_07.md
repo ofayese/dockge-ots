@@ -1,4 +1,6 @@
 > Superseded by `docs/tasks/MASTER_AUDIT_AND_DEPLOY.md` on 2026-05-08. Kept for history.
+>
+> **2026-05-11:** Sections here that require **plain `depends_on` (no `condition:`)** for Synology are **obsolete** — fleet policy and tracked compose now use **`condition: service_healthy`** where dependencies have healthchecks (**Docker Compose v2**). See **`HIVE_OBJECTIVE.md`** and **`docs/hive/NAS_DEPLOYMENT.md` → Dockge stack lifecycle**.
 
 # Task: Next Phase — Port Conflicts, Homepage Fixes, OCI Remaining, rag-stack
 

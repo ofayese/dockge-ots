@@ -7,6 +7,10 @@ Local LLM runtime (`ollama`) + open-webui front-end. CPU-only on this NAS — no
 - **otsai-server** (11434) — Ollama REST API; models persist at `${STACK_ROOT}/ollama/data`
 - **otsai-webui** (8893) — open-webui chat UI; depends on `ollama` healthcheck; app data under `${STACK_ROOT}/ollama/data/open-webui`
 
+## Startup order
+
+**otsai-webui** and **`ollama-model-init`** wait on **ollama** being **healthy**. Model pulls still use the script’s wait loop. NAS flow: **`docs/hive/NAS_DEPLOYMENT.md`** → **Dockge stack lifecycle (Compose v2)**.
+
 ## Volumes
 
 | Host path                              | Container path      | Mode | Created by    |

@@ -2,6 +2,10 @@
 
 Synology-oriented **Grafana** + **Prometheus** + exporters (`node-exporter`, `snmp-exporter`, **cAdvisor**). Compose file: [`compose.yaml`](./compose.yaml).
 
+## Startup order
+
+**prometheus** starts after **node-exporter**, **snmp-exporter**, and **cadvisor** are **healthy**. See **`docs/hive/NAS_DEPLOYMENT.md`** → **Dockge stack lifecycle (Compose v2)**.
+
 ## Ports (defaults)
 
 | Service       | Host port       | Notes                                 |

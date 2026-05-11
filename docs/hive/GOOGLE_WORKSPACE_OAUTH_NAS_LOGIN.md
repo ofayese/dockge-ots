@@ -16,6 +16,15 @@
 
 **Recommendation:** Path A for NAS system login. Path B is for when the NAS itself is the identity provider for other services (not covered here).
 
+### Cross-path OIDC contract (preserve in all repo OIDC edits)
+
+Use the same strings and rules when wiring **`psu-ots`**, **`ollama`** (Open WebUI), **Portainer**, or other DSM-backed OIDC clients:
+
+- **Scopes:** request **`openid profile email groups`** when the app needs profile + email + DSM **`groups`** for RBAC; omit or narrow **`groups`** only if the client truly does not need group claims.
+- **Username claim:** prefer **`preferred_username`** when the IdP emits it and the downstream app supports it; otherwise fall back to **`sub`** (stable subject identifier).
+- **Redirect URI strictness:** registered URIs must match what the client sends **character-for-character** (scheme, host, port, path, trailing slash). Mismatches surface as **`redirect_uri_mismatch`** from Google (Path A) or the Synology SSO Server (Path B).
+- **Synology SSO Server Account Type:** set **`Domain/LDAP/local`** when local NAS accounts or directory-backed users must align with tokens issued for containerized services (see Path B steps below).
+
 ---
 
 ## Prerequisites

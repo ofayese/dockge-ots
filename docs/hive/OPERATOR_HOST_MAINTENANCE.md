@@ -27,7 +27,9 @@ Docker daemon log drivers and log opts affect **every** container that does not 
 
 ## 5.4 — Apple Metadata Cleanup (macOS SMB Shares)
 
+- **Default:** `DRY_RUN=1` — the script prints planned removals only until you explicitly set `DRY_RUN=0` after review.
 - **Script:** `scripts/maintenance/remove_apple_hidden_files.sh` — **safe-by-default** with `DRY_RUN=1` (prints planned `rm` only). Run with `DRY_RUN=0` only after reviewing dry-run output on a copy or narrow path list.
+- **Warning — no blind `._*` sweeps:** Do not run bulk `find … -name '._*' -delete` (or similar) across entire shares; that can strip valid AppleDouble sidecars. Use this repo script’s paired/stray logic and opt-in toggles instead of wholesale deletion.
 - **Why not blanket `._*` deletes:** Blind removal of every small `._*` file can strip Finder / AppleDouble **resource-fork** sidecars the OS or apps still expect on some shares. Default behavior keeps **paired** cleanup (stub only when a sibling data file exists) unless you explicitly opt in.
 - **Optional toggles (review dry-run first):**
   - `APPLE_CLEANUP_ORPHAN_DOT_UNDERSCORE=1` — also remove tiny orphan `._*` files with **no** sibling; higher risk of removing harmless-but-attached metadata.

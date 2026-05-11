@@ -76,7 +76,7 @@ No probe (host networking + daemon mode → no meaningful liveness probe). Verif
 ## Authoritative references
 
 - [AGENTS.md](AGENTS.md) — local lessons learned (rename pattern, dockerized issue flow, validation)
-- [SETUP.md](SETUP.md) — issue/install procedure
+- [SETUP.md](SETUP.md) — issue/install procedure (Dockge-first; legacy `deploy-*.bash` runbooks in [`archive/`](archive/))
 - [HIVE_OBJECTIVE.md](../HIVE_OBJECTIVE.md) — repo-wide guardrails
 
 ## Rollback

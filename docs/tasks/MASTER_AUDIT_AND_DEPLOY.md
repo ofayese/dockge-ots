@@ -1,5 +1,5 @@
 # Task: Master Audit + Deploy — Full Stack
-# Version: 2026-05-10-a (26 stacks incl. synology-api-bridge; host-named TLS paths; consolidation sprint + review additions)
+# Version: 2026-05-10-b (26 stacks incl. synology-api-bridge; host-named TLS; doc clarity — readiness list = review cycle, not open blockers)
 
 /coder
 /compound-learning
@@ -307,14 +307,12 @@ READINESS TIERS (assign one per stack):
   - TIER C (blocked): TZ missing on multi-env service, OR image-pin critical gap (missing digest/semver), OR missing .gitignore on data stacks
   - TIER X (exempt): one-shot / placeholder stacks (mcp-tools-config) with documented exemption
 
-Known deploy-readiness blockers from prior audit (verify still apply):
-  - codex-docs: app image is digest-pinned and Mongo is pinned to `mongo:7`; verify digest freshness on image review cycle.
-  - openresume: digest-pinned (`yuihtt/open-resume@sha256:...`) — remove stale `:latest` assumptions in derived reports.
-  - watchtower: pinned to `containrrr/watchtower:1.7.1` — remove stale `:latest` assumptions in derived reports.
-  - github-desktop: digest-pinned (`ghcr.io/linuxserver/github-desktop@sha256:...`) — no longer a floating-tag blocker.
-  - holyclaude: digest-pinned (`coderluii/holyclaude@sha256:...`) — no longer a floating-tag blocker.
-  - traefik-ots/mft: pinned to `traefik:v3.6.2` — no longer a floating-major blocker.
-  - remotely: digest-pinned (`immybot/remotely@sha256:...`); update stale README/comments that still mention `:latest`.
+Image-pin and doc hygiene review cycle (re-verify on each fleet audit — not “mystery blockers” if compose already pins):
+  - **codex-docs / docker-model-runner / agents_gateway_data:** keep digests or semver aligned with **`docs/hive/COMPOSE_IMAGE_PIN_POLICY.md`**; refresh digests after upstream security advisories.
+  - **openresume:** digest-pinned (`yuihtt/open-resume@sha256:...`) — never reuse a digest from another Hub namespace; re-pin with `docker pull` + `inspect` on the **exact** reference.
+  - **watchtower:** compose uses **`containrrr/watchtower:1.7.1`**; real **`WATCHTOWER_NOTIFICATION_URL`** (e.g. Shoutrrr Discord) lives only in gitignored **`stacks/watchtower/.env`** — see tracked **`stacks/watchtower/.env.example`**.
+  - **github-desktop / holyclaude / traefik-ots / traefik-mft / remotely:** digest- or semver-pinned in compose; scrub any external checklist that still claims `:latest` for these stacks.
+  - **OIDC:** Path A (Google DSM login) vs Path B (Synology SSO Server for apps) — **`docs/hive/GOOGLE_WORKSPACE_OAUTH_NAS_LOGIN.md`** + **`docs/Modern_Identity_Orchestration.md`**; scopes, username claims, redirect strictness, and **`Domain/LDAP/local`** are spelled out there — do not mix **OAuth Service** with **SSO Server** for Path B clients.
 
 ### Generate stacks readiness report
 
@@ -325,7 +323,7 @@ Known deploy-readiness blockers from prior audit (verify still apply):
     4. Action (if TIER B/C — link to proposal or deploy gate)
 
   Example row:
-    | holyclaude | ✓ | ✓ | `:latest` (dev) | ✓ | ✓ | N/A | ✓ | B | Staged — floating tag documented in README |
+    | holyclaude | ✓ | ✓ | digest-pinned (`coderluii/holyclaude@sha256:…`) | ✓ | ✓ | N/A | ✓ | A | Ready — treat README “dev image” note as operator intent, not a floating compose ref |
 
 ======================================================================
 PHASE 3 — HEALTHCHECK AUDIT (AGENT + OPTIONAL NAS IMAGE PROBES)

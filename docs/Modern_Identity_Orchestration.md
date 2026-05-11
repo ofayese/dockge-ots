@@ -53,6 +53,8 @@ Implementing the Synology SSO Server as an OIDC Provider
 The transformation of Synology DSM into a centralized identity hub begins with the configuration of the SSO Server package. This process involves setting the global identity parameters and then registering individual applications that will delegate their authentication to the NAS.
 Fleet OIDC operator checklist (PSU, Open WebUI, Portainer, and similar OIDC clients)
 
+**Canonical path (this repo):** use the underscore filename **`docs/Modern_Identity_Orchestration.md`** only — do not add spaced-name duplicates under **`docs/`**; cross-links from **`AGENTS.md`** and **`docs/hive/GOOGLE_WORKSPACE_OAUTH_NAS_LOGIN.md`** point here.
+
 Required scopes for typical DSM-backed integrations: **`openid profile email groups`** — omit or narrow **`groups`** only when the client explicitly does not need DSM group claims.
 
 Username mapping: prefer the **`preferred_username`** claim when the Identity Provider issues it and the downstream application supports it; otherwise use **`sub`** as the stable subject identifier for account correlation.

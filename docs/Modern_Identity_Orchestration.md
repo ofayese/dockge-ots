@@ -51,6 +51,18 @@ Older versions are susceptible to known cryptographic attacks; potentially break
 Furthermore, the "Application Portal" settings in DSM allow for the customization of ports and domains for specific services. For an SSO Server deployment, it is highly recommended to utilize the default HTTPS port (443) or a dedicated alias to ensure that the identity service is not obscured by non-standard port requirements, which can occasionally complicate the configuration of third-party OIDC clients.[18]
 Implementing the Synology SSO Server as an OIDC Provider
 The transformation of Synology DSM into a centralized identity hub begins with the configuration of the SSO Server package. This process involves setting the global identity parameters and then registering individual applications that will delegate their authentication to the NAS.
+Fleet OIDC operator checklist (PSU, Open WebUI, Portainer, and similar OIDC clients)
+
+Required scopes for typical DSM-backed integrations: **`openid profile email groups`** — omit or narrow **`groups`** only when the client explicitly does not need DSM group claims.
+
+Username mapping: prefer the **`preferred_username`** claim when the Identity Provider issues it and the downstream application supports it; otherwise use **`sub`** as the stable subject identifier for account correlation.
+
+Redirect URIs must match registered values strictly (scheme, host, port, path, and trailing slash discipline); otherwise deployments commonly fail with **`redirect_uri_mismatch`**.
+
+Synology SSO Server **Account Type** must remain **`Domain/LDAP/local`** when local NAS accounts or DSM-aligned directory users must interoperate with OIDC tokens issued for containerized services.
+
+Related repo tooling scope (Apple / Synology extended-attribute clutter): Upstream **`hwdbk/synology-scripts`** **`cleanup_SynoFiles`** can remove “bogus” **`@SynoEAStream`**/**`@SynoResource`** metadata using compiled **`get_attr`** plus an **`xattrs.lst`** policy file. **This repository intentionally does not implement that helper-dependent bogus-xattr path.** The maintained script **`scripts/maintenance/remove_apple_hidden_files.sh`** stays limited to safe, operator-reviewed patterns: paired/small **`._*`** stubs (optional orphan mode), **`.DS_Store`** / **`.AppleDouble`**, and **opt-in** removal of **stray** **`@SynoEAStream`**/**`@SynoResource`** files only when the primary file path no longer exists — see script header comments for toggles.
+
 Global Configuration and Discovery Metadata
 The initial setup occurs in the General Settings tab of the SSO Server. The administrator must first define the "Account Type," which dictates the source of user identities for the SSO service. The "Domain/LDAP/local" option is the most versatile, as it allows for a hybrid environment where local NAS users, as well as users from a connected Active Directory or LDAP directory, can all utilize the same SSO infrastructure.[14, 19]
 Following the account type selection, the "Server URL" must be defined. This URL is the cornerstone of the OIDC discovery process. Once the OIDC service is enabled in the Service tab, the NAS generates a "Well-known URL"—typically https://[your-domain]/.well-known/openid-configuration.[4] This endpoint provides a JSON document that OIDC-compliant applications use to automatically discover the NAS's supported scopes, claims, and cryptographic signing keys.[4, 15, 19] Copying this URL and providing it to client applications is the most effective way to ensure a seamless integration, as it eliminates the need to manually enter individual endpoint URLs.[15, 19]

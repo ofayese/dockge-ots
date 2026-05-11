@@ -14,10 +14,13 @@
 #     "Mac compatibility" / NFD handling is off — pair-based ._ cleanup may skip stubs until names align.
 #
 # Usage:
-#   Single tree (repo or NAS bind root — includes .git/refs Syno cleanup when .git exists):
+#   Single tree (repo NAS root — one find covers stacks/*, .git/refs, and bind data under dockge/):
 #     DRY_RUN=1 APPLE_CLEANUP_ROOT=/volume1/docker/dockge bash scripts/maintenance/remove_apple_hidden_files.sh
-#   Every Dockge stack folder (canonical: .../dockge/stacks/<name>/):
+#   Every Dockge stack folder only (.../stacks/<name>/ each as root — does NOT walk .../dockge/.git or files
+#   directly under .../dockge/ outside stacks/; use APPLE_CLEANUP_ROOT for that):
 #     DRY_RUN=1 APPLE_CLEANUP_STACKS_ROOT=/volume1/docker/dockge/stacks bash scripts/maintenance/remove_apple_hidden_files.sh
+#   Both (e.g. git corruption at repo root plus per-stack pass; repo root walk also covers stacks, stacks pass is redundant):
+#     DRY_RUN=1 APPLE_CLEANUP_ROOT=/volume1/docker/dockge APPLE_CLEANUP_STACKS_ROOT=/volume1/docker/dockge/stacks bash scripts/maintenance/remove_apple_hidden_files.sh
 #   Explicit path list:
 #     DRY_RUN=0 APPLE_CLEANUP_PATHS_FILE=/path/to/paths.list bash scripts/maintenance/remove_apple_hidden_files.sh
 #
@@ -42,7 +45,7 @@ remove_apple_hidden_files.sh — prune .DS_Store, paired/small ._* stubs, .Apple
 
   DRY_RUN=1|0           default 1 — print actions only
   APPLE_CLEANUP_ROOT   single directory root (optional if PATHS_FILE or STACKS_ROOT set)
-  APPLE_CLEANUP_STACKS_ROOT  parent of stack dirs — each .../stacks/<child>/ is scanned (Dockge)
+  APPLE_CLEANUP_STACKS_ROOT  parent of stack dirs — each .../stacks/<child>/ is scanned only (not .../dockge/.git)
   APPLE_CLEANUP_PATHS_FILE  file with one absolute path per line
   MAX_DOT_UNDERSCORE_BYTES  default 65536 (find -size -Nc)
   APPLE_CLEANUP_ORPHAN_DOT_UNDERSCORE  default 0 — set 1 to delete tiny orphan ._ when sibling missing
@@ -183,17 +186,20 @@ process_root() {
 	)
 
 	# Synology DSM Search: @eaDir trees and *@Syno* sidecars anywhere under root (stack data, .git/refs, etc.).
-	echo "    Synology indexer junk — @eaDir dirs and *@SynoEAStream / *@SynoResource under ${root}"
+	local syno_dirs=0 syno_files=0
 	while IFS= read -r -d '' d; do
 		delete_dir "${d}"
+		syno_dirs=$((syno_dirs + 1))
 	done < <(
 		find "${root}" -depth -type d -name '@eaDir' -print0 2>/dev/null
 	)
 	while IFS= read -r -d '' f; do
 		delete_file "${f}"
+		syno_files=$((syno_files + 1))
 	done < <(
 		find "${root}" -type f \( -name '*@SynoEAStream' -o -name '*@SynoResource' \) -print0 2>/dev/null
 	)
+	echo "    Synology indexer junk under ${root}: ${syno_dirs} @eaDir dir(s), ${syno_files} sidecar file(s)"
 
 	if [[ "${APPLE_CLEANUP_STRAY_SYNO_SIDECARS}" == "1" ]]; then
 		while IFS= read -r -d '' f; do

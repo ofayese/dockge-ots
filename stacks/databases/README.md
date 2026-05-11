@@ -54,6 +54,43 @@ docker compose up -d
 
 Data persists under `${STACK_ROOT}/databases/db/`. Back up before any major-version bump.
 
+## Troubleshooting
+
+### PostgreSQL — `invalid record length ... got 0` during startup
+
+After `database system was not properly shut down`, PostgreSQL replays WAL. A line like `invalid record length at ... expected at least 24, got 0` at the **end** of redo is normal (end of WAL segment). If you then see **`database system is ready to accept connections`**, no action is required.
+
+### MariaDB — `Bad magic header in tc log` / `Can't init tc log`
+
+The **transaction coordinator** file `tc.log` under the MariaDB datadir is corrupted, usually from an **unclean shutdown** (NAS reboot, `docker kill`, power loss). InnoDB may be fine; only `tc.log` needs replacing.
+
+1. **Stop** MariaDB (stack stop is fine):
+
+   ```bash
+   docker stop MariaDB
+   ```
+
+2. **Rename or remove** the bad file on the host (bind mount: `${STACK_ROOT}/databases/db/mariadb`):
+
+   ```bash
+   ts="$(date +%Y%m%d%H%M%S)"
+   mv "${STACK_ROOT}/databases/db/mariadb/tc.log" "${STACK_ROOT}/databases/db/mariadb/tc.log.corrupt.${ts}"
+   ```
+
+   If `tc.log` is missing after `mv`, that is acceptable.
+
+3. **Start** MariaDB again; it will recreate `tc.log`:
+
+   ```bash
+   docker compose up -d mariadb
+   ```
+
+On the NAS, set `STACK_ROOT` to your real path (e.g. `/volume1/docker/dockge/stacks`) or use the absolute path under `.../databases/db/mariadb/tc.log`.
+
+**Note:** This is safe for typical app workloads. If you knowingly use **XA two-phase commit** across external resources, verify transaction consistency after recovery.
+
+**Other log noise:** `io_uring_queue_init() failed with ENOSYS` — falls back to libaio; expected on some Synology kernels / Docker seccomp. `memory.pressure not writable` — cgroup v2 quirk; informational unless you tune memory.
+
 ## Backup
 
 | Directory                    | Hyper Backup | Method                                                                                          |

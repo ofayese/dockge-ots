@@ -14,6 +14,11 @@ Traefik v3 runs on the **OTS** NAS and routes HTTPS for **`*.otsorundscore.olute
 
 2. **Optional:** Traefik also exposes **`certificatesResolvers.cloudflare`** (Cloudflare DNS-01, `CF_DNS_API_TOKEN`, `ACME_EMAIL`, state in `${STACK_ROOT}/traefik-ots/data/acme.json`). Use only on routers that set `traefik.http.routers.<n>.tls.certresolver=cloudflare`.
 
+### Log messages (usually harmless)
+
+- **`Failed to inspect container ... No such container`** — The Docker provider still references a container ID that was **removed or recreated** (new ID). Traefik drops it on the next refresh; **restart Traefik** if it repeats after a large redeploy. Not a routing failure by itself.
+- **`Error checking new version` / `update.traefik.io` ... timeout** — Built-in **version check** hitting the public internet; common when NAS DNS or egress is restricted. This repo sets **`--global.checkNewVersion=false`** in `compose.yaml` so Traefik does not call home.
+
 ### ACME storage permissions (`acme.json`)
 
 Traefik refuses to use the Cloudflare resolver if **`acme.json` is world- or group-readable** (expects mode **600**). After the file first exists on the NAS:

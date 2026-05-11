@@ -31,6 +31,8 @@ services:
       - PGID=${PGID:-0}
       - CF_DNS_API_TOKEN=${CF_Token}
     command:
+      # Avoid outbound calls to update.traefik.io (often DNS-timeout on NAS / split-horizon).
+      - --global.checkNewVersion=false
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
       - --providers.file.filename=/etc/traefik/tls.yaml

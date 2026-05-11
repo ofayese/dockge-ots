@@ -1,3 +1,5 @@
+<!-- SUPERSEDED (2026-05): Stack OIDC compose wiring was removed from this repo. SSO Server as IdP for individual apps remains an operator choice (see docs/hive/GOOGLE_WORKSPACE_OAUTH_NAS_LOGIN.md Path B). Archived under docs/tasks/archive/ for reference only — not an active fleet contract. -->
+
 Modern Identity Orchestration: A Comprehensive Technical Analysis of Synology DiskStation Manager as an OpenID Connect Provider and Client
 The paradigm shift in Network Attached Storage (NAS) architecture from localized file repositories to comprehensive application hosting platforms has necessitated a fundamental re-evaluation of identity management. As Synology DiskStation Manager (DSM) evolves, the integration of the OpenID Connect (OIDC) protocol represents a critical infrastructure layer that enables secure, federated identity across a diverse ecosystem of native packages, containerized services, and third-party web applications. This report provides an exhaustive technical analysis of the implementation, governance, and optimization of Synology DSM as both an OIDC Identity Provider (IdP) and a Service Provider (SP), exploring the architectural nuances, security implications, and administrative workflows required for enterprise-grade deployment.
 The Architecture of Identity in the Private Cloud
@@ -53,7 +55,7 @@ Implementing the Synology SSO Server as an OIDC Provider
 The transformation of Synology DSM into a centralized identity hub begins with the configuration of the SSO Server package. This process involves setting the global identity parameters and then registering individual applications that will delegate their authentication to the NAS.
 Fleet OIDC operator checklist (PSU, Open WebUI, Portainer, and similar OIDC clients)
 
-**Canonical path (this repo):** use the underscore filename **`docs/Modern_Identity_Orchestration.md`** only — do not add spaced-name duplicates under **`docs/`**; cross-links from **`AGENTS.md`** and **`docs/hive/GOOGLE_WORKSPACE_OAUTH_NAS_LOGIN.md`** point here.
+**Archive location:** **`docs/tasks/archive/Modern_Identity_Orchestration.md`** (superseded; see HTML comment at top of this file).
 
 Required scopes for typical DSM-backed integrations: **`openid profile email groups`** — omit or narrow **`groups`** only when the client explicitly does not need DSM group claims.
 

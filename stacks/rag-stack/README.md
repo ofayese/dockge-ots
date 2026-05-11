@@ -41,7 +41,7 @@ RAG pipeline: Qdrant vector DB + AnythingLLM + Open WebUI Pipelines. Connects to
 
 ## Health meaning
 
-- **rag-qdrant:** GET `/readyz` returns **200** — vector DB ready.
+- **rag-qdrant:** In-container **Perl** opens TCP **6333**, sends HTTP GET **`/readyz`**, expects **`200 OK`** in the response (the Qdrant image ships **perl** but not **curl**/**wget**/**nc**).
 - **rag-anythingllm:** GET `/api/ping` returns **200** — API server ready.
 - **rag-pipelines:** GET `/` returns **200** — pipeline server ready.
 

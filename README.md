@@ -24,13 +24,13 @@ Do these in order. Long command sequences live in linked docs—do not skip them
 
 1. **Container Manager** — Install from DSM Package Center.
 2. **SSH** — Enable for your operator user; install Git if you use NAS-side `git pull` ([`docs/hive/NAS_DEPLOYMENT.md`](docs/hive/NAS_DEPLOYMENT.md) covers `safe.directory`, SSH keys, and DSM quirks).
-3. **Clone** — `git clone git@github.com:ofayese/dockge-ots.git /volume1/docker/dockge` then `cd /volume1/docker/dockge`. If Git reports dubious ownership:
+3. **Clone** — `git clone git@github.com:ofayese/dockge-ots.git /volume1/docker/dockge` then `cd /volume1/docker/dockge` (adjust **remote URL** and **clone path** if your fork or directory layout differs). If Git reports dubious ownership:
    `git config --file .git/config --add safe.directory /volume1/docker/dockge`
 4. **Bootstrap dirs** — `sudo bash scripts/init-nas.sh` (creates `STACK_ROOT` paths, writes repo `.env`; see [`scripts/README.txt`](scripts/README.txt)).
 5. **Dockge host** — `sudo cp scripts/dockge-start.sh /usr/local/etc/rc.d/dockge.sh && sudo chmod +x /usr/local/etc/rc.d/dockge.sh && sudo sh /usr/local/etc/rc.d/dockge.sh`. Verify **`5571` → `5001`** and HTTP: [`scripts/dockge-start.sh`](scripts/dockge-start.sh), [`scripts/check-dockge-http.sh`](scripts/check-dockge-http.sh).
 6. **acme-sh** — `cd stacks/acme-sh`, `cp .env.example .env`, set **`CF_Token`**, `docker compose up -d`. Create **`/volume1/certs/acme/...`** dirs and run **`--issue` / `--install-cert`** for all bundles: [`stacks/acme-sh/SETUP.md`](stacks/acme-sh/SETUP.md) (**Issue all certs**, **Configure output paths**). Traefik-facing host-named wildcards: **`otsorundscore/`**, **`misfitsds/`** (plus `wildcard/`, `otsorundscore-sub/`, `misfitsds-sub/`, `otsmbpro16`, `hpdevcore` per SETUP). Check: `sudo docker exec AcmeSh acme.sh --list`.
 7. **Traefik** — Deploy **`stacks/traefik-ots/`** (and **`traefik-mft/`** on MFT) **only after** PEMs exist; wrong or missing **`ACME_CERT_ROOT`** ⇒ browser sees self-signed. Flow: [`docs/hive/NAS_DEPLOYMENT.md`](docs/hive/NAS_DEPLOYMENT.md) (Traefik section). Ping: `docker exec traefik-ots wget -qO- http://127.0.0.1:8080/ping`.
-8. **Other stacks** — Dockge UI `http://<NAS>:5571`: per stack `cp .env.example .env`, secrets, deploy. Suggested order: Portainer → acme-sh → Traefik → rest. **Compose / restarts:** use **Docker Compose v2** on the NAS; **`docker compose up -d`** after `git pull` picks up changes (see [`docs/hive/NAS_DEPLOYMENT.md`](docs/hive/NAS_DEPLOYMENT.md) → **Dockge stack lifecycle (Compose v2)** for already-running vs first bring-up).
+8. **Other stacks** — Dockge UI `http://<NAS>:5571`: per stack `cp .env.example .env`, secrets, deploy. **After** steps 6–7 (acme-sh + Traefik), bring up the **rest** of the fleet in any sensible order (e.g. Portainer early if you use it for ops; databases before apps that depend on them). Do **not** read this as repeating acme-sh/Traefik — those are already ordered above. **Compose / restarts:** use **Docker Compose v2** on the NAS; **`docker compose up -d`** after `git pull` picks up changes (see [`docs/hive/NAS_DEPLOYMENT.md`](docs/hive/NAS_DEPLOYMENT.md) → **Dockge stack lifecycle (Compose v2)** for already-running vs first bring-up).
 9. **HAProxy** — Synology **HAProxy** package: point **`-f`** at [`stacks/_haproxy/haproxy.cfg`](stacks/_haproxy/haproxy.cfg) or **`include`** it from [`/volume1/docker/haproxy.cfg`](docs/hive/NAS_DEPLOYMENT.md). **`stacks/_haproxy/certs/`** must contain **only** combined **`.pem`** files (no README). Build bundles from acme output then validate:
    `sudo /volume1/@appstore/haproxy/sbin/haproxy -c -f /volume1/@appdata/haproxy/haproxy.cfg`
    Details: [`stacks/_haproxy/README.txt`](stacks/_haproxy/README.txt), [`docs/hive/NAS_DEPLOYMENT.md`](docs/hive/NAS_DEPLOYMENT.md).
@@ -143,7 +143,7 @@ Keep NFS off on the router USB app if unused; block **rpcbind** on WAN where app
 
 ## Repository layout
 
-- **`stacks/`** — **24** Dockge stack folders (see [`HIVE_OBJECTIVE.md`](HIVE_OBJECTIVE.md)) plus **`_haproxy/`** (HAProxy config, **`certs/`**, **`maps/`**).
+- **`stacks/`** — **26** Dockge stack folders (see [`HIVE_OBJECTIVE.md`](HIVE_OBJECTIVE.md)) plus **`_haproxy/`** (HAProxy config, **`certs/`**, **`maps/`**).
 - **`docs/hive/`** — Operator docs (**`NAS_DEPLOYMENT.md`**, **`SERVICE_MAP.md`**, proposals).
 - **`scripts/`** — Bootstrap, Dockge, validation, permissions.
 - **`AGENTS.md`** / **`HIVE_OBJECTIVE.md`** — Agent context and architecture brief.

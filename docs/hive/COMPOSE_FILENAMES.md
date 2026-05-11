@@ -6,9 +6,7 @@ Most stacks use Dockge-friendly `compose.yaml` at the stack root.
 
 | Path | Filename | Rationale |
 |------|-----------|-----------|
-| `grafana-prom/` | `docker-compose.yml` | Historical Synology / community template layout; referenced in ops runbooks. |
-| `warp-main/` | `docker-compose.yaml` | Upstream Warp sample layout. |
-| `docker-model-runner/` | `docker-compose.yml` | Upstream Docker Model Runner sample. |
+| `docker-model-runner/` | `docker-compose.yml` | Upstream Docker Model Runner sample layout. |
 | `mcp-tools-config/docker-mcp.yaml` | (not Compose) | **Docker Desktop MCP catalog** (registry metadata YAML). Kept alongside Dockge-facing [`compose.yaml`](../../stacks/mcp-tools-config/compose.yaml) (minimal placeholder) so CI validates the stack folder. |
 
 All other stacks under this repo use `compose.yaml` unless a new exception is added here with owner approval.

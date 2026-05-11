@@ -9,8 +9,12 @@
 #     "Mac compatibility" / NFD handling is off — pair-based ._ cleanup may skip stubs until names align.
 #
 # Usage:
-#   DRY_RUN=1 APPLE_CLEANUP_ROOT=/volume1/docker/dockge bash scripts/maintenance/remove_apple_hidden_files.sh
-#   DRY_RUN=0 APPLE_CLEANUP_PATHS_FILE=/path/to/paths.list bash scripts/maintenance/remove_apple_hidden_files.sh
+#   Single tree (repo or NAS bind root):
+#     DRY_RUN=1 APPLE_CLEANUP_ROOT=/volume1/docker/dockge bash scripts/maintenance/remove_apple_hidden_files.sh
+#   Every Dockge stack folder (canonical: .../dockge/stacks/<name>/):
+#     DRY_RUN=1 APPLE_CLEANUP_STACKS_ROOT=/volume1/docker/dockge/stacks bash scripts/maintenance/remove_apple_hidden_files.sh
+#   Explicit path list:
+#     DRY_RUN=0 APPLE_CLEANUP_PATHS_FILE=/path/to/paths.list bash scripts/maintenance/remove_apple_hidden_files.sh
 #
 # paths.list: one absolute directory path per line; # comments and blank lines ignored.
 set -euo pipefail
@@ -18,6 +22,8 @@ set -euo pipefail
 DRY_RUN="${DRY_RUN:-1}"
 APPLE_CLEANUP_ROOT="${APPLE_CLEANUP_ROOT:-}"
 APPLE_CLEANUP_PATHS_FILE="${APPLE_CLEANUP_PATHS_FILE:-}"
+# If set, each immediate subdirectory of this path is used as a scan root (Dockge stacks layout).
+APPLE_CLEANUP_STACKS_ROOT="${APPLE_CLEANUP_STACKS_ROOT:-}"
 # Max size (bytes) for ._* resource-fork stubs; larger files are never candidates.
 MAX_DOT_UNDERSCORE_BYTES="${MAX_DOT_UNDERSCORE_BYTES:-65536}"
 # 1 = also delete tiny orphan ._ files when no sibling exists (stray stub). Default 0 = paired stubs only.
@@ -30,7 +36,8 @@ usage() {
 remove_apple_hidden_files.sh — prune .DS_Store, paired/small ._* stubs, .AppleDouble dirs; optional stray Syno sidecars
 
   DRY_RUN=1|0           default 1 — print actions only
-  APPLE_CLEANUP_ROOT   single directory root (optional if PATHS_FILE set)
+  APPLE_CLEANUP_ROOT   single directory root (optional if PATHS_FILE or STACKS_ROOT set)
+  APPLE_CLEANUP_STACKS_ROOT  parent of stack dirs — each .../stacks/<child>/ is scanned (Dockge)
   APPLE_CLEANUP_PATHS_FILE  file with one absolute path per line
   MAX_DOT_UNDERSCORE_BYTES  default 65536 (find -size -Nc)
   APPLE_CLEANUP_ORPHAN_DOT_UNDERSCORE  default 0 — set 1 to delete tiny orphan ._ when sibling missing
@@ -72,8 +79,20 @@ collect_roots() {
 	if [[ -n "${APPLE_CLEANUP_ROOT}" ]]; then
 		roots+=("${APPLE_CLEANUP_ROOT}")
 	fi
+	if [[ -n "${APPLE_CLEANUP_STACKS_ROOT}" ]]; then
+		if [[ ! -d "${APPLE_CLEANUP_STACKS_ROOT}" ]]; then
+			echo "ERROR: APPLE_CLEANUP_STACKS_ROOT is not a directory: ${APPLE_CLEANUP_STACKS_ROOT}" >&2
+			exit 2
+		fi
+		local child
+		for child in "${APPLE_CLEANUP_STACKS_ROOT}"/*; do
+			[[ -e "${child}" ]] || continue
+			[[ -d "${child}" ]] || continue
+			roots+=("${child}")
+		done
+	fi
 	if [[ "${#roots[@]}" -eq 0 ]]; then
-		echo "ERROR: Set APPLE_CLEANUP_ROOT and/or APPLE_CLEANUP_PATHS_FILE" >&2
+		echo "ERROR: Set APPLE_CLEANUP_ROOT, APPLE_CLEANUP_STACKS_ROOT, and/or APPLE_CLEANUP_PATHS_FILE" >&2
 		exit 2
 	fi
 	printf '%s\n' "${roots[@]}"

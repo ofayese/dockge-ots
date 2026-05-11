@@ -42,15 +42,14 @@ services:
       - TZ=${TZ:-America/New_York}
       - QDRANT__TELEMETRY_DISABLED=1
       - QDRANT__SERVICE__API_KEY=${QDRANT_API_KEY:-}
-    # Healthcheck type E: nc TCP probe. /readyz is unauthenticated even when API key is set.
-    # qdrant image has no wget/curl - nc available via busybox sh.
+    # Healthcheck type E: Perl TCP+HTTP GET /readyz (no wget/curl/nc in qdrant image; perl is present).
+    # /readyz is unauthenticated even when QDRANT__SERVICE__API_KEY is set.
     healthcheck:
       test:
         - CMD
-        - /bin/sh
-        - -c
-        - printf 'GET /readyz HTTP/1.0\r\n\r\n' | nc 127.0.0.1 6333 | grep -q
-          '200 OK'
+        - perl
+        - -e
+        - 'use IO::Socket::INET; my $s = IO::Socket::INET->new(PeerAddr => q(127.0.0.1), PeerPort => 6333, Proto => q(tcp), Timeout => 5) or exit 1; print $s "GET /readyz HTTP/1.0\r\nHost: localhost\r\n\r\n"; my $r = join(q(), <$s>); exit($r =~ m(200 OK) ? 0 : 1);'
       interval: 30s
       timeout: 10s
       retries: 5

@@ -16,15 +16,6 @@
 
 **Recommendation:** Path A for NAS system login. Path B is for when the NAS itself is the identity provider for other services (not covered here).
 
-### Cross-path OIDC contract (preserve in all repo OIDC edits)
-
-Use the same strings and rules when wiring **`psu-ots`**, **`ollama`** (Open WebUI), **Portainer**, or other DSM-backed OIDC clients:
-
-- **Scopes:** request **`openid profile email groups`** when the app needs profile + email + DSM **`groups`** for RBAC; omit or narrow **`groups`** only if the client truly does not need group claims.
-- **Username claim:** prefer **`preferred_username`** when the IdP emits it and the downstream app supports it; otherwise fall back to **`sub`** (stable subject identifier).
-- **Redirect URI strictness:** registered URIs must match what the client sends **character-for-character** (scheme, host, port, path, trailing slash). Mismatches surface as **`redirect_uri_mismatch`** from Google (Path A) or the Synology SSO Server (Path B).
-- **Synology SSO Server Account Type:** set **`Domain/LDAP/local`** when local NAS accounts or directory-backed users must align with tokens issued for containerized services (see Path B steps below).
-
 ---
 
 ## Prerequisites
@@ -180,12 +171,10 @@ The local admin account always works regardless of SSO state.
 For when the NAS acts as identity provider for other services:
 
 1. **Package Center** → install **SSO Server**
-2. SSO Server → **General Settings** → set server URL and **Account Type** **`Domain/LDAP/local`** so DSM/local NAS accounts resolve consistently when tokens carry DSM-aligned identifiers (Path A Google login on DSM remains separate).
+2. SSO Server → **General Settings** → set server URL
 3. SSO Server → **Service** → enable OIDC
 4. SSO Server → **Application** → Add → OIDC
-   - Application name and **Redirect URI** — must match **character-for-character** what each client sends (`redirect_uri` exact match avoids **`redirect_uri_mismatch`**; mind trailing slashes, scheme, port, and path).
-   - **Scopes** on clients (PSU, Open WebUI, Portainer, etc.): request **`openid profile email groups`** when you need profile + email + DSM **`groups`** in tokens for RBAC/team mapping.
-   - **Username claim:** configure consuming apps to prefer **`preferred_username`** when the IdP emits it; otherwise fall back to **`sub`** (stable subject identifier).
+   - Application name, Redirect URI
    - Note the App ID and App Secret
 5. Copy App ID + Secret + Well-known URL into the consuming app
 

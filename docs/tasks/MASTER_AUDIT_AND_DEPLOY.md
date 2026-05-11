@@ -117,7 +117,6 @@ Run before Phase 1 to catch operational misconfigurations:
      ls stacks/ | grep -v '^_' | sort
      # Compare names to HIVE_OBJECTIVE.md “Stack folders” row (includes synology-api-bridge, docker-model-runner, etc.).
      # Supply-chain / IAM (macro): image digests per `docs/hive/COMPOSE_IMAGE_PIN_POLICY.md` (no cross-namespace `sha256:` reuse).
-     # OIDC Path B: read `docs/hive/GOOGLE_WORKSPACE_OAUTH_NAS_LOGIN.md` Path A vs Path B before mixing Google (DSM) with SSO Server clients for psu-ots / open-webui / Portainer.
 
   2. No untracked files in repo root (except .env files):
      git status --short | grep -v '\.env' | head -5
@@ -312,7 +311,7 @@ Image-pin and doc hygiene review cycle (re-verify on each fleet audit — not �
   - **openresume:** digest-pinned (`yuihtt/open-resume@sha256:...`) — never reuse a digest from another Hub namespace; re-pin with `docker pull` + `inspect` on the **exact** reference.
   - **watchtower:** compose uses **`containrrr/watchtower:1.7.1`**; real **`WATCHTOWER_NOTIFICATION_URL`** (e.g. Shoutrrr Discord) lives only in gitignored **`stacks/watchtower/.env`** — see tracked **`stacks/watchtower/.env.example`**.
   - **github-desktop / holyclaude / traefik-ots / traefik-mft / remotely:** digest- or semver-pinned in compose; scrub any external checklist that still claims `:latest` for these stacks.
-  - **OIDC:** Path A (Google DSM login) vs Path B (Synology SSO Server for apps) — **`docs/hive/GOOGLE_WORKSPACE_OAUTH_NAS_LOGIN.md`** + **`docs/Modern_Identity_Orchestration.md`**; scopes, username claims, redirect strictness, and **`Domain/LDAP/local`** are spelled out there — do not mix **OAuth Service** with **SSO Server** for Path B clients.
+  - **DSM / Google login (Path A):** operator checklist in **`docs/hive/GOOGLE_WORKSPACE_OAUTH_NAS_LOGIN.md`**; optional Synology **SSO Server** as IdP for apps is summarized there as Path B (per-app wiring, not compose in this repo).
 
 ### Generate stacks readiness report
 

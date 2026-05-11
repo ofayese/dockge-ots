@@ -20,7 +20,7 @@ Internal **FastAPI** shim for **bounded** DSM HTTP calls. Binds **loopback only*
 ## Configure
 
 1. Copy **`.env.example`** → **`.env`** (gitignored).
-2. Set **`BRIDGE_SHARED_SECRET`**, **`DSM_BASE_URL`** (e.g. `https://10.0.1.15:5001`).
+2. Set **`BRIDGE_SHARED_SECRET`** and **`DSM_BASE_URL`** (e.g. `https://10.0.1.15:5001`). **`DSM_BASE_URL`** is required for any allowlisted route that calls DSM; leaving it blank makes those calls fail or no-op.
 3. Deploy from repo root context so **`${STACK_ROOT}`** resolves (binds **`${STACK_ROOT}/synology-api-bridge/data`** → `/data`).
 
 ```bash

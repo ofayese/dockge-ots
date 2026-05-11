@@ -1,5 +1,7 @@
 # docker-model-runner - Docker Model Runner (GPU)
 
+**Compose file:** this stack uses **`docker-compose.yml`** at the folder root (not `compose.yaml`) — see [`docs/hive/COMPOSE_FILENAMES.md`](../../docs/hive/COMPOSE_FILENAMES.md).
+
 Runs **Docker Model Runner** CUDA images for local LLM endpoints (`devstral-small-2`, `ministral3`, `smollm3`) on the Synology LAN IP `10.0.1.15`.
 
 ## Ports

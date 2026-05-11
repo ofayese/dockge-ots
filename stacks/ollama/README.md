@@ -61,7 +61,7 @@ The one-shot `ollama-model-init` service pulls tiered models from `.env`:
 Re-run the model puller after changing tiers:
 
 ```bash
-docker compose up --force-recreate ollama-model-init
+docker compose --profile init up --force-recreate ollama-model-init
 ```
 
 Pull an extra model manually:

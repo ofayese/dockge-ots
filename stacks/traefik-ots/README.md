@@ -5,8 +5,10 @@ Traefik v3 runs on the **OTS** NAS and routes HTTPS for **`*.otsorundscore.olute
 ## Ports
 
 - **Published:** `TRAEFIK_HTTP_PUBLISH` → container `:80`, `TRAEFIK_HTTPS_PUBLISH` → container `:443`, `TRAEFIK_DASHBOARD_PORT` (default `9080`) → container `:8080` (`/ping`, optional `/dashboard/`).
+- **Dashboard toggle name is exact:** set `TRAEFIK_DASHBOARD=true` (uppercase key). `traefik_dashboard=true` is ignored by Compose interpolation.
 - **LAN example:** `http://10.0.1.15:9080/ping` for host-side liveness.
-- **In-container check:** `docker exec traefik-ots wget -qO- http://127.0.0.1:8080/ping`.
+- **In-container check:** `docker exec traefik-ots wget -qO- http://127.0.0.1:8080/ping`, or `docker exec traefik-ots traefik healthcheck --ping` (no `wget` required). On DSM, if you see **`permission denied` … `docker.sock`**, run the same command with **`sudo`** (only root / docker group may use the socket), or add your user to the **`docker`** group and start a new SSH session.
+- **`docker exec … bash` fails:** The image ships **BusyBox `/bin/sh` only** — there is **no `bash`**. Use `docker exec -it traefik-ots sh`, or run the `traefik` / `wget` commands above directly (Synology “Terminal” defaults to `bash`; pick **`sh`** or override the command).
 
 ## TLS sources
 

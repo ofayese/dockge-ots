@@ -1,5 +1,5 @@
 # Stack: psu-ots — PowerShell Universal (NAS automation / NOC dashboard)
-# Joins external traefik-ots for HTTPS. Operator: issue host-named TLS PEMs first; see docs/hive/SERVICE_MAP.md
+# Published to a LAN host port and fronted by HAProxy host.map routing.
 services:
   universal:
     container_name: psu-ots
@@ -15,6 +15,8 @@ services:
       options:
         max-size: 10m
         max-file: "3"
+    ports:
+      - ${PSU_HOST_IP:-10.0.1.15}:${PSU_HOST_PORT:-5055}:5000
     environment:
       - TZ=${TZ:-America/New_York}
       # Paths inside container for NAS scripts + compose bind roots
@@ -84,15 +86,3 @@ services:
       start_period: 120s
     labels:
       - com.centurylinklabs.watchtower.enable=true
-      - traefik.enable=true
-      - traefik.http.routers.psu-ots.rule=Host(`psu.otsorundscore.olutechsys.com`)
-      - traefik.http.routers.psu-ots.entrypoints=websecure
-      - traefik.http.routers.psu-ots.tls=true
-      - traefik.http.services.psu-ots.loadbalancer.server.port=5000
-    networks:
-      - traefik-ots
-
-networks:
-  traefik-ots:
-    external: true
-    name: traefik-ots

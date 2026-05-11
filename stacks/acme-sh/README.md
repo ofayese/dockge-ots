@@ -19,9 +19,9 @@ Containerized acme.sh in daemon mode — issues and renews TLS certificates via 
 
 Installed PEMs under `${ACME_CERT_ROOT:-/volume1/certs/acme}` are consumed by other stacks; **do not modify directly**.
 
-## Post-issue deploy + verify (HAProxy / Traefik)
+## Post-issue deploy + verify (HAProxy edge)
 
-- **`acme-sh/scripts/deploy_certs.sh`** — host-run: PEM → combined bundles under **`HAPROXY_CERT_STAGE_DIR`** (default **`/volume1/certs/acme/haproxy`**, created if missing); optional **`haproxy -c`** only when that dir matches **`${STACK_ROOT}/_haproxy/certs`**; optional single-stack Traefik restart (**`TRAEFIK_PROFILE`** / **`TRAEFIK_STACK`**). Does not reload HAProxy. See **`SETUP.md`** §7 and ADR **[`../../docs/hive/proposals/acme-sh/ACME_DEPLOY_HOOK_ADR.md`](../../docs/hive/proposals/acme-sh/ACME_DEPLOY_HOOK_ADR.md)**.
+- **`acme-sh/scripts/deploy_certs.sh`** — host-run: PEM → combined bundles under **`HAPROXY_CERT_STAGE_DIR`** (default **`/volume1/certs/acme/haproxy`**, created if missing); optional **`haproxy -c`** only when that dir matches **`${STACK_ROOT}/_haproxy/certs`**. Does not reload HAProxy. See **`SETUP.md`** §7 and ADR **[`../../docs/hive/proposals/acme-sh/ACME_DEPLOY_HOOK_ADR.md`](../../docs/hive/proposals/acme-sh/ACME_DEPLOY_HOOK_ADR.md)**.
 - **`acme-sh/scripts/verify_serving.sh`** — fail-closed OpenSSL SNI check (optional Discord on failure via **`DISCORD_WEBHOOK_URL`**).
 
 ## Required env (`.env`, gitignored)

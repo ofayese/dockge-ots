@@ -1,4 +1,4 @@
-# Runbook — Reissue certs, bring up Traefik, Google OAuth (Path A Step 1)
+# Runbook — Reissue certs, refresh HAProxy edge, Google OAuth (Path A Step 1)
 
 > **Audience:** Operator on the Synology NAS (or SSH session to it) with Dockge stacks under `${STACK_ROOT}` (default `/volume1/docker/dockge/stacks`).
 > **Canonical detail:** Full `--issue` / `--install-cert` matrix lives in [`stacks/acme-sh/SETUP.md`](../../stacks/acme-sh/SETUP.md). This doc is the **ordered** checklist.
@@ -12,12 +12,12 @@
    - `*.misfitsds.olutechsys.com` and `*.misfitsds.olutech.systems` → `misfitsds.synology.me.` (MFT).
    - Grey-cloud / DNS-only for those wildcards (no orange-cloud proxy to DDNS).
 2. **Cloudflare API token** — `Zone.DNS:Edit` on **`olutechsys.com`** and **`olutech.systems`**.
-3. **Repo on NAS** — `${STACK_ROOT}/acme-sh` and `${STACK_ROOT}/traefik-ots` (or `traefik-mft`) exist; `scripts/init-nas.sh` already run if this is a fresh tree.
+3. **Repo on NAS** — `${STACK_ROOT}/acme-sh` and `${STACK_ROOT}/_haproxy` exist; `scripts/init-nas.sh` already run if this is a fresh tree.
 4. **Paths** — `${ACME_CERT_ROOT}` defaults to `/volume1/certs/acme` (see `stacks/acme-sh/.env`).
 
 ---
 
-## Part A — Reissue host-named Traefik PEMs (OTS and MFT)
+## Part A — Reissue host-named PEMs (OTS and MFT)
 
 Perform **on the NAS that runs `acme-sh`** (often **OTS only** if one container issues for both zones).
 
@@ -109,7 +109,7 @@ sudo docker exec AcmeSh acme.sh --issue \
 
 Wait for **success** in logs (`docker logs -f AcmeSh`). DNS propagation is typically 1–2 minutes per order.
 
-### A5 — Install PEMs to Traefik-facing dirs
+### A5 — Install PEMs to host cert dirs
 
 `--install-cert -d` must match **Main_Domain** from `acme.sh --list` (the **first** `-d` from **A4** — here the apex on `.olutechsys.com`).
 
@@ -153,41 +153,20 @@ Details: [`stacks/_haproxy/README.txt`](../../stacks/_haproxy/README.txt). Reloa
 
 ---
 
-## Part B — Bring Traefik up (per NAS)
+## Part B — Refresh HAProxy edge (per NAS)
 
-**Rule:** PEMs must exist **before** the first meaningful HTTPS test.
-
-### B1 — OTS NAS (`traefik-ots`)
+**Rule:** PEM bundles in `${STACK_ROOT}/_haproxy/certs/` must exist before HTTPS smoke tests.
 
 ```bash
-cd "${STACK_ROOT:-/volume1/docker/dockge/stacks}/traefik-ots"
-test -f .env || cp .env.example .env
-# Confirm ACME_CERT_ROOT matches where PEMs were installed (default /volume1/certs/acme)
-sudo docker compose up -d
-sleep 15
-sudo docker exec traefik-ots traefik healthcheck --ping
+sudo /volume1/@appstore/haproxy/sbin/haproxy -c -f "${STACK_ROOT:-/volume1/docker/dockge/stacks}/_haproxy/haproxy.cfg"
 ```
+
+Reload HAProxy after validation using your package/service workflow.
 
 **Smoke tests:**
 
-- `sudo docker exec traefik-ots traefik healthcheck --ping` (authoritative).
-- Optional from the NAS host: `curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:9080/ping` when using the default `TRAEFIK_DASHBOARD_PORT=9080` (see `.env`).
-
-See [`stacks/traefik-ots/README.md`](../../stacks/traefik-ots/README.md) for ports, `tls.yaml`, and label examples.
-
-### B2 — MFT NAS (`traefik-mft`)
-
-Repeat **B1** on the **MFT** host using `${STACK_ROOT}/traefik-mft` and container name **`traefik-mft`**. PEM source is **`misfitsds/`** on that NAS (or copy/sync if you centralise issuance).
-
-### B3 — After PEM rotation
-
-Restart Traefik so the process reloads file-based certs if you replaced PEMs in place:
-
-```bash
-cd "${STACK_ROOT}/traefik-ots" && sudo docker compose restart
-```
-
-(MFT: same with `traefik-mft`.)
+- `curl -kI --max-time 15 https://psu.otsorundscore.olutechsys.com`
+- `echo | openssl s_client -servername psu.otsorundscore.olutechsys.com -connect 10.0.1.15:443 2>/dev/null | openssl x509 -noout -subject -dates`
 
 ---
 

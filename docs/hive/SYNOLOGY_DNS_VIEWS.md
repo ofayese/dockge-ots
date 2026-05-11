@@ -249,6 +249,6 @@ If the NAS running DNS Server is offline, clients need a **second resolver** tha
 
 ### After TLS / ACME changes (operator checklist)
 
-On the NAS: `docker compose restart traefik-ots traefik-mft` (or your Dockge equivalent) so Traefik reloads certs. **Do not delete** `acme.json` / acme-sh state unless you are following `stacks/acme-sh/SETUP.md` rotation. From a LAN client: `curl -kI --max-time 15 https://<real-hostname>` and `echo | openssl s_client -servername <hostname> -connect <ip>:443 2>/dev/null | openssl x509 -noout -subject -dates` to confirm SAN and expiry.
+On the NAS: validate and reload HAProxy after refreshing staged PEM bundles under `stacks/_haproxy/certs/`. From a LAN client: `curl -kI --max-time 15 https://<real-hostname>` and `echo | openssl s_client -servername <hostname> -connect <ip>:443 2>/dev/null | openssl x509 -noout -subject -dates` to confirm SAN and expiry.
 
 Further stack examples (Pi-hole, Technitium) live in git history of this doc if you reintroduce them; prefer Dockge stack paths under `/volume1/docker/dockge/stacks/` when adding containers.

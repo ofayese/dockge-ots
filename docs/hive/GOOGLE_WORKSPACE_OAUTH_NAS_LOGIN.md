@@ -3,7 +3,7 @@
 > **Audience:** Operator deploying Google Workspace identity login for Synology DSM.
 > **Goal:** Use a Google Workspace account to authenticate into DSM as a NAS system user.
 
-**Operator checklist (certs → Traefik → this doc):** [`docs/hive/CERT_REISSUE_TRAEFIK_OAUTH_RUNBOOK.md`](CERT_REISSUE_TRAEFIK_OAUTH_RUNBOOK.md) — Part **C** mirrors **Step 1** below with dual-TLD origin/redirect notes.
+**Operator checklist (certs → HAProxy edge → this doc):** [`docs/hive/CERT_REISSUE_TRAEFIK_OAUTH_RUNBOOK.md`](CERT_REISSUE_TRAEFIK_OAUTH_RUNBOOK.md) — Part **C** mirrors **Step 1** below with dual-TLD origin/redirect notes.
 
 ---
 
@@ -39,7 +39,7 @@ These four things **must agree** — mismatches cause `origin_mismatch` or `redi
 | OAuth Client JavaScript Origins | Exact `scheme://host` for each browser URL you will use (see **Step 1**) |
 | OAuth Client Redirect URIs | Exact callback per origin, e.g. `https://nas.otsorundscore.olutechsys.com/__ssolib/oauth/callback` |
 | DSM Login Portal HTTPS hostname | Must equal the host in Origins (e.g. `nas.otsorundscore.olutechsys.com`) |
-| TLS cert SAN | Wildcard **`*.otsorundscore.olutechsys.com`** / **`*.otsorundscore.olutech.systems`** when both issued on the Traefik PEM (see runbook) |
+| TLS cert SAN | Wildcard **`*.otsorundscore.olutechsys.com`** / **`*.otsorundscore.olutech.systems`** when both are issued and staged to HAProxy PEM bundles (see runbook) |
 
 **Origin rules (Google enforces strictly):**
 - Scheme + host only — no paths, no wildcards, no trailing slash
@@ -124,7 +124,7 @@ https://nas.otsorundscore.olutech.systems/__ssolib/oauth/callback
 ### Routing table
 | Public URL | Reverse proxy | DSM service |
 |---|---|---|
-| `https://nas.otsorundscore.olutechsys.com` | Traefik :6443 | DSM HTTPS :5001 |
+| `https://nas.otsorundscore.olutechsys.com` | HAProxy :443 | DSM HTTPS :5001 |
 
 ---
 
@@ -148,7 +148,7 @@ https://nas.otsorundscore.olutech.systems/__ssolib/oauth/callback
 | `redirect_uri_mismatch` | DSM sends a different callback URL than registered | Copy exact URI from DSM SSO Client config |
 | `NET::ERR_CERT_AUTHORITY_INVALID` | DSM serving self-signed cert on the OAuth hostname | Issue cert for `nas.otsorundscore.olutechsys.com` via acme-sh |
 | `Client sent HTTP request to HTTPS server` | Reverse proxy sending HTTP to DSM HTTPS backend | Set proxy destination to `https://` |
-| `400 Bad Request` from DSM | Same HTTP/HTTPS mismatch at proxy layer | Verify Traefik backend uses `https://` for DSM |
+| `400 Bad Request` from DSM | Same HTTP/HTTPS mismatch at proxy layer | Verify HAProxy backend uses DSM HTTPS target (`https://` on :5001) |
 
 ---
 

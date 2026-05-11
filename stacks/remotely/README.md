@@ -13,7 +13,7 @@ no inbound firewall ports are required beyond the web UI.
 
 ## Prerequisites
 
-- Traefik (`traefik-ots`) or DSM Reverse Proxy serving HTTPS for the public URL
+- HAProxy host map/backends or DSM Reverse Proxy serving HTTPS for the public URL
 - **WebSocket enabled** in the reverse proxy (see below — required for remote sessions)
 
 ## WebSocket requirement (critical)
@@ -30,7 +30,7 @@ once an HTTPS connection is established.
    (auto-adds `Upgrade: websocket` and `Connection: Upgrade` headers)
 4. Save
 
-**Traefik:** WebSocket is transparent — no extra configuration needed.
+**HAProxy:** WebSocket upgrade is transparent with HTTP mode defaults in this repo.
 
 ## Environment variables
 
@@ -90,13 +90,6 @@ sudo docker compose down
 
 To restore from backup, copy the data directory contents back and `docker compose up -d`.
 
-## Traefik labels (optional — add to compose.yaml when routing via Traefik)
+## HAProxy mapping (for public HTTPS)
 
-```yaml
-labels:
-  - traefik.enable=true
-  - traefik.http.routers.remotely.rule=Host(`remotely.otsorundscore.olutechsys.com`)
-  - traefik.http.routers.remotely.entrypoints=websecure
-  - traefik.http.routers.remotely.tls=true
-  - traefik.http.services.remotely.loadbalancer.server.port=5000
-```
+Map the public hostname in `stacks/_haproxy/maps/host.map` and point the backend in `stacks/_haproxy/haproxy.cfg` to `10.0.1.15:5371`.

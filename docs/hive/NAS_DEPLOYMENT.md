@@ -62,9 +62,6 @@ STACK_ROOT_OVERRIDE=/volume1/docker/dockge/stacks \
 | Container | Port | Protocol | URL | Notes |
 | --- | --- | --- | --- | --- |
 | Dockge | 5571 | HTTP | `http://10.0.1.15:5571` | Plain HTTP |
-| Traefik dashboard | 9080 | HTTP | `http://10.0.1.15:9080/dashboard/` | Trailing slash required; only when `TRAEFIK_DASHBOARD=true` |
-| Traefik HTTP | 8880 | HTTP | `http://10.0.1.15:8880` | Redirects to HTTPS |
-| Traefik HTTPS | 6443 | HTTPS | `https://10.0.1.15:6443` | TLS — use `https://` |
 | Portainer | 9000 | HTTP | `http://10.0.1.15:9000` | Portainer CE HTTP |
 | Portainer | 9443 | HTTPS | `https://10.0.1.15:9443` | TLS — use `https://` |
 | Portainer Agent | 9001 | HTTPS (mTLS) | Internal only | Not browser-accessible |
@@ -86,11 +83,9 @@ STACK_ROOT_OVERRIDE=/volume1/docker/dockge/stacks \
 | OpenResume | 8889 | HTTP | `http://10.0.1.15:8889` | Plain HTTP |
 | Watchtower metrics | 18787 | HTTP | `http://10.0.1.15:18787` | API/metrics |
 
-**"Client sent an HTTP request to an HTTPS server"** — you accessed a TLS port with `http://`. Fix: change to `https://`. Affected ports: **9443** (Portainer HTTPS), **6443** (Traefik HTTPS), **9001** (Portainer Agent — mTLS, not meant for browser `http://`/`https://` checks).
+**"Client sent an HTTP request to an HTTPS server"** — you accessed a TLS port with `http://`. Fix: change to `https://`. Affected ports: **9443** (Portainer HTTPS), **443** (HAProxy HTTPS), **9001** (Portainer Agent — mTLS, not meant for browser `http://`/`https://` checks).
 
-**"server unexpectedly dropped the connection"** — host port published but no container listener. Most common cause: Traefik port mapping pointed to wrong internal port. Traefik listens on `:80` and `:443` internally; host must map `8880→:80` and `6443→:443`.
-
-**Traefik 404 on `/`** when dashboard is disabled — correct behaviour. Access with `http://10.0.1.15:9080/dashboard/` (trailing slash) only when `TRAEFIK_DASHBOARD=true`.
+**"server unexpectedly dropped the connection"** — host port published but no container listener. Common causes: stale HAProxy backend port, service not listening on the published host port, or DNS entry mapping to the wrong backend.
 
 ## Known outstanding issues
 
@@ -299,8 +294,6 @@ Always set `name:` explicitly on every `networks:` block. Without it Docker prep
 | `github-desktop-net` | `172.20.0.0/24` | `github-desktop-net` |
 | `grafana-net` | `172.22.0.0/24` | `grafana-net` |
 | `prometheus-net` | `172.22.1.0/24` | `prometheus-net` |
-| `traefik-ots` | `172.23.0.0/24` | `traefik-ots` |
-| `traefik-mft` | `172.23.1.0/24` | `traefik-mft` |
 | `portainer-net` | `172.24.0.0/24` | `portainer-net` |
 | `dozzle-net` | `172.24.1.0/24` | `dozzle-net` |
 | `homepage-net` | `172.24.2.0/24` | `homepage-net` |
@@ -310,7 +303,7 @@ Always set `name:` explicitly on every `networks:` block. Without it Docker prep
 | `zabbix-net` | `172.25.1.0/24` | `zabbix-net` |
 | `searxng-net` | `172.26.0.0/24` | `searxng-net` |
 | `ollama-net` | `172.27.0.0/24` | `ollama-net` |
-| `rag-net` | `172.27.1.0/24` | `rag-net` |
+| `rag-net` | `172.28.7.0/24` | `rag-net` |
 | `holyclaude` | `172.28.0.0/24` | *(named volume stack — no bridge)* |
 | `remotely-net` | `172.28.1.0/24` | `remotely-net` |
 | `code-server-net` | `172.28.2.0/24` | `code-server-net` |
@@ -318,7 +311,7 @@ Always set `name:` explicitly on every `networks:` block. Without it Docker prep
 | `agents-net` | `172.28.4.0/24` | `agents-net` |
 | `codex-docs-net` | `172.28.5.0/24` | `codex-docs-net` |
 | `openresume-net` | `172.28.6.0/24` | `openresume-net` |
-| Next free | `172.28.7.0/24+` | — |
+| Next free | `172.28.8.0/24+` | — |
 
 To check existing subnets on the NAS before adding a network:
 
@@ -429,46 +422,27 @@ This is expected. Post-change verification that requires `STACK_ROOT` in every `
 
 Two second-level subdomains route traffic to each NAS:
 
-- `*.otsorundscore.olutechsys.com` / `*.otsorundscore.olutech.systems` → otsorundscore NAS (`traefik-ots` stack)
-- `*.misfitsds.olutechsys.com` / `*.misfitsds.olutech.systems` → misfitsds NAS (`traefik-mft` stack)
+- `*.otsorundscore.olutechsys.com` / `*.otsorundscore.olutech.systems` → otsorundscore NAS (HAProxy host map)
+- `*.misfitsds.olutechsys.com` / `*.misfitsds.olutech.systems` → misfitsds NAS (HAProxy host map)
 
-Both are wildcard CNAMEs to the NAS DDNS hostname — no per-service DNS entry is needed. Add a new service by adding Traefik labels to its `compose.yaml` and joining the `traefik-ots` or `traefik-mft` network.
+Both are wildcard CNAMEs to the NAS DDNS hostname — no per-service DNS entry is needed. Add a new service by publishing a host port and mapping hostname → backend in `stacks/_haproxy/maps/host.map`.
 
 See [docs/hive/SERVICE_MAP.md](SERVICE_MAP.md) for the full service inventory.
 See [docs/hive/dns/olutechsys.com.zone](dns/olutechsys.com.zone) for the DNS zone reference.
 
-## Traefik deployment
+## HAProxy deployment
 
-Traefik runs as a container on each NAS in its own Dockge stack. It is **not** part of the service stacks — it is a shared infrastructure stack deployed once per NAS.
+HAProxy is the shared HTTPS edge on each NAS. Service stacks publish LAN ports and HAProxy routes hostnames to those backends via `stacks/_haproxy/maps/host.map`.
 
 ### Deploy order
 
-1. **Issue and install PEMs** with **`stacks/acme-sh`** first (DNS-01). Traefik **OTS** mounts **`${ACME_CERT_ROOT}/otsorundscore/`**; Traefik **MFT** mounts **`${ACME_CERT_ROOT}/misfitsds/`**. Paths are wired in each stack’s `compose.yaml` and `config/tls.yaml`.
-2. Deploy **`traefik-ots`** (OTS NAS) or **`traefik-mft`** (MFT NAS) via Dockge **after** `fullchain.pem` and `privkey.pem` exist in those directories.
-3. Confirm Traefik is healthy:
+1. **Issue and install PEMs** with **`stacks/acme-sh`** first (DNS-01). Keep host-named cert trees (`otsorundscore/`, `misfitsds/`) current.
+2. Build/update combined PEM bundles in `stacks/_haproxy/certs/` and validate config:
    ```bash
-   docker exec traefik-ots traefik healthcheck --ping
+   sudo /volume1/@appstore/haproxy/sbin/haproxy -c -f /volume1/docker/dockge/stacks/_haproxy/haproxy.cfg
    ```
-4. Deploy service stacks — they join the `traefik-ots` / `traefik-mft` network and appear in Traefik automatically.
-
-### Cert bind-mount dependency
-
-Traefik does **not** read legacy **`ots-sub/`** or **`mft-sub/`** paths. Use **host-named** PEM dirs **`otsorundscore/`** and **`misfitsds/`** (see [`stacks/acme-sh/SETUP.md`](../../stacks/acme-sh/SETUP.md) and [`docs/hive/CERT_REISSUE_TRAEFIK_OAUTH_RUNBOOK.md`](CERT_REISSUE_TRAEFIK_OAUTH_RUNBOOK.md)). If the mount source is empty or missing files at startup, Traefik may serve a **self-signed fallback** — browsers will warn. Issue and **`--install-cert`** before first Traefik deploy.
-
-### Traefik port mapping (critical)
-
-Traefik entrypoints listen on `:80` (web) and `:443` (websecure) **INSIDE** the container. Host port mapping must target these internal ports:
-
-- `${TRAEFIK_HTTP_PUBLISH:-8880}:80` — maps host 8880 to container :80
-- `${TRAEFIK_HTTPS_PUBLISH:-6443}:443` — maps host 6443 to container :443
-
-**NOT** `:8880` or `:6443` as container targets — those have no listeners.
-
-Default: HAProxy owns host 443/80; Traefik uses 8880/6443 on the host.
-
-### Security Advisor warning
-
-Traefik mounts `/var/run/docker.sock` read-only. Security Advisor will flag this. It is intentional and documented in `stacks/traefik-ots/compose.yaml` and `stacks/traefik-mft/compose.yaml`.
+3. Reload HAProxy.
+4. Deploy/update service stacks and host.map/backend entries.
 
 ## Security Advisor warnings
 
@@ -481,7 +455,6 @@ Security Advisor will report the following warnings for this repo. All are inten
 | `IPC_LOCK` capability | **github-desktop** (Electron memory locking) | Intentional — documented in `stacks/github-desktop/compose.yaml` |
 | `no-new-privileges` omitted | **github-desktop** (Electron setuid sandbox vs DSM) | Intentional — `bfa07bd`. Do not re-add NNP |
 | `privileged: true` on zabbix-agent2 | Docker agent needs host access for container metrics | Only relevant if **zabbix-agent2** is uncommented |
-| `/var/run/docker.sock` mount | **traefik-ots** and **traefik-mft** (Docker label discovery) | Read-only (`:ro`). Required for Traefik service auto-discovery |
 
 Acknowledge these in **Security Advisor → Mark as acknowledged**. Do not remove settings from `compose.yaml` solely to silence warnings.
 
@@ -516,8 +489,8 @@ The following are also safe to include:
 | Path | Contents | Notes |
 | --- | --- | --- |
 | `/volume1/certs/acme/wildcard/` | PEM files | Safe — no live database |
-| `/volume1/certs/acme/otsorundscore/` | PEM files | Traefik-OTS default TLS; safe — no live database |
-| `/volume1/certs/acme/misfitsds/` | PEM files | Traefik-MFT default TLS; safe — no live database |
+| `/volume1/certs/acme/otsorundscore/` | PEM files | Source for HAProxy-staged OTS cert bundles; safe — no live database |
+| `/volume1/certs/acme/misfitsds/` | PEM files | Source for HAProxy-staged MFT cert bundles; safe — no live database |
 | `/volume1/certs/acme/otsorundscore-sub/` | PEM files | Optional broader SAN profile; safe — no live database |
 | `/volume1/certs/acme/misfitsds-sub/` | PEM files | Optional broader SAN profile; safe — no live database |
 | `/volume1/certs/acme/otsmbpro16/` | PEM files | Safe — no live database |

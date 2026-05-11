@@ -124,10 +124,9 @@ sudo docker exec AcmeSh acme.sh --list
 
 After new or renewed PEMs under **`${ACME_CERT_ROOT}`** (profiles such as **`otsorundscore`**, **`misfitsds`** — see the tree at the top of this file):
 
-1. **HAProxy bundles + optional Traefik restart (host-run, preferred):**  
+1. **HAProxy bundles (host-run, preferred):**  
    - Script: **`stacks/acme-sh/scripts/deploy_certs.sh`** — builds combined PEMs into **`HAPROXY_CERT_STAGE_DIR`** (default **`/volume1/certs/acme/haproxy`**; **`mkdir -p`** on run). Atomic replace + **`.lkg`** rollback still applies under that directory when **`haproxy -c`** runs and fails (**`haproxy -c`** is skipped unless **`HAPROXY_CERT_STAGE_DIR`** equals **`${STACK_ROOT}/_haproxy/certs`**, so the config’s `crt` paths match staged files; copy bundles to the live path your **`haproxy.cfg`** uses, then validate/reload HAProxy manually in DSM or via your own procedure). The script does **not** restart or reload HAProxy.  
    - **Single profile (optional):** with **`BUNDLE_SPECS` unset**, set **`ACME_PROFILE=otsorundscore`** or **`misfitsds`** to stage **one** HAProxy bundle using the default filename mapping (see script header).  
-   - **Traefik:** set **`TRAEFIK_PROFILE=ots`** or **`mft`** (or **`TRAEFIK_STACK=traefik-ots`** / **`traefik-mft`**) so **only one** Traefik stack is restarted; defaults skip Traefik if unset.  
    - **HAProxy validate:** when staging matches the live cert dir, **`haproxy -c`** runs against **`HAPROXY_CFG`** (default **`${STACK_ROOT}/_haproxy/haproxy.cfg`**) if **`HAPROXY_BIN`** is executable (Synology package default **`/volume1/@appstore/haproxy/sbin/haproxy`**).  
    - Rationale: **[`docs/hive/proposals/acme-sh/ACME_DEPLOY_HOOK_ADR.md`](../../docs/hive/proposals/acme-sh/ACME_DEPLOY_HOOK_ADR.md)** (host-run vs in-container).
 

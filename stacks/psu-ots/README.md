@@ -4,8 +4,8 @@ PowerShell Universal provides **scheduled jobs**, **API endpoints**, and a **NOC
 
 ## Prerequisites
 
-- **TLS:** Host-named wildcard PEMs under `${ACME_CERT_ROOT}/otsorundscore/` (OTS NAS) per [`docs/hive/SERVICE_MAP.md`](../../docs/hive/SERVICE_MAP.md). Traefik rule in compose: `psu.otsorundscore.olutechsys.com`.
-- **Network:** `traefik-ots` stack must exist (external Docker network `traefik-ots`).
+- **TLS:** Host-named wildcard PEM bundle for `psu.otsorundscore.olutechsys.com` (and optional `.olutech.systems`) must exist under [`stacks/_haproxy/certs/`](../_haproxy/certs/) per [`docs/hive/SERVICE_MAP.md`](../../docs/hive/SERVICE_MAP.md).
+- **HAProxy mapping:** [`stacks/_haproxy/maps/host.map`](../_haproxy/maps/host.map) must map the PSU hostnames to `psu-be`, and [`stacks/_haproxy/haproxy.cfg`](../_haproxy/haproxy.cfg) must point `psu-be` at `${PSU_HOST_IP}:${PSU_HOST_PORT}`.
 - **DNS:** Public + split-horizon records for `psu.otsorundscore.olutechsys.com` (and `.olutech.systems` if used).
 
 ## First deploy
@@ -17,7 +17,7 @@ cp .env.example .env
 docker compose up -d
 ```
 
-Admin UI: `https://psu.otsorundscore.olutechsys.com` (via Traefik) or publish host port temporarily for bootstrap.
+Admin UI: `https://psu.otsorundscore.olutechsys.com` (via HAProxy) and optional direct LAN bootstrap `http://${PSU_HOST_IP}:${PSU_HOST_PORT}`.
 
 ## Repository layout
 

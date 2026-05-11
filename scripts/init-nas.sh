@@ -9,7 +9,7 @@
 # Manifest exhaustiveness (BSD-safe; no grep -oP):
 #   diff <(grep -E '^\s*"[^"]+:' scripts/init-nas.sh | sed -E 's/^[[:space:]]*"([^"]+):.*/\1/' | sort -u) \
 #        <(ls stacks/ | grep -vE '^portainer$|^agents_gateway_data$|^it-tools$|^mcp-tools-config$|^openresume$|^warp-main$|^watchtower$|^docker-model-runner$' | sort)
-# Left: unique stack names from STACK_MANIFEST (sort -u: traefik-ots / traefik-mft each listed twice for config+data).
+# Left: unique stack names from STACK_MANIFEST.
 # Right: stack dirs excluding MANIFEST_EXEMPT (same as grep -vE list). _haproxy stays on both sides.
 
 set -euo pipefail
@@ -92,10 +92,6 @@ STACK_MANIFEST=(
 
 	# ── New stacks: add entry here before first deploy ─────────────────
 	"psu-ots:data"
-	"traefik-ots:config" # Traefik config (tls.yaml)
-	"traefik-ots:data"   # Traefik built-in ACME state (acme.json) - separate from acme-sh PEMs
-	"traefik-mft:config"
-	"traefik-mft:data"
 
 	# HAProxy bind-mount assets (certs + host map); not a Dockge compose stack - see stacks/_haproxy/README.txt
 	"_haproxy:certs,maps"

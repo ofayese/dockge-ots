@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # Stage HAProxy PEM bundles (fullchain + privkey) from acme.sh output under HAPROXY_CERT_STAGE_DIR (default
-# /volume1/certs/acme/haproxy). Optionally restart one Traefik stack. Does not reload or restart HAProxy.
+# /volume1/certs/acme/haproxy). Does not reload HAProxy.
 # Host-run (preferred). See docs/hive/proposals/acme-sh/ACME_DEPLOY_HOOK_ADR.md
 set -euo pipefail
 
 usage() {
 	cat <<'USAGE'
-Usage: deploy_certs.sh [--no-traefik] [--no-haproxy-check]
+Usage: deploy_certs.sh [--no-haproxy-check]
 
 Environment:
   STACK_ROOT              Required — Dockge stacks root (e.g. /volume1/docker/dockge/stacks)
@@ -19,15 +19,11 @@ Environment:
   ACME_PROFILE            Optional — when set and BUNDLE_SPECS is empty, builds one bundle:
                             otsorundscore → otsorundscore.olutechsys.com.pem
                             misfitsds     → misfitsds.olutechsys.com.pem
-  TRAEFIK_PROFILE         ots | mft — selects traefik-ots or traefik-mft for restart (unless TRAEFIK_STACK set)
-  TRAEFIK_STACK           e.g. traefik-ots — overrides profile mapping; restart only this compose project name
-  SKIP_TRAEFIK            If 1, never restart Traefik
   HAPROXY_BIN             Default /volume1/@appstore/haproxy/sbin/haproxy (Synology package); must exist for -c
   HAPROXY_CFG             Config for haproxy -c; default ${STACK_ROOT}/_haproxy/haproxy.cfg
   DISCORD_WEBHOOK_URL     Optional — notify on hard failures (same var name as acme-sh compose)
 
 Flags:
-  --no-traefik       Skip Traefik docker compose restart
   --no-haproxy-check Skip haproxy -c (still runs openssl checks on staged bundles)
 USAGE
 }
@@ -44,12 +40,9 @@ notify_discord() {
 
 STACK_ROOT="${STACK_ROOT:?Set STACK_ROOT to your Dockge stacks directory}"
 ACME_CERT_ROOT="${ACME_CERT_ROOT:-/volume1/certs/acme}"
-SKIP_TRAEFIK="${SKIP_TRAEFIK:-0}"
-DO_TRAEFIK=1
 DO_HAPROXY_CHECK=1
 while [[ "${1:-}" == -* ]]; do
 	case "$1" in
-		--no-traefik) DO_TRAEFIK=0 ;;
 		--no-haproxy-check) DO_HAPROXY_CHECK=0 ;;
 		-h | --help) usage; exit 0 ;;
 		*) echo "Unknown flag: $1" >&2; usage >&2; exit 2 ;;
@@ -140,31 +133,3 @@ if [[ "${DO_HAPROXY_CHECK}" -eq 1 ]]; then
 	fi
 fi
 
-if [[ "${DO_TRAEFIK}" -eq 1 && "${SKIP_TRAEFIK}" != "1" ]]; then
-	tstack="${TRAEFIK_STACK:-}"
-	if [[ -z "${tstack}" ]]; then
-		case "${TRAEFIK_PROFILE:-}" in
-			ots) tstack="traefik-ots" ;;
-			mft) tstack="traefik-mft" ;;
-			*) tstack="" ;;
-		esac
-	fi
-	if [[ -z "${tstack}" ]]; then
-		echo "Traefik restart skipped: set TRAEFIK_PROFILE=ots|mft or TRAEFIK_STACK=traefik-ots|traefik-mft" >&2
-	else
-		proj="${STACK_ROOT}/${tstack}"
-		if [[ ! -d "${proj}" ]]; then
-			echo "ERROR: ${proj} not found" >&2
-			exit 1
-		fi
-		(
-			cd "${proj}" || exit 1
-			if [[ -f .env ]]; then
-				docker compose --env-file .env restart
-			else
-				docker compose restart
-			fi
-		)
-		echo "restarted: ${tstack}"
-	fi
-fi

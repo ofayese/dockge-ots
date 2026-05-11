@@ -2,14 +2,14 @@
 
 **Status:** Accepted  
 **Date:** 2026-05-10  
-**Scope:** `stacks/acme-sh/` renewals → Traefik file mounts, HAProxy PEM bundles, optional verify.
+**Scope:** `stacks/acme-sh/` renewals → HAProxy PEM bundles and optional verify.
 
 ## Context
 
 - **Issuer:** only **acme.sh** (this repo’s `acme-sh` stack); no Certbot.
-- **Consumers:** Traefik (`traefik-ots` / `traefik-mft`) reads PEM trees from the host; HAProxy loads combined PEM bundles from `${STACK_ROOT}/_haproxy/certs/` (directory must contain **only** `.pem` files).
+- **Consumers:** HAProxy loads combined PEM bundles from `${STACK_ROOT}/_haproxy/certs/` (directory must contain **only** `.pem` files).
 - **Platform:** Synology DSM + Docker Compose + optional Synology HAProxy package.
-- **Risk:** in-container hooks run as the acme-sh container user, lack a stable path to **one** Traefik project dir, and cannot reliably invoke the DSM `haproxy` binary or validate against the **live** `@appdata` config without mounting extra host paths and the Docker socket (undesired expansion of blast radius).
+- **Risk:** in-container hooks run as the acme-sh container user and cannot reliably invoke the DSM `haproxy` binary or validate against the **live** `@appdata` config without mounting extra host paths and elevated access (undesired blast radius).
 
 ## Decision
 
@@ -17,9 +17,8 @@
 
 ## Rationale
 
-1. **Least privilege for acme-sh:** the issuance container keeps host networking for ACME only; it does not need Docker socket, Traefik compose project access, or HAProxy binaries.
-2. **Correct reload scope:** Traefik reload must target **only** the stack that owns the profile (`TRAEFIK_PROFILE=ots|mft` or explicit `TRAEFIK_STACK`). A host script with `STACK_ROOT` can `docker compose` in the right directory without cross-restarting both edges by default.
-3. **HAProxy safety:** atomic PEM writes, `openssl` checks, then `haproxy -c` against the repo config (or `HAPROXY_CFG`) with **rollback to last-known-good** on validation failure matches DSM operator practice documented in `NAS_DEPLOYMENT.md` / `_haproxy/README.txt`.
+1. **Least privilege for acme-sh:** the issuance container keeps host networking for ACME only; it does not need Docker socket or HAProxy binaries.
+2. **HAProxy safety:** atomic PEM writes, `openssl` checks, then `haproxy -c` against the repo config (or `HAPROXY_CFG`) with **rollback to last-known-good** on validation failure matches DSM operator practice documented in `NAS_DEPLOYMENT.md` / `_haproxy/README.txt`.
 4. **DSM cert import:** DSM UI/API steps for **control panel TLS** remain **manual** (see `SETUP.md`); no “pinned DSM version” automation until explicitly scoped.
 
 ## Consequences

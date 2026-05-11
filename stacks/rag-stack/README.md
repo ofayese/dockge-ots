@@ -60,3 +60,7 @@ docker compose down
 ```
 
 Data under `${STACK_ROOT}/rag-stack/data/` persists unless you remove those directories.
+
+## Troubleshooting
+
+- If `docker compose up` fails with `failed to create network rag-net: ... Pool overlaps`, run `docker compose down`, remove the stale network with `docker network rm rag-net` (only if no containers are attached), then start the stack again.

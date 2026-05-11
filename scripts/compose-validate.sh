@@ -17,6 +17,10 @@ cd "$ROOT"
 export COMPOSE_ENV_FILE="${ROOT}/.github/compose-ci.env"
 # Host bind mounts use ${STACK_ROOT}/<stack>/… — CI resolves to the real stacks/ path.
 export STACK_ROOT="${STACK_ROOT:-${STACKS}}"
+# Validation-only: satisfy compose interpolation for stacks that reference these vars without
+# requiring real secrets in the invoking environment (docker compose config -q).
+export CODE_SERVER_PASSWORD="${CODE_SERVER_PASSWORD:-validation_dummy_pass}"
+export WATCHTOWER_NOTIFICATION_URL="${WATCHTOWER_NOTIFICATION_URL:-discord://dummy_token@dummy_id}"
 
 mkdir -p "${STACKS}/grafana-prom/secrets"
 if [[ ! -s "${STACKS}/grafana-prom/secrets/watchtower_bearer_token.txt" ]]; then

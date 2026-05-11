@@ -25,6 +25,15 @@ Docker daemon log drivers and log opts affect **every** container that does not 
 - DSM’s reverse-proxy / nginx layers are **not** replaced by this repo’s acme.sh + Traefik path. Basic Auth strings in generated nginx snippets must **escape** `$` and special characters per DSM’s parser.
 - **DSM upgrade overwrite:** DSM updates can reset or merge nginx fragments. Re-apply custom snippets after upgrades and keep a **git-tracked** copy of your final nginx fragment outside DSM-only paths if possible.
 
+## 5.4 — Apple Metadata Cleanup (macOS SMB Shares)
+
+- **Script:** `scripts/maintenance/remove_apple_hidden_files.sh` — **safe-by-default** with `DRY_RUN=1` (prints planned `rm` only). Run with `DRY_RUN=0` only after reviewing dry-run output on a copy or narrow path list.
+- **Why not blanket `._*` deletes:** Blind removal of every small `._*` file can strip Finder / AppleDouble **resource-fork** sidecars the OS or apps still expect on some shares. Default behavior keeps **paired** cleanup (stub only when a sibling data file exists) unless you explicitly opt in.
+- **Optional toggles (review dry-run first):**
+  - `APPLE_CLEANUP_ORPHAN_DOT_UNDERSCORE=1` — also remove tiny orphan `._*` files with **no** sibling; higher risk of removing harmless-but-attached metadata.
+  - `APPLE_CLEANUP_STRAY_SYNO_SIDECARS=1` — remove **stray** only `*@SynoEAStream` / `*@SynoResource` under `@eaDir` when the primary file path no longer exists (Synology sidecar clutter).
+- **Out of scope:** This repo **does not** implement upstream **`hwdbk/synology-scripts`** **`cleanup_SynoFiles`**-style **bogus-xattr** cleanup that depends on helper tooling (**`get_attr`** + **`xattrs.lst`**). Use DSM/Mac-side `xattr` workflows if you need that depth.
+
 ## 6 — Git usability on Synology (dmurphyoz-style hardening)
 
 - **`git-shell-commands`:** Restrict login shells for dedicated Git users to a small allow-listed command set (e.g. `git-upload-pack`, `git-receive-pack`, custom repo-creation helpers).

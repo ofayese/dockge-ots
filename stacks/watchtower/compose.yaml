@@ -8,11 +8,8 @@ services:
       - no-new-privileges:true
     restart: unless-stopped
     ports:
-      # Prometheus (grafana-prom) scrapes /v1/metrics here; restrict on firewall if needed.
-      - 10.0.1.15:18787:8080
+      - 10.0.1.15:8080:8080
     volumes:
-      # /var/run socket context
-      # docker.sock :ro — Watchtower reads container and image metadata only.
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
       - PUID=${PUID:-0}
@@ -25,7 +22,6 @@ services:
       - WATCHTOWER_NOTIFICATIONS=shoutrrr
       - WATCHTOWER_NOTIFICATION_URL=${WATCHTOWER_NOTIFICATION_URL}
       - WATCHTOWER_NOTIFICATION_REPORT=1
-      # HTTP API + metrics (Prometheus). Periodic cron schedule is preserved.
       - WATCHTOWER_HTTP_API_UPDATE=1
       - WATCHTOWER_HTTP_API_PERIODIC_POLLS=1
       - WATCHTOWER_HTTP_API_METRICS=1
@@ -33,8 +29,10 @@ services:
     secrets:
       - watchtower_bearer
     healthcheck:
-      # Image is scratch-based: no /bin/sh or wget. Use watchtower's built-in probe (same as upstream Dockerfile HEALTHCHECK).
-      test: ["CMD", "/watchtower", "--health-check"]
+      test:
+        - CMD
+        - /watchtower
+        - --health-check
       interval: 30s
       timeout: 5s
       retries: 3
@@ -48,3 +46,4 @@ secrets:
   watchtower_bearer:
     # Single source of truth for bearer auth (Prometheus uses the same file).
     file: ../grafana-prom/secrets/watchtower_bearer_token.txt
+networks: {}

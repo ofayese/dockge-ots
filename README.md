@@ -97,7 +97,7 @@ sudo sh -c 'cat /volume1/certs/acme/otsorundscore/fullchain.pem /volume1/certs/a
 | Dockge UI     | **5571**      | Maps to container **5001** (not DSM **5001**)                                     |
 | Portainer     | **9443**      | HTTPS                                                                             |
 | DSM           | **5000/5001** | Synology — do not confuse with Dockge                                             |
-| Traefik ping  | **8080**      | In-container; lock down for prod                                                  |
+| Traefik dashboard/ping | **9080** | Host publish (`TRAEFIK_DASHBOARD_PORT`) → container `8080`; in-container checks stay on `127.0.0.1:8080` |
 | Remotely UI   | **5371**      | Host `10.0.1.15:5371 -> container 5000`; SignalR/WebSocket app                    |
 | HAProxy HTTPS | **443**       | Package listener                                                                  |
 | HAProxy HTTP  | **8080**      | Redirect to HTTPS in [`stacks/_haproxy/haproxy.cfg`](stacks/_haproxy/haproxy.cfg) |

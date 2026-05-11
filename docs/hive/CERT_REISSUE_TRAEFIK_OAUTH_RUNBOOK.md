@@ -171,7 +171,7 @@ sudo docker exec traefik-ots traefik healthcheck --ping
 **Smoke tests:**
 
 - `sudo docker exec traefik-ots traefik healthcheck --ping` (authoritative).
-- Optional from the NAS host: `curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8080/ping` when **`8080`** is the published dashboard/ping port (see `TRAEFIK_DASHBOARD_PORT` in `.env`).
+- Optional from the NAS host: `curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:9080/ping` when using the default `TRAEFIK_DASHBOARD_PORT=9080` (see `.env`).
 
 See [`stacks/traefik-ots/README.md`](../../stacks/traefik-ots/README.md) for ports, `tls.yaml`, and label examples.
 

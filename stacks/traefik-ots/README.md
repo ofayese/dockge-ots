@@ -4,8 +4,9 @@ Traefik v3 runs on the **OTS** NAS and routes HTTPS for **`*.otsorundscore.olute
 
 ## Ports
 
-- **Published:** `TRAEFIK_HTTP_PUBLISH` → container `:80`, `TRAEFIK_HTTPS_PUBLISH` → container `:443`, `TRAEFIK_DASHBOARD_PORT` → `:8080` (`/ping`, optional `/dashboard/`).
-- **LAN example:** `http://10.0.1.15:8080/ping` for liveness.
+- **Published:** `TRAEFIK_HTTP_PUBLISH` → container `:80`, `TRAEFIK_HTTPS_PUBLISH` → container `:443`, `TRAEFIK_DASHBOARD_PORT` (default `9080`) → container `:8080` (`/ping`, optional `/dashboard/`).
+- **LAN example:** `http://10.0.1.15:9080/ping` for host-side liveness.
+- **In-container check:** `docker exec traefik-ots wget -qO- http://127.0.0.1:8080/ping`.
 
 ## TLS sources
 

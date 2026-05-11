@@ -62,7 +62,7 @@ STACK_ROOT_OVERRIDE=/volume1/docker/dockge/stacks \
 | Container | Port | Protocol | URL | Notes |
 | --- | --- | --- | --- | --- |
 | Dockge | 5571 | HTTP | `http://10.0.1.15:5571` | Plain HTTP |
-| Traefik dashboard | 8080 | HTTP | `http://10.0.1.15:8080/dashboard/` | Trailing slash required; only when `TRAEFIK_DASHBOARD=true` |
+| Traefik dashboard | 9080 | HTTP | `http://10.0.1.15:9080/dashboard/` | Trailing slash required; only when `TRAEFIK_DASHBOARD=true` |
 | Traefik HTTP | 8880 | HTTP | `http://10.0.1.15:8880` | Redirects to HTTPS |
 | Traefik HTTPS | 6443 | HTTPS | `https://10.0.1.15:6443` | TLS — use `https://` |
 | Portainer | 9000 | HTTP | `http://10.0.1.15:9000` | Portainer CE HTTP |
@@ -90,7 +90,7 @@ STACK_ROOT_OVERRIDE=/volume1/docker/dockge/stacks \
 
 **"server unexpectedly dropped the connection"** — host port published but no container listener. Most common cause: Traefik port mapping pointed to wrong internal port. Traefik listens on `:80` and `:443` internally; host must map `8880→:80` and `6443→:443`.
 
-**Traefik 404 on `/`** when dashboard is disabled — correct behaviour. Access with `http://10.0.1.15:8080/dashboard/` (trailing slash) only when `TRAEFIK_DASHBOARD=true`.
+**Traefik 404 on `/`** when dashboard is disabled — correct behaviour. Access with `http://10.0.1.15:9080/dashboard/` (trailing slash) only when `TRAEFIK_DASHBOARD=true`.
 
 ## Known outstanding issues
 

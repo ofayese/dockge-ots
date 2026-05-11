@@ -172,7 +172,7 @@ JWT decoder, UUID generator, bcrypt hasher, QR code generator, TOML↔YAML conve
 
 | Container | Host port | Protocol | Access URL | Notes |
 |---|---|---|---|---|
-| Traefik dashboard | 8080 | HTTP | `http://10.0.1.15:8080/dashboard/` | Trailing slash required; only when `TRAEFIK_DASHBOARD=true` |
+| Traefik dashboard | 9080 | HTTP | `http://10.0.1.15:9080/dashboard/` | Trailing slash required; only when `TRAEFIK_DASHBOARD=true` |
 | Traefik HTTP | 8880 | HTTP | `http://10.0.1.15:8880` | Redirects to HTTPS |
 | Traefik HTTPS | 6443 | HTTPS | `https://10.0.1.15:6443` | TLS — use `https://` |
 | Portainer | 9000 | HTTP | `http://10.0.1.15:9000` | |

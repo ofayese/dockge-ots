@@ -19,11 +19,12 @@ services:
       # published but the container has no listener on that internal port.
       - ${TRAEFIK_HTTP_PUBLISH:-8880}:80
       - ${TRAEFIK_HTTPS_PUBLISH:-6443}:443
-      # Dashboard port: serves /ping always; serves /dashboard/ only when
-      # TRAEFIK_DASHBOARD=true. Access with trailing slash:
-      #   http://10.0.1.15:8080/dashboard/
+      # Dashboard / ping host publish: maps host :9080 (default) to container :8080.
+      # Serves /ping always; serves /dashboard/ only when TRAEFIK_DASHBOARD=true.
+      # Access with trailing slash:
+      #   http://10.0.1.15:9080/dashboard/
       # "404 page not found" on /: correct when dashboard is disabled.
-      - ${TRAEFIK_DASHBOARD_PORT:-8080}:8080
+      - ${TRAEFIK_DASHBOARD_PORT:-9080}:8080
     volumes:
       # /var/run socket context
       # docker.sock :ro — Traefik reads Docker labels only.

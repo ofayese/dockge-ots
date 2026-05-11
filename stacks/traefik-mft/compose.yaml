@@ -16,7 +16,8 @@ services:
       # Publishing host:8880 → container:80 (NOT :8880 which has no listener).
       - ${TRAEFIK_HTTP_PUBLISH:-8880}:80
       - ${TRAEFIK_HTTPS_PUBLISH:-6443}:443
-      - ${TRAEFIK_DASHBOARD_PORT:-8080}:8080
+      # Host default :9080 maps to container traefik entrypoint :8080.
+      - ${TRAEFIK_DASHBOARD_PORT:-9080}:8080
     volumes:
       # /var/run socket context
       # docker.sock :ro — Traefik reads Docker labels only.

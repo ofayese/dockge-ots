@@ -4,7 +4,7 @@ Traefik v3 runs on the **MFT** NAS and routes HTTPS for **`*.misfitsds.olutechsy
 
 ## Ports
 
-Same pattern as `traefik-ots`: map host ports to **container** `:80` / `:443` / `:8080` (see `traefik-ots/README.md`).
+Same pattern as `traefik-ots`: map host ports to **container** `:80` / `:443`, and map host `TRAEFIK_DASHBOARD_PORT` (default `9080`) to container `:8080` (see `traefik-ots/README.md`).
 
 ## Adding a service
 

@@ -59,6 +59,16 @@ services:
       - PSU_GALLERY_INSTALL=${PSU_GALLERY_INSTALL:-0}
       - PSU_GALLERY_INSTALL_STRICT=${PSU_GALLERY_INSTALL_STRICT:-1}
       - PSU_GALLERY_INCLUDE_WINDOWS=${PSU_GALLERY_INCLUDE_WINDOWS:-0}
+      # Path B — DSM SSO Server (OIDC IdP). Use SSO Server, not OAuth Service. See stacks/psu-ots/README.md § OIDC.
+      - PSU_OIDC_ENABLED=${PSU_OIDC_ENABLED:-0}
+      - Authentication__OIDC__Enabled=${PSU_OIDC_ENABLED:-0}
+      - Authentication__OIDC__Authority=${OIDC_AUTHORITY:-}
+      - Authentication__OIDC__ClientID=${OIDC_CLIENT_ID:-}
+      - Authentication__OIDC__ClientSecret=${OIDC_CLIENT_SECRET:-}
+      - Authentication__OIDC__CallbackPath=${PSU_OIDC_CALLBACK_PATH:-/auth/signin-oidc}
+      - Authentication__OIDC__ResponseType=${PSU_OIDC_RESPONSE_TYPE:-code}
+      - Authentication__OIDC__Scope=${OIDC_SCOPES:-openid profile email groups}
+      - Authentication__OIDC__GetUserInfo=${PSU_OIDC_GET_USER_INFO:-true}
     entrypoint:
       - /bin/sh
       - /dockge-gallery-entrypoint.sh

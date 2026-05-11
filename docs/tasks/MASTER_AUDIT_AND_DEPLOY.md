@@ -114,6 +114,10 @@ Run before Phase 1 to catch operational misconfigurations:
   1. Stack count and manifest match:
      ls stacks/ | grep -v '^_' | wc -l
      # Expected: 26
+     ls stacks/ | grep -v '^_' | sort
+     # Compare names to HIVE_OBJECTIVE.md “Stack folders” row (includes synology-api-bridge, docker-model-runner, etc.).
+     # Supply-chain / IAM (macro): image digests per `docs/hive/COMPOSE_IMAGE_PIN_POLICY.md` (no cross-namespace `sha256:` reuse).
+     # OIDC Path B: read `docs/hive/GOOGLE_WORKSPACE_OAUTH_NAS_LOGIN.md` Path A vs Path B before mixing Google (DSM) with SSO Server clients for psu-ots / open-webui / Portainer.
 
   2. No untracked files in repo root (except .env files):
      git status --short | grep -v '\.env' | head -5

@@ -21,6 +21,24 @@ Local LLM runtime (`ollama`) + open-webui front-end. CPU-only on this NAS — no
 
 `ai.otsorundscore.olutechsys.com` (referenced in `WEBUI_URL`; resolved via `extra_hosts`).
 
+## OIDC (Synology SSO Server — Path B)
+
+Use **DSM SSO Server** as the OIDC IdP for Open WebUI — **not** **OAuth Service**. Architecture: Path A (Google → DSM) vs Path B (SSO Server → apps) is summarized in [`docs/hive/GOOGLE_WORKSPACE_OAUTH_NAS_LOGIN.md`](../../docs/hive/GOOGLE_WORKSPACE_OAUTH_NAS_LOGIN.md).
+
+**Open WebUI env (see [SSO & OAuth](https://docs.openwebui.com/troubleshooting/sso/)):**
+
+| Variable | Purpose |
+| -------- | ------- |
+| `WEBUI_URL` | Public base URL — **set first**; drives redirect construction. |
+| `OPENID_PROVIDER_URL` | Full `…/.well-known/openid-configuration` URL from SSO Server. |
+| `OAUTH_CLIENT_ID` / `OAUTH_CLIENT_SECRET` | SSO Server OIDC application for **open-webui** (separate client from PSU / Portainer). |
+| `ENABLE_OAUTH_SIGNUP` | `true` to JIT-provision WebUI users on first OIDC login. |
+| `OAUTH_SCOPES` | Default `openid email profile groups` — confirm Synology emits **`groups`** if you rely on it. |
+| `ENABLE_OAUTH_PERSISTENT_CONFIG` | `false` recommended in Docker so `.env` stays authoritative. |
+| `OPENID_REDIRECT_URI` | Must match SSO app registration, e.g. `https://<your-webui-host>/oauth/oidc/callback`. |
+
+**Reverse proxy:** do **not** cache `/oauth`, `/api`, `/callback`, `/login`, `/ws` server-side (see Open WebUI SSO doc § proxy caching).
+
 ## Health
 
 - ollama: `curl http://localhost:11434/api/tags` returns JSON

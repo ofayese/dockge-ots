@@ -10,6 +10,8 @@ Consolidated **operator runbooks** for risky host-level changes. These are **man
 - **Rollback:** Keep the previous `.spk` / driver package and the prior DSM recovery notes; plan disk-order and pool-import steps if the M2 volume hosts irreplaceable metadata.
 - **Probes only:** If a script only **lists** disks, M2 status, or `cat /proc/mdstat`, it is informational. Do not chain probes into silent `insmod` / package install without explicit operator approval.
 
+**Operator acknowledgment (fleet / change windows):** Before installing or upgrading **007revad-class** M.2 volume tooling, the operator documents agreement with the bullets above (support/warranty, backups, DSM build pin, rollback) in the change ticket or runbook — **no** repo CI or agent may apply DSM patches or drivers autonomously.
+
 ## 5.2 — telnetdoogie / Docker logging (fleet-wide risk)
 
 Docker daemon log drivers and log opts affect **every** container that does not override `logging:`.

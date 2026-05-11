@@ -24,6 +24,17 @@ Container management UI (server) + agent for daemon access on the host.
 
 `portainer_agent` mounts `/` as `/host` plus `docker.sock` — this is the **highest privilege surface** of any stack. Access is gated by the agent-cluster TLS certs.
 
+## OIDC (Synology SSO Server — Path B)
+
+Use **DSM SSO Server** as the OIDC IdP for **who can open the Portainer UI** — **not** the **OAuth Service** package (Synology API resource authorization).
+
+1. Package Center → **SSO Server** → separate **OIDC application** for Portainer (do not reuse PSU or Open WebUI clients).
+2. Portainer: **Settings → Authentication → OAuth** — choose **Custom** and paste endpoints from Synology’s OIDC discovery document (issuer, authorization, token, userinfo as required by Portainer’s wizard).
+3. **Redirect URL:** use the exact value Portainer shows for your **public** Portainer base URL (confirm in UI after enabling OAuth; do not assume a fragment like `#!/auth` unless your edition displays it).
+4. **Automatic team membership:** to map DSM **`groups`** (or equivalent) to Portainer teams, set **Claim name** to match the claim Synology puts in the token (often **`groups`**) and define regex / static team mappings per [Portainer — OAuth](https://docs.portainer.io/admin/settings/authentication/oauth).
+
+**Risk note:** OAuth/OIDC only gates **UI access**. It does **not** reduce **`docker.sock`** or agent **host `/`** exposure — operators with Portainer access remain highly trusted.
+
 ## Rollback
 
 ```bash

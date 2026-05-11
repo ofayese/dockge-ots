@@ -25,6 +25,22 @@ Versioned PSU config lives under **`data/Repository/`** on the NAS (`.universal/
 
 **Git-tracked templates:** copy [`universal/`](./universal/) into `data/Repository/.universal/` after first deploy (root `.gitignore` ignores `stacks/**/data/`, so templates ship beside the stack instead of under `data/`).
 
+## OIDC (Synology SSO Server — Path B)
+
+Use **DSM SSO Server** as the OIDC IdP for **human** PSU Admin / dashboard login — **not** the separate **OAuth Service** package (API authorization for Synology ecosystem APIs).
+
+1. Package Center → **SSO Server** → enable **OIDC server** → note issuer / `.well-known` URL.
+2. **Application → Add (OIDC)** — client for PSU; **redirect URI** must match your public PSU URL + callback path (default **`/auth/signin-oidc`**, e.g. `https://psu.otsorundscore.olutechsys.com/auth/signin-oidc`).
+3. Scopes: include **`openid`**, **`profile`**, **`email`**, and **`groups`** if you map DSM groups to PSU roles.
+4. Copy **Application ID** / **Application Secret** into **gitignored** `.env` as **`OIDC_CLIENT_ID`** / **`OIDC_CLIENT_SECRET`**; set **`OIDC_AUTHORITY`** to the issuer URL Synology shows for OIDC (must match [PowerShell Universal — OpenID Connect](https://docs.powershelluniversal.com/config/security/openid-connect) expectations for **Authority**).
+5. Set **`PSU_OIDC_ENABLED=1`** and recreate the container (compose passes **`Authentication__OIDC__Enabled`** from this value).
+
+**Compose wiring:** `compose.yaml` passes **`Authentication__OIDC__*`** from **`OIDC_*`** / **`PSU_OIDC_*`** (ASP.NET Core environment variable convention). No tracked `appsettings.json`; Universal reads env at process start.
+
+**APIs vs OIDC:** OIDC covers **interactive UI login**. **`PSU_AUTH_TOKEN`**, **`DOCKGE_USERNAME`** / **`DOCKGE_PASSWORD`**, and **`NAS_PULL_APP_TOKEN`** remain for jobs, Dockge API, and webhooks until redesigned — see **`universal/endpoints/dockge-api.ps1`**.
+
+**Google / DSM Login Portal (Path A):** If you use Google Workspace for **DSM** sign-in, that is separate from this Path B stack — see [`docs/hive/GOOGLE_WORKSPACE_OAUTH_NAS_LOGIN.md`](../../docs/hive/GOOGLE_WORKSPACE_OAUTH_NAS_LOGIN.md) (architecture table: Path A vs Path B).
+
 ## Security notes
 
 - **`/nas-repo` is `:ro` in compose** — change to `:rw` only if you implement `git pull` from PSU and accept NAS git hygiene rules ([`AGENTS.md`](../../AGENTS.md)).

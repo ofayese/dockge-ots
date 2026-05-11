@@ -308,15 +308,13 @@ READINESS TIERS (assign one per stack):
   - TIER X (exempt): one-shot / placeholder stacks (mcp-tools-config) with documented exemption
 
 Known deploy-readiness blockers from prior audit (verify still apply):
-  - codex-docs: :latest image needs operator pin (digest) — TIER B until pinned
-  - openresume: :latest image needs operator pin (digest) — TIER B until pinned
-  - watchtower: :latest image needs operator pin — TIER B until pinned
-  - github-desktop: :latest — documented floating-tag exception in README — TIER B
-  - holyclaude: :latest — documented dev image exception in README — TIER B
-  - traefik-ots/mft: traefik:v3 floating major tag — pin advisory in README — TIER B
-  - agents_gateway_data: TZ missing — TIER C until fixed
-  - warp-main: TZ partial — TIER B if other checks pass
-  - remotely: :latest — no upstream semver tags published — digest pin via `docker pull` — TIER B
+  - codex-docs: app image is digest-pinned and Mongo is pinned to `mongo:7`; verify digest freshness on image review cycle.
+  - openresume: digest-pinned (`yuihtt/open-resume@sha256:...`) — remove stale `:latest` assumptions in derived reports.
+  - watchtower: pinned to `containrrr/watchtower:1.7.1` — remove stale `:latest` assumptions in derived reports.
+  - github-desktop: digest-pinned (`ghcr.io/linuxserver/github-desktop@sha256:...`) — no longer a floating-tag blocker.
+  - holyclaude: digest-pinned (`coderluii/holyclaude@sha256:...`) — no longer a floating-tag blocker.
+  - traefik-ots/mft: pinned to `traefik:v3.6.2` — no longer a floating-major blocker.
+  - remotely: digest-pinned (`immybot/remotely@sha256:...`); update stale README/comments that still mention `:latest`.
 
 ### Generate stacks readiness report
 

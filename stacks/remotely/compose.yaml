@@ -21,9 +21,10 @@ services:
   remotely:
     container_name: remotely
     image: immybot/remotely@sha256:9bdff2d8f7a9926731fe8394d9b0292eb5679153b1da7f3b80ecd9fa9823b89b
-    # :latest - upstream does not publish semver tags; pin to digest after first pull:
+    # Upstream does not publish semver tags; this service should stay digest-pinned.
+    # Refresh pin when needed:
+    #   docker pull immybot/remotely:latest
     #   docker inspect immybot/remotely:latest --format '{{index .RepoDigests 0}}'
-    # OPERATOR PIN NEEDED before production use.
     mem_limit: 1g
     # ASP.NET Core + SignalR hub; 1g covers concurrent remote sessions on a homelab.
     cpu_shares: 512

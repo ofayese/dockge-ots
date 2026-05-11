@@ -9,7 +9,7 @@ no inbound firewall ports are required beyond the web UI.
 
 | Service  | Container | Internal | Host           | Image                   |
 | -------- | --------- | -------- | -------------- | ----------------------- |
-| remotely | remotely  | 5000     | 10.0.1.15:5371 | immybot/remotely:latest |
+| remotely | remotely  | 5000     | 10.0.1.15:5371 | immybot/remotely@sha256:9bdff2d8f7a9926731fe8394d9b0292eb5679153b1da7f3b80ecd9fa9823b89b |
 
 ## Prerequisites
 
@@ -72,12 +72,13 @@ ASP.NET Core host is up and accepting requests.
 
 ## Image pinning
 
-`immybot/remotely:latest` does not publish semver tags. Pin to a digest after first pull:
+`immybot/remotely` does not publish semver tags. The stack is currently digest-pinned; refresh the digest when needed:
 
 ```bash
+sudo docker pull immybot/remotely:latest
 sudo docker inspect immybot/remotely:latest \
   --format '{{index .RepoDigests 0}}'
-# Use the digest in compose.yaml: immybot/remotely@sha256:<digest>
+# Update compose.yaml with the new digest: immybot/remotely@sha256:<digest>
 ```
 
 ## Rollback

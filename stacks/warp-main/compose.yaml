@@ -14,6 +14,7 @@ services:
       - WARP_PORT=9090
       - PUID=${PUID:-0}
       - PGID=${PGID:-0}
+      - TZ=America/New_York
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
@@ -41,6 +42,7 @@ services:
       - CLAUDE_PORT=3000
       - PUID=${PUID:-0}
       - PGID=${PGID:-0}
+      - TZ=America/New_York
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
@@ -66,6 +68,7 @@ services:
       - CLAUDE_API_PORT=3000
       - PUID=${PUID:-0}
       - PGID=${PGID:-0}
+      - TZ=America/New_York
     ports:
       - "8080:8080"
     extra_hosts:

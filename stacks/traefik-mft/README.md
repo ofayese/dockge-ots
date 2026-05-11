@@ -2,6 +2,14 @@
 
 Traefik v3 runs on the **MFT** NAS and routes HTTPS for **`*.misfitsds.olutechsys.com`** and **`*.misfitsds.olutech.systems`**. Default TLS uses **`acme-sh`** PEMs (`misfitsds/`) via `config/tls.yaml`. A **`certificatesResolvers.cloudflare`** resolver (DNS-01, same token model as acme-sh) is also configured; internal split-horizon DNS is **not** used for ACME.
 
+### ACME storage permissions (`acme.json`)
+
+Traefik expects **`${STACK_ROOT}/traefik-mft/data/acme.json`** at mode **600** once the file exists. If logs show `permissions 644 ... are too open, please use 600`:
+
+```bash
+chmod 600 "${STACK_ROOT}/traefik-mft/data/acme.json"
+```
+
 ## Ports
 
 Same pattern as `traefik-ots`: map host ports to **container** `:80` / `:443`, and map host `TRAEFIK_DASHBOARD_PORT` (default `9080`) to container `:8080` (see `traefik-ots/README.md`).

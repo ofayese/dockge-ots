@@ -54,7 +54,8 @@ services:
       - --certificatesResolvers.cloudflare.acme.email=${ACME_EMAIL:-hostmaster@example.com}
       - --certificatesResolvers.cloudflare.acme.storage=/data/acme.json
       - --certificatesResolvers.cloudflare.acme.dnsChallenge.provider=cloudflare
-      - --certificatesResolvers.cloudflare.acme.dnsChallenge.delaybeforecheck=10s
+      # Traefik v3.6+: delayBeforeCheck deprecated — use propagation.delayBeforeChecks
+      - --certificatesResolvers.cloudflare.acme.dnsChallenge.propagation.delayBeforeChecks=10s
       # When TRAEFIK_DASHBOARD=true: dashboard served at :8080/dashboard/ (trailing slash)
       # When false (production): :8080 serves only /ping - accessing / returns 404 (correct)
       - --api.dashboard=${TRAEFIK_DASHBOARD:-false}

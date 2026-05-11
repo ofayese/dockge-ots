@@ -43,7 +43,8 @@ services:
       - --certificatesResolvers.cloudflare.acme.email=${ACME_EMAIL:-hostmaster@example.com}
       - --certificatesResolvers.cloudflare.acme.storage=/data/acme.json
       - --certificatesResolvers.cloudflare.acme.dnsChallenge.provider=cloudflare
-      - --certificatesResolvers.cloudflare.acme.dnsChallenge.delaybeforecheck=10s
+      # Traefik v3.6+: delayBeforeCheck deprecated — use propagation.delayBeforeChecks
+      - --certificatesResolvers.cloudflare.acme.dnsChallenge.propagation.delayBeforeChecks=10s
       - --api.dashboard=${TRAEFIK_DASHBOARD:-false}
       - --api.insecure=${TRAEFIK_DASHBOARD:-false}
       - --log.level=${TRAEFIK_LOG_LEVEL:-WARN}

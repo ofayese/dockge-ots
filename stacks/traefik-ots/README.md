@@ -14,6 +14,15 @@ Traefik v3 runs on the **OTS** NAS and routes HTTPS for **`*.otsorundscore.olute
 
 2. **Optional:** Traefik also exposes **`certificatesResolvers.cloudflare`** (Cloudflare DNS-01, `CF_DNS_API_TOKEN`, `ACME_EMAIL`, state in `${STACK_ROOT}/traefik-ots/data/acme.json`). Use only on routers that set `traefik.http.routers.<n>.tls.certresolver=cloudflare`.
 
+### ACME storage permissions (`acme.json`)
+
+Traefik refuses to use the Cloudflare resolver if **`acme.json` is world- or group-readable** (expects mode **600**). After the file first exists on the NAS:
+
+```bash
+chmod 600 "${STACK_ROOT}/traefik-ots/data/acme.json"
+# recreate container if it logged ERR and skipped the resolver
+```
+
 ## Adding a service
 
 1. Join the **`traefik-ots`** external network from the service stack.

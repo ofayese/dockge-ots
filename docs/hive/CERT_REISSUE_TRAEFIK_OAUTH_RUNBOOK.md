@@ -43,24 +43,64 @@ sudo mkdir -p /volume1/certs/acme/otsorundscore /volume1/certs/acme/misfitsds
 sudo docker exec AcmeSh acme.sh --list
 ```
 
-If you are **replacing** an older RSA order whose primary `-d` was only `*.otsorundscore.olutechsys.com` and you need **both TLDs** on one cert, remove the old order first (see [`stacks/acme-sh/SETUP.md`](../../stacks/acme-sh/SETUP.md) **Re-issue** note), then re-run **A4**.
+If **Main_Domain** in the list is `*.otsorundscore.olutechsys.com` or `*.misfitsds.olutechsys.com` (wildcard-primary) and you want a **new** apex-primary order from **A4**, remove that old order first — acme.sh keeps one directory per Main_Domain.
+
+**Do not** remove an order whose Main_Domain is already `otsorundscore.olutechsys.com` / `misfitsds.olutechsys.com` unless you intend to wipe and re-create it; in that case prefer `acme.sh --issue ... --force` to expand SANs on the existing order when acme.sh allows it (see logs). Full detail: [`stacks/acme-sh/SETUP.md`](../../stacks/acme-sh/SETUP.md) **Re-issue** / **otsorundscore-sub**.
+
+### A3b — Remove wildcard-primary orders (manual)
+
+Use the **exact** Main_Domain string from `acme.sh --list`. Typical cleanup when moving to apex-first **A4**:
+
+```bash
+# ECC first (ignore errors if you never had ECC orders)
+sudo docker exec AcmeSh acme.sh --remove -d '*.otsorundscore.olutechsys.com' --ecc
+sudo docker exec AcmeSh acme.sh --remove -d '*.misfitsds.olutechsys.com' --ecc
+
+# RSA
+sudo docker exec AcmeSh acme.sh --remove -d '*.otsorundscore.olutechsys.com'
+sudo docker exec AcmeSh acme.sh --remove -d '*.misfitsds.olutechsys.com'
+```
+
+Confirm: `sudo docker exec AcmeSh acme.sh --list` — those Main_Domain rows should be gone.
+
+### A3c — Same cleanup, idempotent (automation-friendly)
+
+Runs **inside** the container so `*` is not expanded by the host shell. Safe to run before **A4** even if an order is already absent (`|| true` swallows “not found” style failures).
+
+```bash
+sudo docker exec AcmeSh sh -c '
+  for d in "*.otsorundscore.olutechsys.com" "*.misfitsds.olutechsys.com"; do
+    acme.sh --remove -d "$d" --ecc 2>/dev/null || true
+    acme.sh --remove -d "$d" 2>/dev/null || true
+  done
+  acme.sh --list
+'
+```
+
+There is **no** built-in acme-sh compose hook in this repo that runs this automatically on `docker compose up`; keep it as an explicit operator (or NAS cron) step before the first `--issue` after a migration. Optional: wrap the `sh -c` block in a small script under `${STACK_ROOT}/acme-sh/scripts/` on your NAS if you want a named command.
 
 ### A4 — Issue (DNS-01)
 
-**OTS wildcard (both TLDs):**
+**Wildcard vs apex:** A name like `*.otsorundscore.olutechsys.com` does **not** cover the apex `otsorundscore.olutechsys.com` (one DNS label only). Put **apex first** or **wildcard first** on the same `--issue` line; only the **first** `-d` matters for acme.sh’s **order key** and for **`--install-cert -d`** in **A5** (must match `acme.sh --list` **Main_Domain**).
+
+**OTS — apex + wildcards (both TLDs):**
 
 ```bash
 sudo docker exec AcmeSh acme.sh --issue \
+  -d 'otsorundscore.olutechsys.com' \
+  -d 'otsorundscore.olutech.systems' \
   -d '*.otsorundscore.olutechsys.com' \
   -d '*.otsorundscore.olutech.systems' \
   --keylength 2048 \
   --dns dns_cf --server letsencrypt
 ```
 
-**MFT wildcard (both TLDs):**
+**MFT — apex + wildcards (both TLDs):**
 
 ```bash
 sudo docker exec AcmeSh acme.sh --issue \
+  -d 'misfitsds.olutechsys.com' \
+  -d 'misfitsds.olutech.systems' \
   -d '*.misfitsds.olutechsys.com' \
   -d '*.misfitsds.olutech.systems' \
   --keylength 2048 \
@@ -71,11 +111,11 @@ Wait for **success** in logs (`docker logs -f AcmeSh`). DNS propagation is typic
 
 ### A5 — Install PEMs to Traefik-facing dirs
 
-Primary `-d` must match the order shown in `acme.sh --list` (usually the **first** `-d` from **A4**).
+`--install-cert -d` must match **Main_Domain** from `acme.sh --list` (the **first** `-d` from **A4** — here the apex on `.olutechsys.com`).
 
 ```bash
 sudo docker exec AcmeSh acme.sh --install-cert \
-  -d '*.otsorundscore.olutechsys.com' \
+  -d 'otsorundscore.olutechsys.com' \
   --cert-file      /volume1/certs/acme/otsorundscore/cert.pem \
   --key-file       /volume1/certs/acme/otsorundscore/privkey.pem \
   --ca-file        /volume1/certs/acme/otsorundscore/chain.pem \
@@ -85,7 +125,7 @@ sudo docker exec AcmeSh acme.sh --install-cert \
 
 ```bash
 sudo docker exec AcmeSh acme.sh --install-cert \
-  -d '*.misfitsds.olutechsys.com' \
+  -d 'misfitsds.olutechsys.com' \
   --cert-file      /volume1/certs/acme/misfitsds/cert.pem \
   --key-file       /volume1/certs/acme/misfitsds/privkey.pem \
   --ca-file        /volume1/certs/acme/misfitsds/chain.pem \

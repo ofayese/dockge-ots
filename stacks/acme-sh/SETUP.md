@@ -17,6 +17,7 @@ For 4096-bit RSA, substitute `--keylength 4096` in every `--issue` block below
 ├── hpdevcore/                     hpdevcore.olutechsys.com
 ├── otsorundscore/                 Traefik-OTS PEMs: `otsorundscore.*` + `*.otsorundscore.*` (`.olutechsys.com` + `.olutech.systems`)
 ├── misfitsds/                     Traefik-MFT PEMs: `misfitsds.*` + `*.misfitsds.*` (both TLDs)
+├── haproxy/                       Combined PEM bundles from **`scripts/deploy_certs.sh`** (default **`HAPROXY_CERT_STAGE_DIR`**)
 ├── deploy-otsorundscore.bash         legacy Mac staging (see archive/SETUP_LEGACY_2026-05-10.md)
 ├── deploy-misfitsds.bash          legacy misfitsds deploy (see archive)
 ├── deploy-otsmbpro16.bash         run on the Mac (PEMs → ~/certs/otsmbpro16/)
@@ -124,10 +125,10 @@ sudo docker exec AcmeSh acme.sh --list
 After new or renewed PEMs under **`${ACME_CERT_ROOT}`** (profiles such as **`otsorundscore`**, **`misfitsds`** — see the tree at the top of this file):
 
 1. **HAProxy bundles + optional Traefik restart (host-run, preferred):**  
-   - Script: **`stacks/acme-sh/scripts/deploy_certs.sh`** — builds combined PEMs into **`${STACK_ROOT}/_haproxy/certs/`** (atomic replace + `.lkg` rollback on `haproxy -c` failure).  
+   - Script: **`stacks/acme-sh/scripts/deploy_certs.sh`** — builds combined PEMs into **`HAPROXY_CERT_STAGE_DIR`** (default **`/volume1/certs/acme/haproxy`**; **`mkdir -p`** on run). Atomic replace + **`.lkg`** rollback still applies under that directory when **`haproxy -c`** runs and fails (**`haproxy -c`** is skipped unless **`HAPROXY_CERT_STAGE_DIR`** equals **`${STACK_ROOT}/_haproxy/certs`**, so the config’s `crt` paths match staged files; copy bundles to the live path your **`haproxy.cfg`** uses, then validate/reload HAProxy manually in DSM or via your own procedure). The script does **not** restart or reload HAProxy.  
    - **Single profile (optional):** with **`BUNDLE_SPECS` unset**, set **`ACME_PROFILE=otsorundscore`** or **`misfitsds`** to stage **one** HAProxy bundle using the default filename mapping (see script header).  
    - **Traefik:** set **`TRAEFIK_PROFILE=ots`** or **`mft`** (or **`TRAEFIK_STACK=traefik-ots`** / **`traefik-mft`**) so **only one** Traefik stack is restarted; defaults skip Traefik if unset.  
-   - **HAProxy:** the script runs **`haproxy -c`** when **`HAPROXY_BIN`** exists (Synology package default **`/volume1/@appstore/haproxy/sbin/haproxy`**) against **`HAPROXY_CFG`** (default **`${STACK_ROOT}/_haproxy/haproxy.cfg`**). On success, optionally set **`HAPROXY_RELOAD_CMD`** to your operator reload (DSM UI, or a vetted `kill -HUP` to the **running** `haproxy` pid — match **`docs/hive/NAS_DEPLOYMENT.md`** paths; do not guess on unfamiliar DSM builds).  
+   - **HAProxy validate:** when staging matches the live cert dir, **`haproxy -c`** runs against **`HAPROXY_CFG`** (default **`${STACK_ROOT}/_haproxy/haproxy.cfg`**) if **`HAPROXY_BIN`** is executable (Synology package default **`/volume1/@appstore/haproxy/sbin/haproxy`**).  
    - Rationale: **[`docs/hive/proposals/acme-sh/ACME_DEPLOY_HOOK_ADR.md`](../../docs/hive/proposals/acme-sh/ACME_DEPLOY_HOOK_ADR.md)** (host-run vs in-container).
 
 2. **TLS edge verify:** **`stacks/acme-sh/scripts/verify_serving.sh`** — requires **`CONNECT_HOST`**; set **`CONNECT_PORT`** (default **`6443`**), **`SNI`** (defaults to **`CONNECT_HOST`**), **`MIN_VALID_DAYS`** (default **21** for **`openssl x509 -checkend`**), optional **`EXPECTED_SUBJECT`**. On TLS / subject / expiry failure, posts to **`DISCORD_WEBHOOK_URL`** when set (same variable name as **`stacks/acme-sh/.env.example`**).

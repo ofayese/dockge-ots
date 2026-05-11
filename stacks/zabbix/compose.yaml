@@ -19,7 +19,13 @@ services:
     volumes:
       - ${STACK_ROOT}/zabbix/db:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "zabbix", "-d", "zabbix"]
+      test:
+        - CMD
+        - pg_isready
+        - -U
+        - zabbix
+        - -d
+        - zabbix
       interval: 30s
       timeout: 10s
       retries: 5
@@ -27,11 +33,10 @@ services:
     logging:
       driver: json-file
       options:
-        max-size: "10m"
+        max-size: 10m
         max-file: "3"
     labels:
       - com.centurylinklabs.watchtower.enable=true
-
   zabbix-server:
     container_name: Zabbix-Server
     image: zabbix/zabbix-server-pgsql:7.4-alpine
@@ -45,7 +50,7 @@ services:
     depends_on:
       - postgres
     ports:
-      - "${ZABBIX_SERVER_PUBLISH:-10051}:10051"
+      - ${ZABBIX_SERVER_PUBLISH:-10051}:10051
     environment:
       - PUID=${PUID:-0}
       - PGID=${PGID:-0}
@@ -58,7 +63,11 @@ services:
     volumes:
       - ${STACK_ROOT}/zabbix/data:/var/lib/zabbix
     healthcheck:
-      test: ["CMD", "zabbix_server", "-R", "diaginfo"]
+      test:
+        - CMD
+        - zabbix_server
+        - -R
+        - diaginfo
       interval: 30s
       timeout: 10s
       retries: 5
@@ -66,11 +75,10 @@ services:
     logging:
       driver: json-file
       options:
-        max-size: "10m"
+        max-size: 10m
         max-file: "3"
     labels:
       - com.centurylinklabs.watchtower.enable=true
-
   zabbix-web:
     container_name: Zabbix-Web
     image: zabbix/zabbix-web-nginx-pgsql:7.4-alpine
@@ -85,7 +93,7 @@ services:
       - postgres
       - zabbix-server
     ports:
-      - "${ZABBIX_WEB_PORT:-8532}:8080"
+      - ${ZABBIX_WEB_PORT:-8532}:8080
     environment:
       - PUID=${PUID:-0}
       - PGID=${PGID:-0}
@@ -99,7 +107,11 @@ services:
       - ZBX_SERVER_PORT=10051
       - PHP_TZ=${TZ:-America/New_York}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/ping"]
+      test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost:8080/ping
       interval: 30s
       timeout: 10s
       retries: 5
@@ -107,11 +119,10 @@ services:
     logging:
       driver: json-file
       options:
-        max-size: "10m"
+        max-size: 10m
         max-file: "3"
     labels:
       - com.centurylinklabs.watchtower.enable=true
-
   # ──────────────────────────────────────────────────────────────────
   # ZABBIX AGENT OPTIONS - read before uncommenting
   # ──────────────────────────────────────────────────────────────────

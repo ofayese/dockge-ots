@@ -75,7 +75,6 @@ services:
       start_period: 15s
     networks:
       - traefik-ots
-
 networks:
   traefik-ots:
     # name: override prevents Docker double-name artefact.

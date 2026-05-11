@@ -22,7 +22,7 @@ Map these in the Zabbix UI to your DSM SNMPv3 user and authentication/privacy pa
 ## Images
 
 - `postgres:15-alpine` — pinned major aligned with repo baseline; Marius guide used `postgres:16`; operator may bump via proposal.
-- `zabbix/zabbix-server-pgsql:7.4-alpine` and `zabbix/zabbix-web-nginx-pgsql:7.4-alpine` — track Marius “7.4.x” line; upgrade via digest or explicit tag after `docker pull` inspection.
+- `zabbix/zabbix-server-pgsql:alpine-7.4-latest` and `zabbix/zabbix-web-nginx-pgsql:alpine-7.4-latest` — track Marius “7.4.x” line; Zabbix tag shape is `alpine-<major.minor>-latest` (not `<major.minor>-alpine`); upgrade via digest or explicit tag after `docker pull` inspection.
 
 ## Volumes
 

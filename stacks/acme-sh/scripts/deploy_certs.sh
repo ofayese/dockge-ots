@@ -88,7 +88,8 @@ stage_one() {
 	# Concat fullchain + key (HAProxy bundle order)
 	cat "${fc}" "${pk}" >"${staged}"
 	openssl x509 -in "${staged}" -noout -subject -dates >/dev/null
-	openssl pkey -in "${staged}" -noout -check >/dev/null
+	# pkey must read privkey.pem — combined bundle is cert-first; OpenSSL 3 decodes first PEM only.
+	openssl pkey -in "${pk}" -noout -check >/dev/null
 	local final="${CERT_DIR}/${out_name}"
 	if [[ -f "${final}" ]]; then
 		cp -a "${final}" "${final}.lkg"

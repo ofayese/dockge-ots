@@ -50,6 +50,7 @@ services:
       - com.centurylinklabs.watchtower.enable=true
     networks:
       - code-server-net
+      - ots-net
   db:
     image: mysql:8.3
     container_name: CodeServerDB
@@ -93,6 +94,7 @@ services:
       - com.centurylinklabs.watchtower.enable=true
     networks:
       - code-server-net
+      - ots-net
   phpmyadmin:
     image: phpmyadmin:5.2.2-apache
     container_name: CodeServerPMA
@@ -139,6 +141,7 @@ services:
       - com.centurylinklabs.watchtower.enable=true
     networks:
       - code-server-net
+      - ots-net
 volumes:
   mysql_data:
     driver: local
@@ -150,3 +153,5 @@ networks:
       config:
         - subnet: 172.28.2.0/24
           gateway: 172.28.2.1
+  ots-net:
+    external: true

@@ -231,6 +231,16 @@ else
 	echo "WARN: not root; run: sudo bash ${SCRIPT_DIR}/fix-permissions.sh ${STACK_ROOT}" >&2
 fi
 
+# ── 5. Create shared external network ────────────────────────────────
+echo ""
+echo "Creating shared external network 'ots-net' ..."
+if ! docker network ls --format '{{.Name}}' | grep -q '^ots-net$'; then
+	docker network create --driver bridge --subnet 172.29.0.0/16 --gateway 172.29.0.1 ots-net
+	echo "  ✓ created: ots-net"
+else
+	echo "  ✓ exists: ots-net"
+fi
+
 echo ""
 echo "────────────────────────────────────────"
 echo "Init complete."

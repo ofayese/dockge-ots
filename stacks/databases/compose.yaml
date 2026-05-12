@@ -37,6 +37,8 @@ services:
       start_period: 30s
     labels:
       - com.centurylinklabs.watchtower.enable=true
+    networks:
+      - ots-net
   postgres:
     container_name: PostgreSQL
     image: postgres:16-alpine
@@ -75,6 +77,8 @@ services:
       start_period: 20s
     labels:
       - com.centurylinklabs.watchtower.enable=true
+    networks:
+      - ots-net
   adminer:
     container_name: Adminer
     image: adminer:5.4.2-standalone
@@ -114,6 +118,8 @@ services:
       start_period: 20s
     labels:
       - com.centurylinklabs.watchtower.enable=true
+    networks:
+      - ots-net
 secrets:
   mariadb_root_pw:
     file: ${STACK_ROOT}/databases/secrets/mariadb_root_pw.txt
@@ -121,4 +127,6 @@ secrets:
     file: ${STACK_ROOT}/databases/secrets/mariadb_app_pw.txt
   postgres_pw:
     file: ${STACK_ROOT}/databases/secrets/postgres_pw.txt
-networks: {}
+networks:
+  ots-net:
+    external: true

@@ -11,6 +11,8 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    networks:
+      - ots-net
     restart: unless-stopped
     volumes:
       - ${STACK_ROOT}/codex-docs/db:/data/db:rw
@@ -36,6 +38,8 @@ services:
     cpu_shares: 256
     security_opt:
       - no-new-privileges:true
+    networks:
+      - ots-net
     restart: unless-stopped
     ports:
       - "10.0.1.15:8896:3000"
@@ -62,3 +66,7 @@ services:
       - "otsorundscore.olutechsys.com:10.0.1.15"
     labels:
       - com.centurylinklabs.watchtower.enable=true
+
+networks:
+  ots-net:
+    external: true

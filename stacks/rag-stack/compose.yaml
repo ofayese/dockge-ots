@@ -58,6 +58,7 @@ services:
       - com.centurylinklabs.watchtower.enable=true
     networks:
       - rag-net
+      - ots-net
   anythingllm:
     container_name: rag-anythingllm
     image: mintplexlabs/anythingllm:1.7.6
@@ -122,6 +123,7 @@ services:
       - com.centurylinklabs.watchtower.enable=true
     networks:
       - rag-net
+      - ots-net
   pipelines:
     container_name: rag-pipelines
     image: ghcr.io/open-webui/pipelines@sha256:b48e9bc338ce2be0acfbeff01810db72408a12f07739f9e3879c1f2b00952d6e
@@ -170,6 +172,7 @@ services:
       - com.centurylinklabs.watchtower.enable=true
     networks:
       - rag-net
+      - ots-net
 networks:
   rag-net:
     # name: override prevents Docker from prepending the project name.
@@ -181,3 +184,5 @@ networks:
         # See docs/hive/NAS_DEPLOYMENT.md for full subnet registry.
         - subnet: 172.28.7.0/24
           gateway: 172.28.7.1
+  ots-net:
+    external: true

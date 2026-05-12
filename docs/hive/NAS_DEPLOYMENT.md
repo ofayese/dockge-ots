@@ -85,7 +85,7 @@ STACK_ROOT_OVERRIDE=/volume1/docker/dockge/stacks \
 
 **"Client sent an HTTP request to an HTTPS server"** — you accessed a TLS port with `http://`. Fix: change to `https://`. Affected ports: **9443** (Portainer HTTPS), **443** (HAProxy HTTPS), **9001** (Portainer Agent — mTLS, not meant for browser `http://`/`https://` checks).
 
-**"server unexpectedly dropped the connection"** — host port published but no container listener. Common causes: stale HAProxy backend port, service not listening on the published host port, or DNS entry mapping to the wrong backend.
+**"server unexpectedly dropped the connection"** - host port published but no container listener. Common causes: stale HAProxy backend port, service not listening on the published host port, or DNS entry mapping to the wrong backend.
 
 ## Known outstanding issues
 
@@ -179,6 +179,7 @@ sudo bash scripts/init-nas.sh
 1. DSM → Package Center → install **Container Manager**
 2. SSH as `laolufayese` (Port 28)
 3. SSH key setup:
+
    ```bash
    ssh-keygen -t ed25519 -C "nas-deploy" -f ~/.ssh/id_ed25519
    chmod 700 ~/.ssh && chmod 600 ~/.ssh/id_ed25519
@@ -282,36 +283,27 @@ All writable data lives under `${STACK_ROOT}/<stack>/<sub-folder>`. The resolved
 
 Stack-level `.gitignore` files are required for data-heavy stacks (`databases`, `zabbix`, `ollama`, `rag-stack`, `remotely`) so generated runtime/db artifacts never enter git.
 
-## Docker network subnet registry
+## Docker network
 
-All container networks must use `172.17.0.0/8` broken into `/24` segments. `192.168.x.x` is **forbidden** — DSM Container Manager auto-assigns from that range for stacks without explicit network blocks.
+All stacks attach to a single shared external bridge **`ots-net`** (`172.29.0.0/16`). `192.168.x.x` is **forbidden** — DSM Container Manager auto-assigns from that range for stacks without explicit network blocks.
 
-Always set `name:` explicitly on every `networks:` block. Without it Docker prepends the project name, creating double-name artefacts (e.g. `github-desktop_github-desktop-net` instead of `github-desktop-net`).
+`init-nas.sh` creates `ots-net` idempotently before stacks are deployed. Every `compose.yaml` declares:
+
+```yaml
+networks:
+  ots-net:
+    external: true
+```
+
+and each service references `- ots-net`.
+
+**Exceptions** (retain per-stack named networks with their own `/24`):
 
 | Stack / network | Subnet | Network name |
 | --- | --- | --- |
 | Docker host bridge (reserved) | `172.17.0.0/16` | `docker0` — **do not use** |
-| `github-desktop-net` | `172.20.0.0/24` | `github-desktop-net` |
-| `grafana-net` | `172.22.0.0/24` | `grafana-net` |
-| `prometheus-net` | `172.22.1.0/24` | `prometheus-net` |
-| `portainer-net` | `172.24.0.0/24` | `portainer-net` |
-| `dozzle-net` | `172.24.1.0/24` | `dozzle-net` |
-| `homepage-net` | `172.24.2.0/24` | `homepage-net` |
-| `watchtower-net` | `172.24.3.0/24` | `watchtower-net` |
-| `it-tools-net` | `172.24.4.0/24` | `it-tools-net` |
-| `databases-net` | `172.25.0.0/24` | `databases-net` |
-| `zabbix-net` | `172.25.1.0/24` | `zabbix-net` |
-| `searxng-net` | `172.26.0.0/24` | `searxng-net` |
-| `ollama-net` | `172.27.0.0/24` | `ollama-net` |
-| `rag-net` | `172.28.7.0/24` | `rag-net` |
-| `holyclaude` | `172.28.0.0/24` | *(named volume stack — no bridge)* |
-| `remotely-net` | `172.28.1.0/24` | `remotely-net` |
-| `code-server-net` | `172.28.2.0/24` | `code-server-net` |
 | `warp-network` | `172.28.3.0/24` | `warp-network` |
-| `agents-net` | `172.28.4.0/24` | `agents-net` |
-| `codex-docs-net` | `172.28.5.0/24` | `codex-docs-net` |
-| `openresume-net` | `172.28.6.0/24` | `openresume-net` |
-| Next free | `172.28.8.0/24+` | — |
+| `zabbix-net` | `172.25.1.0/24` | `zabbix-net` |
 
 To check existing subnets on the NAS before adding a network:
 
@@ -438,9 +430,11 @@ HAProxy is the shared HTTPS edge on each NAS. Service stacks publish LAN ports a
 
 1. **Issue and install PEMs** with **`stacks/acme-sh`** first (DNS-01). Keep host-named cert trees (`otsorundscore/`, `misfitsds/`) current.
 2. Build/update combined PEM bundles in `stacks/_haproxy/certs/` and validate config:
+
    ```bash
    sudo /volume1/@appstore/haproxy/sbin/haproxy -c -f /volume1/docker/dockge/stacks/_haproxy/haproxy.cfg
    ```
+
 3. Reload HAProxy.
 4. Deploy/update service stacks and host.map/backend entries.
 

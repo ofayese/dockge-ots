@@ -38,6 +38,8 @@ services:
       start_period: 40s
     labels:
       - com.centurylinklabs.watchtower.enable=true
+    networks:
+      - ots-net
   portainer_agent:
     image: portainer/agent:2.39.1
     container_name: portainer_agent
@@ -73,3 +75,8 @@ services:
       - TZ=America/New_York
     labels:
       - com.centurylinklabs.watchtower.enable=true
+    networks:
+      - ots-net
+networks:
+  ots-net:
+    external: true

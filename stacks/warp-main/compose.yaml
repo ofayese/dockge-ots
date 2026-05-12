@@ -92,4 +92,9 @@ services:
 
 networks:
   warp-network:
+    name: warp-network
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.3.0/24
+          gateway: 172.28.3.1

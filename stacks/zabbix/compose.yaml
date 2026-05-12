@@ -168,4 +168,9 @@ services:
 
 networks:
   zabbix-net:
+    name: zabbix-net
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.1.0/24
+          gateway: 172.25.1.1

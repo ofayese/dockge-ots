@@ -52,12 +52,15 @@ services:
       - com.centurylinklabs.watchtower.enable=true
     networks:
       - github-desktop-net
+      - ots-net
 networks:
   github-desktop-net:
     # name: override prevents Docker from prepending the project name,
     # which would create "github-desktop_github-desktop-net" (double-name).
     # With name: set, the Docker network is always "github-desktop-net".
     name: github-desktop-net
+  ots-net:
+    external: true
     driver: bridge
     ipam:
       config:

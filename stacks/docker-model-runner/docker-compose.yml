@@ -14,6 +14,8 @@ services:
     restart: unless-stopped
     ports:
       - 10.0.1.15:8001:8000
+    networks:
+      - ots-net
     extra_hosts:
       - "host.docker.internal:host-gateway"
       - "otsorundscore.olutechsys.com:10.0.1.15"
@@ -49,6 +51,8 @@ services:
     restart: unless-stopped
     ports:
       - 10.0.1.15:8003:8000
+    networks:
+      - ots-net
     extra_hosts:
       - "host.docker.internal:host-gateway"
       - "otsorundscore.olutechsys.com:10.0.1.15"
@@ -83,6 +87,8 @@ services:
     restart: unless-stopped
     ports:
       - 10.0.1.15:8011:8000
+    networks:
+      - ots-net
     extra_hosts:
       - "host.docker.internal:host-gateway"
       - "otsorundscore.olutechsys.com:10.0.1.15"
@@ -101,3 +107,7 @@ services:
     x-models:
       llm:
         model: ai/smollm3
+
+networks:
+  ots-net:
+    external: true

@@ -50,7 +50,11 @@ services:
       options:
         max-size: 10m
         max-file: "3"
+    networks:
+      - ots-net
 volumes:
   claude-home: {}
   cloudcli-data: {}
-networks: {}
+networks:
+  ots-net:
+    external: true

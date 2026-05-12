@@ -6,6 +6,8 @@ services:
     cpu_shares: 512
     security_opt:
       - no-new-privileges:true
+    networks:
+      - ots-net
     restart: unless-stopped
     command: valkey-server --save "" --appendonly no
     # NOTE: vm.overcommit_memory and net.core.somaxconn cannot be set via
@@ -44,6 +46,8 @@ services:
     cpu_shares: 768
     security_opt:
       - no-new-privileges:true
+    networks:
+      - ots-net
     restart: unless-stopped
     ports:
       - 10.0.1.15:8888:8080
@@ -73,3 +77,7 @@ services:
         max-file: "3"
     labels:
       - com.centurylinklabs.watchtower.enable=true
+
+networks:
+  ots-net:
+    external: true

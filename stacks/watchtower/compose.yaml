@@ -37,6 +37,8 @@ services:
       timeout: 5s
       retries: 3
       start_period: 15s
+    networks:
+      - ots-net
     logging:
       driver: json-file
       options:
@@ -46,4 +48,6 @@ secrets:
   watchtower_bearer:
     # Single source of truth for bearer auth (Prometheus uses the same file).
     file: ../grafana-prom/secrets/watchtower_bearer_token.txt
-networks: {}
+networks:
+  ots-net:
+    external: true

@@ -11,11 +11,11 @@ Internal **FastAPI** shim for **bounded** DSM HTTP calls. Binds **loopback only*
 
 ## Allowlisted routes (v1)
 
-| Method | Path | DSM call |
-|--------|------|----------|
-| `GET` | `/health` | — |
-| `GET` | `/v1/dsm/ping` | `GET ${DSM_BASE_URL}/` |
-| `GET` | `/v1/syno-api/info` | `GET …/webapi/entry.cgi` with **`api=SYNO.API.Info`**, **`method=query`**, **`version=1`** only |
+| Method | Path                | DSM call                                                                                        |
+| ------ | ------------------- | ----------------------------------------------------------------------------------------------- |
+| `GET`  | `/health`           | —                                                                                               |
+| `GET`  | `/v1/dsm/ping`      | `GET ${DSM_BASE_URL}/`                                                                          |
+| `GET`  | `/v1/syno-api/info` | `GET …/webapi/entry.cgi` with **`api=SYNO.API.Info`**, **`method=query`**, **`version=1`** only |
 
 ## Configure
 

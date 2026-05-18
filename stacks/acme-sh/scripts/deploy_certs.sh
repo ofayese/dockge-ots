@@ -43,9 +43,16 @@ ACME_CERT_ROOT="${ACME_CERT_ROOT:-/volume1/certs/acme}"
 DO_HAPROXY_CHECK=1
 while [[ "${1:-}" == -* ]]; do
 	case "$1" in
-		--no-haproxy-check) DO_HAPROXY_CHECK=0 ;;
-		-h | --help) usage; exit 0 ;;
-		*) echo "Unknown flag: $1" >&2; usage >&2; exit 2 ;;
+	--no-haproxy-check) DO_HAPROXY_CHECK=0 ;;
+	-h | --help)
+		usage
+		exit 0
+		;;
+	*)
+		echo "Unknown flag: $1" >&2
+		usage >&2
+		exit 2
+		;;
 	esac
 	shift
 done
@@ -59,12 +66,12 @@ DEFAULT_SPECS="otsorundscore:otsorundscore.olutechsys.com.pem misfitsds:misfitsd
 SPECS="${BUNDLE_SPECS:-${DEFAULT_SPECS}}"
 if [[ -n "${ACME_PROFILE:-}" && -z "${BUNDLE_SPECS:-}" ]]; then
 	case "${ACME_PROFILE}" in
-		otsorundscore) SPECS="otsorundscore:otsorundscore.olutechsys.com.pem" ;;
-		misfitsds) SPECS="misfitsds:misfitsds.olutechsys.com.pem" ;;
-		*)
-			echo "ERROR: ACME_PROFILE must be otsorundscore|misfitsds or set BUNDLE_SPECS explicitly (got: ${ACME_PROFILE})" >&2
-			exit 2
-			;;
+	otsorundscore) SPECS="otsorundscore:otsorundscore.olutechsys.com.pem" ;;
+	misfitsds) SPECS="misfitsds:misfitsds.olutechsys.com.pem" ;;
+	*)
+		echo "ERROR: ACME_PROFILE must be otsorundscore|misfitsds or set BUNDLE_SPECS explicitly (got: ${ACME_PROFILE})" >&2
+		exit 2
+		;;
 	esac
 fi
 read -r -a SPEC_LIST <<<"${SPECS}"
@@ -132,4 +139,3 @@ if [[ "${DO_HAPROXY_CHECK}" -eq 1 ]]; then
 		echo "WARN: HAPROXY_BIN not executable (${HAPROXY_BIN}) — skipping haproxy -c (operator must validate on NAS)" >&2
 	fi
 fi
-

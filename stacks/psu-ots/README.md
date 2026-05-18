@@ -50,15 +50,15 @@ Interactive PSU Admin login uses **PowerShell Universal defaults** from the imag
 
 Git-tracked PowerShell templates (copy into `data/Repository/.universal/` on the NAS):
 
-| Path | Role |
-|------|------|
-| `universal/scripts/dockge-jobs.ps1` | Background jobs **A–G** + backup + **`Invoke-PSUJob_AutoRemediation`** / **`Invoke-PSUJob_GitOpsSync`**. Each `Invoke-PSUJob_*` queues `Start-Job` and writes timestamped JSON under `PSU_REPORTS_ROOT` (default `/data/reports`) with **48h** retention. |
-| `universal/endpoints/dockge-api.ps1` | Registers `/api/v1/*` routes; enforces **`Authorization: Bearer`** vs **`PSU_AUTH_TOKEN`**. Optional: `PSU_ALLOW_STACK_RESTART`, `PSU_REMEDIATION_ENABLED`, `PSU_GITOPS_ENABLED`. |
-| `universal/endpoints/dockge-endpoints.ps1` | Dot-sources `dockge-api.ps1` (single entry for the `endpoints/` folder). |
-| `universal/dashboards/dockge-compliance.ps1` | NOC panels **A–G** (UD auto-refresh) backed by the JSON reports above. |
-| `universal/scripts/Import-PSUGalleryModules.ps1` | **Required** gallery import (throws unless `PSU_GALLERY_OPTIONAL=1`). |
-| `universal/scripts/Install-PSUGalleryModules.ps1` | Downloads modules from PSGallery (`Install-PSResource` / `Install-Module`); used by **`PSU_GALLERY_INSTALL=1`** and **`Dockerfile`**. |
-| `scripts/docker-gallery-entrypoint.sh` | Compose **entrypoint** wrapper: optional install, then `exec ./Universal/Universal.Server` (matches upstream image). |
+| Path                                              | Role                                                                                                                                                                                                                                                      |
+| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `universal/scripts/dockge-jobs.ps1`               | Background jobs **A–G** + backup + **`Invoke-PSUJob_AutoRemediation`** / **`Invoke-PSUJob_GitOpsSync`**. Each `Invoke-PSUJob_*` queues `Start-Job` and writes timestamped JSON under `PSU_REPORTS_ROOT` (default `/data/reports`) with **48h** retention. |
+| `universal/endpoints/dockge-api.ps1`              | Registers `/api/v1/*` routes; enforces **`Authorization: Bearer`** vs **`PSU_AUTH_TOKEN`**. Optional: `PSU_ALLOW_STACK_RESTART`, `PSU_REMEDIATION_ENABLED`, `PSU_GITOPS_ENABLED`.                                                                         |
+| `universal/endpoints/dockge-endpoints.ps1`        | Dot-sources `dockge-api.ps1` (single entry for the `endpoints/` folder).                                                                                                                                                                                  |
+| `universal/dashboards/dockge-compliance.ps1`      | NOC panels **A–G** (UD auto-refresh) backed by the JSON reports above.                                                                                                                                                                                    |
+| `universal/scripts/Import-PSUGalleryModules.ps1`  | **Required** gallery import (throws unless `PSU_GALLERY_OPTIONAL=1`).                                                                                                                                                                                     |
+| `universal/scripts/Install-PSUGalleryModules.ps1` | Downloads modules from PSGallery (`Install-PSResource` / `Install-Module`); used by **`PSU_GALLERY_INSTALL=1`** and **`Dockerfile`**.                                                                                                                     |
+| `scripts/docker-gallery-entrypoint.sh`            | Compose **entrypoint** wrapper: optional install, then `exec ./Universal/Universal.Server` (matches upstream image).                                                                                                                                      |
 
 **Operational notes:** the PSU container does **not** mount `docker.sock`. **`Invoke-PSUJob_AutoRemediation`** runs **`docker compose pull && up -d`** and **`docker image prune -a -f`** on the **NAS host over SSH** when **`NAS_HOST_IP`**, **`NAS_SSH_USER`**, **`SSH_KEY_PATH`**, and **`NAS_HOST_STACKS_ROOT`** are set (see **`NAS_HOST_SSH_SETUP.md`**). **Trivy** / **SMART** probes run only when those tools exist in the image or on the host bind. **`POST /api/v1/gitops/sync`** queues `Invoke-PSUJob_GitOpsSync` when **`PSU_GITOPS_ENABLED=1`** and `/nas-repo` is writable; **`POST /api/v1/provision/stack`** and **`POST /api/v1/restore/request`** remain **501** placeholders.
 
@@ -68,16 +68,16 @@ Git-tracked PowerShell templates (copy into `data/Repository/.universal/` on the
 
 `Import-PSUGalleryModules` loads every module in **`Get-DockgePSUGalleryModuleNames`**. Unless **`PSU_GALLERY_OPTIONAL=1`**, a failed import **throws** (dashboard/endpoints/jobs fail fast). Use optional mode only while staging; do not leave it on in production if you rely on gallery behavior.
 
-| Area | Modules (Linux set) |
-|------|----------------------|
-| Dashboard UX | `Universal.Utilities.Apps`, `Universal.Components.Loader` |
-| Notifications / triggers | `Universal.Notifications`, `PowerShellUniversal.Triggers.Email`, `PowerShellUniversal.Triggers.Discord` |
-| Monitoring / API | `PowerShellUniversal.API.Monitoring`, `PowerShellUniversal.API.System` |
-| Health checks | `PowerShellUniversal.HealthCheck.InternetAccess`, `PowerShellUniversal.HealthCheck.ExcessiveRunspaces` |
-| Network / certs | `Universal.Apps.NetworkUtilities`, `PowerShellUniversal.Apps.NetworkUtilities`, `PowerShellUniversal.Apps.LetsEncrypt` |
-| DB / tests | `PowerShellUniversal.API.dbatools`, `PowerShellUniversal.Apps.Pester` |
-| Utilities | `PowerShellUniversal.Scripts`, `PowerShellUniversal.Apps.Tools`, `PowerShellUniversal.API.PSResourceGet`, `PowerShellUniversal.Plaster`, `PowerShellUniversal.Apps.Cookbook`, `PowerShellUniversal.Apps.Random` |
-| Identity | `Universal.Apps.ActiveDirectory`, `PowerShellUniversal.Roles.ActiveDirectory` |
+| Area                     | Modules (Linux set)                                                                                                                                                                                             |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Dashboard UX             | `Universal.Utilities.Apps`, `Universal.Components.Loader`                                                                                                                                                       |
+| Notifications / triggers | `Universal.Notifications`, `PowerShellUniversal.Triggers.Email`, `PowerShellUniversal.Triggers.Discord`                                                                                                         |
+| Monitoring / API         | `PowerShellUniversal.API.Monitoring`, `PowerShellUniversal.API.System`                                                                                                                                          |
+| Health checks            | `PowerShellUniversal.HealthCheck.InternetAccess`, `PowerShellUniversal.HealthCheck.ExcessiveRunspaces`                                                                                                          |
+| Network / certs          | `Universal.Apps.NetworkUtilities`, `PowerShellUniversal.Apps.NetworkUtilities`, `PowerShellUniversal.Apps.LetsEncrypt`                                                                                          |
+| DB / tests               | `PowerShellUniversal.API.dbatools`, `PowerShellUniversal.Apps.Pester`                                                                                                                                           |
+| Utilities                | `PowerShellUniversal.Scripts`, `PowerShellUniversal.Apps.Tools`, `PowerShellUniversal.API.PSResourceGet`, `PowerShellUniversal.Plaster`, `PowerShellUniversal.Apps.Cookbook`, `PowerShellUniversal.Apps.Random` |
+| Identity                 | `Universal.Apps.ActiveDirectory`, `PowerShellUniversal.Roles.ActiveDirectory`                                                                                                                                   |
 
 **Windows-only add-ons** (set **`PSU_GALLERY_INCLUDE_WINDOWS=1`** for install/import lists): `PowerShellUniversal.Apps.TaskManager`, `PowerShellUniversal.Apps.Services`, `PowerShellUniversal.Apps.AutomatedLab`, `Universal.Apps.WindowsSystemInformation`.
 

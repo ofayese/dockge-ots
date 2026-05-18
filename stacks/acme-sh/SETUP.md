@@ -124,10 +124,11 @@ sudo docker exec AcmeSh acme.sh --list
 
 After new or renewed PEMs under **`${ACME_CERT_ROOT}`** (profiles such as **`otsorundscore`**, **`misfitsds`** — see the tree at the top of this file):
 
-1. **HAProxy bundles (host-run, preferred):**  
-   - Script: **`stacks/acme-sh/scripts/deploy_certs.sh`** — builds combined PEMs into **`HAPROXY_CERT_STAGE_DIR`** (default **`/volume1/certs/acme/haproxy`**; **`mkdir -p`** on run). Atomic replace + **`.lkg`** rollback still applies under that directory when **`haproxy -c`** runs and fails (**`haproxy -c`** is skipped unless **`HAPROXY_CERT_STAGE_DIR`** equals **`${STACK_ROOT}/_haproxy/certs`**, so the config’s `crt` paths match staged files; copy bundles to the live path your **`haproxy.cfg`** uses, then validate/reload HAProxy manually in DSM or via your own procedure). The script does **not** restart or reload HAProxy.  
-   - **Single profile (optional):** with **`BUNDLE_SPECS` unset**, set **`ACME_PROFILE=otsorundscore`** or **`misfitsds`** to stage **one** HAProxy bundle using the default filename mapping (see script header).  
-   - **HAProxy validate:** when staging matches the live cert dir, **`haproxy -c`** runs against **`HAPROXY_CFG`** (default **`${STACK_ROOT}/_haproxy/haproxy.cfg`**) if **`HAPROXY_BIN`** is executable (Synology package default **`/volume1/@appstore/haproxy/sbin/haproxy`**).  
+1. **HAProxy bundles (host-run, preferred):**
+
+   - Script: **`stacks/acme-sh/scripts/deploy_certs.sh`** — builds combined PEMs into **`HAPROXY_CERT_STAGE_DIR`** (default **`/volume1/certs/acme/haproxy`**; **`mkdir -p`** on run). Atomic replace + **`.lkg`** rollback still applies under that directory when **`haproxy -c`** runs and fails (**`haproxy -c`** is skipped unless **`HAPROXY_CERT_STAGE_DIR`** equals **`${STACK_ROOT}/_haproxy/certs`**, so the config’s `crt` paths match staged files; copy bundles to the live path your **`haproxy.cfg`** uses, then validate/reload HAProxy manually in DSM or via your own procedure). The script does **not** restart or reload HAProxy.
+   - **Single profile (optional):** with **`BUNDLE_SPECS` unset**, set **`ACME_PROFILE=otsorundscore`** or **`misfitsds`** to stage **one** HAProxy bundle using the default filename mapping (see script header).
+   - **HAProxy validate:** when staging matches the live cert dir, **`haproxy -c`** runs against **`HAPROXY_CFG`** (default **`${STACK_ROOT}/_haproxy/haproxy.cfg`**) if **`HAPROXY_BIN`** is executable (Synology package default **`/volume1/@appstore/haproxy/sbin/haproxy`**).
    - Rationale: **[`docs/hive/proposals/acme-sh/ACME_DEPLOY_HOOK_ADR.md`](../../docs/hive/proposals/acme-sh/ACME_DEPLOY_HOOK_ADR.md)** (host-run vs in-container).
 
 2. **TLS edge verify:** **`stacks/acme-sh/scripts/verify_serving.sh`** — requires **`CONNECT_HOST`**; set **`CONNECT_PORT`** (default **`6443`**), **`SNI`** (defaults to **`CONNECT_HOST`**), **`MIN_VALID_DAYS`** (default **21** for **`openssl x509 -checkend`**), optional **`EXPECTED_SUBJECT`**. On TLS / subject / expiry failure, posts to **`DISCORD_WEBHOOK_URL`** when set (same variable name as **`stacks/acme-sh/.env.example`**).
@@ -136,7 +137,7 @@ After new or renewed PEMs under **`${ACME_CERT_ROOT}`** (profiles such as **`ots
 
 #### DSM Control Panel — manual certificate import (operator)
 
-Importing DSM’s **control panel** or **reverse-proxy** certificate is **manual** (DSM UI: *Control Panel → Security → Certificate* or the Login Portal / reverse-proxy certificate picker). **Do not** automate DSM certificate APIs from this repo without an explicit **pinned DSM major/minor** disclaimer, documented test matrix, and rollback — DSM upgrades routinely overwrite nginx fragments and certificate store layouts.
+Importing DSM’s **control panel** or **reverse-proxy** certificate is **manual** (DSM UI: _Control Panel → Security → Certificate_ or the Login Portal / reverse-proxy certificate picker). **Do not** automate DSM certificate APIs from this repo without an explicit **pinned DSM major/minor** disclaimer, documented test matrix, and rollback — DSM upgrades routinely overwrite nginx fragments and certificate store layouts.
 
 ### 8. Verify
 
@@ -735,18 +736,18 @@ sudo synopkg restart ContainerManager
 
 ## What this stack manages
 
-| Component                              | Cert                                                              | Auto-renewed                  | Deployed by |
-| -------------------------------------- | ----------------------------------------------------------------- | ----------------------------- | ----------- |
+| Component                              | Cert                                                              | Auto-renewed                  | Deployed by                                                                                          |
+| -------------------------------------- | ----------------------------------------------------------------- | ----------------------------- | ---------------------------------------------------------------------------------------------------- |
 | DSM HTTPS — otsorundscore              | `wildcard/` (`*.olutechsys.com`)                                  | acme.sh                       | DSM UI + optional legacy `deploy-otsorundscore.bash` ([archive](archive/SETUP_LEGACY_2026-05-10.md)) |
-| DSM HTTPS — misfitsds                  | `wildcard/` (`*.olutechsys.com`)                                  | acme.sh                       | DSM UI + optional legacy `deploy-misfitsds.bash` ([archive](archive/SETUP_LEGACY_2026-05-10.md)) |
-| Docker daemon TLS — otsorundscore      | `wildcard/fullchain.pem`                                          | acme.sh                       | Legacy `deploy-otsorundscore.bash` ([archive](archive/SETUP_LEGACY_2026-05-10.md)) |
-| Docker daemon mTLS — otsorundscore     | `docker-mtls/servers/otsorundscore.olutechsys.com/`               | local `docker-mtls-*` scripts | `deploy-otsorundscore-mtls.bash` ([archive](archive/SETUP_LEGACY_2026-05-10.md)) |
-| DSM cert slot — otsorundscore services | `otsorundscore-sub/`                                              | acme.sh                       | Legacy bash ([archive](archive/SETUP_LEGACY_2026-05-10.md)) |
-| DSM cert slot — misfitsds services     | `misfitsds-sub/`                                                  | acme.sh                       | Legacy bash ([archive](archive/SETUP_LEGACY_2026-05-10.md)) |
-| MacBook (otsmbpro16)                   | `otsmbpro16/`                                                     | acme.sh                       | Legacy `deploy-otsmbpro16.bash` ([archive](archive/SETUP_LEGACY_2026-05-10.md)) |
-| Laptop (hpdevcore)                     | `hpdevcore/`                                                      | acme.sh                       | Legacy `deploy-hpdevcore.bash` ([archive](archive/SETUP_LEGACY_2026-05-10.md)) |
-| OTS Traefik / edge services            | `otsorundscore/` (`*.otsorundscore.{olutechsys,olutech.systems}`) | acme.sh                       | **`scripts/deploy_certs.sh`** + Traefik (`tls.yaml`) |
-| MFT Traefik / edge services            | `misfitsds/` (`*.misfitsds.{olutechsys,olutech.systems}`)         | acme.sh                       | **`scripts/deploy_certs.sh`** + Traefik (`tls.yaml`) |
+| DSM HTTPS — misfitsds                  | `wildcard/` (`*.olutechsys.com`)                                  | acme.sh                       | DSM UI + optional legacy `deploy-misfitsds.bash` ([archive](archive/SETUP_LEGACY_2026-05-10.md))     |
+| Docker daemon TLS — otsorundscore      | `wildcard/fullchain.pem`                                          | acme.sh                       | Legacy `deploy-otsorundscore.bash` ([archive](archive/SETUP_LEGACY_2026-05-10.md))                   |
+| Docker daemon mTLS — otsorundscore     | `docker-mtls/servers/otsorundscore.olutechsys.com/`               | local `docker-mtls-*` scripts | `deploy-otsorundscore-mtls.bash` ([archive](archive/SETUP_LEGACY_2026-05-10.md))                     |
+| DSM cert slot — otsorundscore services | `otsorundscore-sub/`                                              | acme.sh                       | Legacy bash ([archive](archive/SETUP_LEGACY_2026-05-10.md))                                          |
+| DSM cert slot — misfitsds services     | `misfitsds-sub/`                                                  | acme.sh                       | Legacy bash ([archive](archive/SETUP_LEGACY_2026-05-10.md))                                          |
+| MacBook (otsmbpro16)                   | `otsmbpro16/`                                                     | acme.sh                       | Legacy `deploy-otsmbpro16.bash` ([archive](archive/SETUP_LEGACY_2026-05-10.md))                      |
+| Laptop (hpdevcore)                     | `hpdevcore/`                                                      | acme.sh                       | Legacy `deploy-hpdevcore.bash` ([archive](archive/SETUP_LEGACY_2026-05-10.md))                       |
+| OTS Traefik / edge services            | `otsorundscore/` (`*.otsorundscore.{olutechsys,olutech.systems}`) | acme.sh                       | **`scripts/deploy_certs.sh`** + Traefik (`tls.yaml`)                                                 |
+| MFT Traefik / edge services            | `misfitsds/` (`*.misfitsds.{olutechsys,olutech.systems}`)         | acme.sh                       | **`scripts/deploy_certs.sh`** + Traefik (`tls.yaml`)                                                 |
 
 The previous local CA codebase (`setup-docker-tls.bash`, `deploy-nas-cert.bash`)
 has been retired and archived to `/volume1/certs/archives/scripts-2026-04-27/`.

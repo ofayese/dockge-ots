@@ -128,11 +128,14 @@ delete_dir() {
 # Primary path for .../@eaDir/<name>@SynoEAStream or .../@eaDir/<name>@SynoResource → .../<name>
 syno_sidecar_to_primary() {
 	local f="$1"
-	local p="${f/@eaDir\/}"
+	local p="${f/@eaDir\//}"
 	case "${f}" in
-		*@SynoEAStream) p="${p%@SynoEAStream}" ;;
-		*@SynoResource) p="${p%@SynoResource}" ;;
-		*) printf ''; return 1 ;;
+	*@SynoEAStream) p="${p%@SynoEAStream}" ;;
+	*@SynoResource) p="${p%@SynoResource}" ;;
+	*)
+		printf ''
+		return 1
+		;;
 	esac
 	printf '%s' "${p}"
 }

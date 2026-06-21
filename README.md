@@ -105,31 +105,31 @@ sudo sh -c 'cat /volume1/certs/acme/otsorundscore/fullchain.pem /volume1/certs/a
 
 ## 9. Key scripts and files
 
-| Path                                                                                                 | Role                                             |
-| ---------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| [`scripts/dockge-start.sh`](scripts/dockge-start.sh)                                                 | Dockge host container (rc.d)                     |
-| [`scripts/init-nas.sh`](scripts/init-nas.sh)                                                         | Post-clone dirs + `.env`                         |
-| [`scripts/fix-permissions.sh`](scripts/fix-permissions.sh)                                           | Bind-mount ownership                             |
-| [`scripts/compose-validate.sh`](scripts/compose-validate.sh)                                         | All Compose files (CI)                           |
-| [`scripts/check-dockge-http.sh`](scripts/check-dockge-http.sh)                                       | Probe Dockge on 5571                             |
-| [`scripts/verify-repo-layout.sh`](scripts/verify-repo-layout.sh)                                     | Hive / stack path guard                          |
-| [`scripts/validate-haproxy-proposal.sh`](scripts/validate-haproxy-proposal.sh)                       | HAProxy `-c` off-box                             |
-| [`stacks/acme-sh/SETUP.md`](stacks/acme-sh/SETUP.md)                                                 | Cert issue/install runbook                       |
+| Path                                                                                                 | Role                                                         |
+| ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| [`scripts/dockge-start.sh`](scripts/dockge-start.sh)                                                 | Dockge host container (rc.d)                                 |
+| [`scripts/init-nas.sh`](scripts/init-nas.sh)                                                         | Post-clone dirs + `.env`                                     |
+| [`scripts/fix-permissions.sh`](scripts/fix-permissions.sh)                                           | Bind-mount ownership                                         |
+| [`scripts/compose-validate.sh`](scripts/compose-validate.sh)                                         | All Compose files (CI)                                       |
+| [`scripts/check-dockge-http.sh`](scripts/check-dockge-http.sh)                                       | Probe Dockge on 5571                                         |
+| [`scripts/verify-repo-layout.sh`](scripts/verify-repo-layout.sh)                                     | Hive / stack path guard                                      |
+| [`scripts/validate-haproxy-proposal.sh`](scripts/validate-haproxy-proposal.sh)                       | HAProxy `-c` off-box                                         |
+| [`stacks/acme-sh/SETUP.md`](stacks/acme-sh/SETUP.md)                                                 | Cert issue/install runbook                                   |
 | [`docs/hive/CERT_REISSUE_TRAEFIK_OAUTH_RUNBOOK.md`](docs/hive/CERT_REISSUE_TRAEFIK_OAUTH_RUNBOOK.md) | Ordered: reissue → HAProxy edge checks → Google OAuth Step 1 |
-| [`docs/hive/NAS_DEPLOYMENT.md`](docs/hive/NAS_DEPLOYMENT.md)                                         | Full NAS reference                               |
-| [`AGENTS.md`](AGENTS.md)                                                                             | Agent memory and conventions                     |
+| [`docs/hive/NAS_DEPLOYMENT.md`](docs/hive/NAS_DEPLOYMENT.md)                                         | Full NAS reference                                           |
+| [`AGENTS.md`](AGENTS.md)                                                                             | Agent memory and conventions                                 |
 
 ---
 
 ## 10. Troubleshooting (short)
 
-| Symptom                          | Likely cause                                   | Action                                                                                                        |
-| -------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| Dockge dies / wrong port         | **`5571:5571`**                                | `docker stop Dockge && docker rm Dockge`, rerun [`scripts/dockge-start.sh`](scripts/dockge-start.sh) via rc.d |
-| HAProxy **no start line**        | Non-`.pem` in **`stacks/_haproxy/certs/`**     | Remove stray files; PEMs only                                                                                 |
-| HAProxy **no SSL certificate**   | Empty **`certs/`**                             | Install PEM bundles (see §5)                                                                                  |
-| **`git pull`** dubious ownership | Owner ≠ git user                               | `git config --file .git/config --add safe.directory /volume1/docker/dockge`                                   |
-| **`publickey`** as root          | Root has no GitHub key                         | Run **`git`** as the DSM user with **`~/.ssh`** keys                                                          |
+| Symptom                          | Likely cause                               | Action                                                                                                        |
+| -------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| Dockge dies / wrong port         | **`5571:5571`**                            | `docker stop Dockge && docker rm Dockge`, rerun [`scripts/dockge-start.sh`](scripts/dockge-start.sh) via rc.d |
+| HAProxy **no start line**        | Non-`.pem` in **`stacks/_haproxy/certs/`** | Remove stray files; PEMs only                                                                                 |
+| HAProxy **no SSL certificate**   | Empty **`certs/`**                         | Install PEM bundles (see §5)                                                                                  |
+| **`git pull`** dubious ownership | Owner ≠ git user                           | `git config --file .git/config --add safe.directory /volume1/docker/dockge`                                   |
+| **`publickey`** as root          | Root has no GitHub key                     | Run **`git`** as the DSM user with **`~/.ssh`** keys                                                          |
 
 ---
 

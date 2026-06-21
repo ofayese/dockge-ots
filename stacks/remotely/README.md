@@ -7,8 +7,8 @@ no inbound firewall ports are required beyond the web UI.
 
 ## Services
 
-| Service  | Container | Internal | Host           | Image                   |
-| -------- | --------- | -------- | -------------- | ----------------------- |
+| Service  | Container | Internal | Host           | Image                                                                                    |
+| -------- | --------- | -------- | -------------- | ---------------------------------------------------------------------------------------- |
 | remotely | remotely  | 5000     | 10.0.1.15:5371 | immybot/remotely@sha256:9bdff2d8f7a9926731fe8394d9b0292eb5679153b1da7f3b80ecd9fa9823b89b |
 
 ## Prerequisites

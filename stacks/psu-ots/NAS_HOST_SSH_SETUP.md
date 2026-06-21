@@ -33,7 +33,7 @@ ssh -i psu_remediation_key YOUR_USER@NAS_IP 'docker info >/dev/null && echo ok'
 
 ### Option A — File mount (repo template)
 
-1. Copy the private key onto the NAS (not into Git), e.g.  
+1. Copy the private key onto the NAS (not into Git), e.g.
    `/volume1/docker/dockge/stacks/psu-ots/keys/psu_remediation_key`
 2. Restrict permissions:
 
@@ -55,11 +55,11 @@ Store the private key material as a **Secret** in PSU (Platform → Variables), 
 
 In **`stacks/psu-ots/.env`** (then recreate the container):
 
-| Variable | Example | Purpose |
-|----------|---------|---------|
-| `NAS_HOST_IP` | `10.0.1.15` | SSH target |
-| `NAS_SSH_USER` | `laolufayese` | SSH login |
-| `SSH_KEY_PATH` | `/ssh-keys/psu_remediation_key` | Private key path **inside** the container |
+| Variable               | Example                         | Purpose                                     |
+| ---------------------- | ------------------------------- | ------------------------------------------- |
+| `NAS_HOST_IP`          | `10.0.1.15`                     | SSH target                                  |
+| `NAS_SSH_USER`         | `laolufayese`                   | SSH login                                   |
+| `SSH_KEY_PATH`         | `/ssh-keys/psu_remediation_key` | Private key path **inside** the container   |
 | `NAS_HOST_STACKS_ROOT` | `/volume1/docker/dockge/stacks` | Host path used in `docker compose` over SSH |
 
 If **`PSU_STACK_ROOT`** inside the container is **`/nas-repo/stacks`**, **`NAS_HOST_STACKS_ROOT` is required** so the remote script can `cd` to the real host directory.

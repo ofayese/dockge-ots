@@ -36,7 +36,6 @@ docker compose up -d
 sudo docker exec AcmeSh acme.sh --set-notify --notify-hook discord
 ```
 
-
 ---
 
 <a id="mtls-bundle-reference"></a>
@@ -279,7 +278,6 @@ sudo mount -t cifs //YOUR_FILESERVER/certs /mnt/nas-certs -o user=YOUR_USER
 SOURCE_DIR=/mnt/nas-certs/acme/hpdevcore \
   bash /mnt/nas-certs/acme/deploy-hpdevcore.bash
 ```
-
 
 ---
 
